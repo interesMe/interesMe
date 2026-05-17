@@ -1,0 +1,22 @@
+services:
+
+  backend:
+    build:
+      context: ./InteresMe.API
+
+    container_name: interesme-api
+
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./InteresMe.Client
+
+    container_name: interesme-client
+
+    ports:
+      - "5050:80"
+
+    depends_on:
+      - backend
