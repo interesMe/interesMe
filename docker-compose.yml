@@ -1,13 +1,42 @@
 services:
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: interesme-postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./InteresMe.API
 
     container_name: interesme-api
 
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
     ports:
       - "8080:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build:
@@ -20,3 +49,6 @@ services:
 
     depends_on:
       - backend
+
+volumes:
+  postgres_data:

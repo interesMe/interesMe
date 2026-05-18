@@ -15,6 +15,30 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # Ephemeral credentials for CI only — not used in production (.env)
+    env:
+      POSTGRES_USER: interesme
+      POSTGRES_PASSWORD: Wp8kN2mQ9xR4vL7tY1zA6bC0dE3fG5hJ8kM1nP4qS7u
+      POSTGRES_DB: interesme
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      AUTH_TOKEN_SECRET: CiOnly7kM9nP2qS5uV8wX1yZ4aB6cD0eF3gH5jK8mN1pQ4rT7vW0xY3zA6bC9dE2fG
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: interesme
+          POSTGRES_PASSWORD: Wp8kN2mQ9xR4vL7tY1zA6bC0dE3fG5hJ8kM1nP4qS7u
+          POSTGRES_DB: interesme
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U interesme -d interesme"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
 
       - name: Checkout repository
