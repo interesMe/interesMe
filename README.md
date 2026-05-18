@@ -1,25 +1,27 @@
 # InteresMe
 
-InteresMe is a modern social discovery platform focused on meaningful connections through interests, goals, projects, and lifestyle.
+InteresMe is a social discovery platform focused on meaningful connections through interests, goals, projects, and lifestyle.
 
-Unlike traditional social media platforms that prioritize endless scrolling and superficial interaction, InteresMe is designed to help people discover like-minded individuals through shared passions, personal growth, creativity, and real-world activities.
+This repository is a **monorepo** with a single ASP.NET Core backend and an Angular frontend.
 
 ---
 
 ## Tech Stack
 
-### Backend
+### Backend (`InteresMe.API`)
 - ASP.NET Core 8
-- REST API
-- Swagger
+- Modular folder structure (one Web API project)
+- PostgreSQL + Entity Framework Core
+- JWT authentication (Swagger **Authorize** button)
+- BCrypt password hashing
+- Swagger / OpenAPI
 - Docker
 
-### Frontend
+### Frontend (`InteresMe.Client`)
 - Angular
 - TypeScript
 - Tailwind CSS
-- Nginx
-- Docker
+- Nginx (Docker)
 
 ---
 
@@ -27,48 +29,129 @@ Unlike traditional social media platforms that prioritize endless scrolling and 
 
 ```txt
 interesme/
-│
-├── InteresMe.API/
-│   ├── Controllers/
-│   ├── Models/
-│   ├── Services/
+├── InteresMe.API/              # Backend (single project)
+│   ├── Modules/
+│   │   ├── Auth/               # Register, Login, JWT
+│   │   ├── Users/
+│   │   ├── Feed/
+│   │   └── Chat/
+│   ├── Data/                   # DbContext, migrations
+│   ├── Security/               # JWT, BCrypt
+│   ├── Configuration/          # Env, Swagger
 │   └── Dockerfile
-│
 ├── InteresMe.Client/
-│   ├── src/
-│   └── Dockerfile
-│
 ├── docker-compose.yml
+├── .env.example                # Copy to .env (not committed)
 └── InteresMe.sln
-Running with Docker
+```
 
-Build and start the entire project:
+Each module contains: `Controllers/`, `Services/`, `DTOs/`, `Models/`.
 
+---
+
+## Getting Started
+
+### 1. Environment variables
+
+```bash
+cp .env.example .env
+```
+
+Generate secrets and paste them into `.env`:
+
+```bash
+openssl rand -base64 32   # POSTGRES_PASSWORD
+openssl rand -base64 48   # AUTH_TOKEN_SECRET
+```
+
+| Variable | Description |
+|----------|-------------|
+| `POSTGRES_USER` | Database user |
+| `POSTGRES_PASSWORD` | Database password (min 16 chars) |
+| `POSTGRES_DB` | Database name |
+| `POSTGRES_HOST` | `localhost` for local run, `postgres` in Docker |
+| `POSTGRES_PORT` | Default `5432` |
+| `AUTH_TOKEN_SECRET` | JWT signing key (min 32 chars) |
+
+Never commit `.env` — it is listed in `.gitignore`.
+
+### 2. Run with Docker (recommended)
+
+```bash
 docker compose up --build
-Local URLs
+```
 
-Frontend:
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5050 |
+| API | http://localhost:8080 |
+| Swagger | http://localhost:8080/swagger |
+| PostgreSQL | localhost:5432 |
 
-http://localhost:5050
+Migrations are applied automatically when the API starts.
 
-Backend:
+### 3. Run locally (without Docker)
 
-http://localhost:8080
+Start PostgreSQL, then:
 
-Swagger:
+```bash
+dotnet run --project InteresMe.API
+```
 
-http://localhost:8080/swagger
-Planned Features
-Authentication & Authorization
-User profiles
-Interest-based discovery
-Activity feed
-Messaging system
-Communities
-Smart matching
-Responsive UI
-Current Status
+| | URL |
+|---|-----|
+| API | http://localhost:5097 |
+| Swagger | http://localhost:5097/swagger |
 
-Project is currently in active development.
+---
 
-This repository contains both frontend and backend applications in a monorepo architecture.
+## API Overview
+
+### Auth (PostgreSQL, public)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Login, returns JWT |
+
+### Protected modules (require JWT)
+
+| Module | Base route |
+|--------|------------|
+| Users | `/api/users` |
+| Feed | `/api/feed` |
+| Chat | `/api/chat` |
+
+### Swagger + JWT
+
+1. Call `POST /api/auth/login`
+2. Copy the `token` from the response
+3. Click **Authorize** in Swagger
+4. Paste the token (without `Bearer`)
+5. Call protected endpoints
+
+---
+
+## Development
+
+```bash
+# Restore & build
+dotnet restore InteresMe.sln
+dotnet build InteresMe.sln
+
+# EF migrations (from repo root)
+dotnet ef migrations add MigrationName \
+  --project InteresMe.API/InteresMe.API.csproj \
+  --output-dir Data/Migrations
+```
+
+---
+
+## Current Status
+
+- Auth with PostgreSQL, BCrypt, JWT
+- Users, Feed, Chat modules (in-memory data for Feed/Chat/Users)
+- Docker Compose with Postgres
+- CI: build backend + frontend on `main`
+
+Planned: full persistence for all modules, interest-based discovery, communities, matching.
