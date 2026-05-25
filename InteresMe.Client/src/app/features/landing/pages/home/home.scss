@@ -1,0 +1,361 @@
+* {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+
+  width: 100%;
+  height: 100vh;
+
+  overflow: hidden;
+}
+
+.landing {
+  position: relative;
+
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+
+  overflow: hidden;
+
+  background: #fff;
+}
+
+/* LOGO */
+
+.logo {
+  position: absolute;
+
+  top: 40px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  z-index: 50;
+
+  font-size: 64px;
+  font-weight: 800;
+
+  letter-spacing: -0.05em;
+
+  color: #111;
+
+  user-select: none;
+}
+
+/* CENTER LINE */
+
+.divider {
+  position: absolute;
+
+  top: 0;
+  left: 50%;
+
+  width: 1px;
+  height: 100%;
+
+  background: rgba(0,0,0,0.08);
+
+  transform: translateX(-50%);
+
+  z-index: 20;
+
+  transition: left 0.45s ease;
+}
+
+/* SIDES */
+
+.side {
+  position: relative;
+
+  width: 50%;
+  height: 100%;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: width 0.45s ease;
+}
+
+/* VIDEO */
+
+.bg-video {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  pointer-events: none;
+
+  user-select: none;
+
+  z-index: 1;
+
+  transform: scale(1.02);
+}
+
+/* REMOVE MEDIA CONTROLS */
+
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+/* OVERLAYS */
+
+.overlay {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 2;
+
+  backdrop-filter: blur(2px);
+
+  transition: all 0.35s ease;
+}
+
+.relationship-overlay {
+  background:
+    rgba(255, 245, 247, 0.72);
+}
+
+.work-overlay {
+  background:
+    rgba(240, 252, 255, 0.76);
+}
+
+/* CONTENT */
+
+.content {
+  position: relative;
+
+  z-index: 10;
+
+  max-width: 560px;
+
+  text-align: center;
+
+  padding: 40px;
+}
+
+/* LABELS */
+
+.label {
+  display: inline-block;
+
+  margin-bottom: 24px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  letter-spacing: 0.35em;
+
+  color: #ff4d6d;
+}
+
+.work-label {
+  color: #1597e5;
+}
+
+/* TITLES */
+
+h1 {
+  margin: 0 0 28px;
+
+  font-size: 104px;
+  line-height: 0.92;
+
+  font-weight: 800;
+
+  letter-spacing: -0.06em;
+
+  color: #111;
+}
+
+/* TEXT */
+
+p {
+  margin: 0 auto 42px;
+
+  max-width: 560px;
+
+  font-size: 30px;
+  line-height: 1.45;
+
+  color: rgba(0,0,0,0.68);
+}
+
+/* BUTTON */
+
+button {
+  width: 240px;
+  height: 72px;
+
+  border: none;
+  outline: none;
+
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  background: rgba(255,255,255,0.24);
+
+  backdrop-filter: blur(20px);
+
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255,255,255,0.34);
+
+  color: #111;
+
+  font-size: 22px;
+  font-weight: 700;
+
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+button:hover {
+  transform: translateY(-3px);
+
+  background: rgba(255,255,255,0.38);
+
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.12);
+}
+
+/* HOVER STATES */
+
+.relationship-active .relationship {
+  width: 56%;
+}
+
+.relationship-active .work {
+  width: 44%;
+}
+
+.relationship-active .divider {
+  left: 56%;
+}
+
+.relationship-active .relationship-overlay {
+  background:
+    rgba(255,245,247,0.58);
+}
+
+.relationship-active .work-overlay {
+  background:
+    rgba(240,252,255,0.88);
+}
+
+.work-active .relationship {
+  width: 44%;
+}
+
+.work-active .work {
+  width: 56%;
+}
+
+.work-active .divider {
+  left: 44%;
+}
+
+.work-active .relationship-overlay {
+  background:
+    rgba(255,245,247,0.88);
+}
+
+.work-active .work-overlay {
+  background:
+    rgba(240,252,255,0.58);
+}
+
+/* MOBILE */
+
+@media (max-width: 900px) {
+
+  .landing {
+    flex-direction: column;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .side {
+    width: 100%;
+    height: 50%;
+
+    transition: none;
+  }
+
+  .relationship-active .relationship,
+  .relationship-active .work,
+  .work-active .relationship,
+  .work-active .work {
+    width: 100%;
+  }
+
+  .logo {
+    top: 24px;
+
+    font-size: 34px;
+  }
+
+  .content {
+    max-width: 100%;
+
+    padding: 18px;
+  }
+
+  .label {
+    font-size: 11px;
+
+    letter-spacing: 0.28em;
+  }
+
+  h1 {
+    font-size: 44px;
+
+    line-height: 1;
+  }
+
+  p {
+    font-size: 17px;
+
+    margin-bottom: 28px;
+  }
+
+  button {
+    width: 100%;
+    max-width: 240px;
+
+    height: 60px;
+
+    font-size: 18px;
+  }
+}
