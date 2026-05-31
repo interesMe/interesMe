@@ -15,4 +15,8 @@ public interface IAuthService
     Task<AuthResult<RefreshResponse>> RefreshTokenAsync(
         RefreshRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<AuthResult<AuthResponse>> GoogleLoginAsync(
+    GoogleAuthRequest request,
+    CancellationToken cancellationToken = default);
 }

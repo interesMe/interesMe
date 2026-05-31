@@ -16,6 +16,15 @@ public class AuthController(IAuthService authService) : ControllerBase
         CancellationToken cancellationToken) =>
         ToActionResult(authService.RegisterAsync(request, cancellationToken));
 
+    [HttpPost("google")]
+    public Task<IActionResult> GoogleLogin(
+        [FromBody] GoogleAuthRequest request,
+        CancellationToken cancellationToken) =>
+        ToActionResult(
+            authService.GoogleLoginAsync(
+                request,
+                cancellationToken));
+
     [HttpPost("login")]
     public Task<IActionResult> Login(
         [FromBody] LoginRequest request,
@@ -30,38 +39,38 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     private static async Task<IActionResult> ToActionResult<T>(
     Task<AuthResult<T>> resultTask)
-{
-    var result = await resultTask;
-
-    if (result.IsSuccess)
     {
-        return new OkObjectResult(result.Response);
+        var result = await resultTask;
+
+        if (result.IsSuccess)
+        {
+            return new OkObjectResult(result.Response);
+        }
+
+        return result.ErrorKind switch
+        {
+            AuthErrorKind.Validation =>
+                new BadRequestObjectResult(
+                    new { message = result.ErrorMessage }),
+
+            AuthErrorKind.EmailAlreadyExists =>
+                new ConflictObjectResult(
+                    new { message = result.ErrorMessage }),
+
+            AuthErrorKind.InvalidCredentials =>
+                new UnauthorizedObjectResult(
+                    new { message = result.ErrorMessage }),
+
+            AuthErrorKind.NotImplemented =>
+                new ObjectResult(
+                    new { message = result.ErrorMessage })
+                {
+                    StatusCode = StatusCodes.Status501NotImplemented
+                },
+
+            _ =>
+                new BadRequestObjectResult(
+                    new { message = result.ErrorMessage })
+        };
     }
-
-    return result.ErrorKind switch
-    {
-        AuthErrorKind.Validation =>
-            new BadRequestObjectResult(
-                new { message = result.ErrorMessage }),
-
-        AuthErrorKind.EmailAlreadyExists =>
-            new ConflictObjectResult(
-                new { message = result.ErrorMessage }),
-
-        AuthErrorKind.InvalidCredentials =>
-            new UnauthorizedObjectResult(
-                new { message = result.ErrorMessage }),
-
-        AuthErrorKind.NotImplemented =>
-            new ObjectResult(
-                new { message = result.ErrorMessage })
-            {
-                StatusCode = StatusCodes.Status501NotImplemented
-            },
-
-        _ =>
-            new BadRequestObjectResult(
-                new { message = result.ErrorMessage })
-    };
-}
 }

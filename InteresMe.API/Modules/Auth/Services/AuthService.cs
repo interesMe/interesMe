@@ -10,7 +10,8 @@ namespace InteresMe.API.Modules.Auth.Services;
 
 public class AuthService(
     AppDbContext dbContext,
-    JwtTokenService jwtTokenService)
+    JwtTokenService jwtTokenService,
+    IOAuthProviderService oAuthProviderService)
     : IAuthService
 {
     private const int MinPasswordLength = 8;
@@ -183,6 +184,66 @@ public class AuthService(
             RefreshToken = newRefreshToken
         });
     }
+    public async Task<AuthResult<AuthResponse>> GoogleLoginAsync(
+        GoogleAuthRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payload =
+                await oAuthProviderService.ValidateGoogleTokenAsync(
+                    request.IdToken,
+                    cancellationToken);
+
+            var email = payload.Email
+                .Trim()
+                .ToLowerInvariant();
+
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(
+                    u => u.Email == email,
+                    cancellationToken);
+
+            if (user is null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    DisplayName = payload.Name ?? email,
+                    GoogleId = payload.Subject,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                dbContext.Users.Add(user);
+
+                await dbContext.SaveChangesAsync(
+                    cancellationToken);
+            }
+            else if (string.IsNullOrWhiteSpace(user.GoogleId))
+            {
+                user.GoogleId = payload.Subject;
+
+                await dbContext.SaveChangesAsync(
+                    cancellationToken);
+            }
+
+            var refreshToken = await CreateRefreshTokenAsync(
+                user.Id,
+                cancellationToken);
+
+            return AuthResult<AuthResponse>.Success(
+                BuildAuthResponse(
+                    user,
+                    refreshToken));
+        }
+        catch (Exception)
+        {
+            return AuthResult<AuthResponse>.Failure(
+                AuthErrorKind.InvalidCredentials,
+                "Invalid Google token.");
+        }
+    }
 
     private async Task<string> CreateRefreshTokenAsync(
         Guid userId,
@@ -215,6 +276,7 @@ public class AuthService(
 
         return (refreshToken, refreshTokenEntity);
     }
+
 
     private static bool IsUniqueConstraintViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException

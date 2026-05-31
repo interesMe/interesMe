@@ -14,5 +14,5 @@ public class RefreshToken
     public DateTime? RevokedAt { get; set; }
 
     public User user { get; set; } = null!;
-    
+
 }
