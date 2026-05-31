@@ -33,5 +33,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(user => user.CreatedAt)
                 .IsRequired();
         });
+
+        
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("refresh_tokens", "auth");
+
+            entity.HasKey(token => token.Id);
+
+            entity.Property(token => token.TokenHash)
+                .HasMaxLength(512)
+                .IsRequired();
+
+            entity.Property(token => token.TokenHash)
+                .IsRequired();
+
+            entity.Property(token => token.CreatedAt)
+                .IsRequired();
+
+            entity.Property(token => token.ExpiresAt)
+                .IsRequired();
+
+            entity.HasOne(token => token.user)
+                .WithMany(user => user.RefreshTokens)
+                .HasForeignKey(token => token.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

@@ -22,21 +22,46 @@ public class AuthController(IAuthService authService) : ControllerBase
         CancellationToken cancellationToken) =>
         ToActionResult(authService.LoginAsync(request, cancellationToken));
 
-    private static async Task<IActionResult> ToActionResult(Task<AuthResult> resultTask)
+    [HttpPost("refresh")]
+    public Task<IActionResult> RefreshToken(
+        [FromBody] RefreshRequest request,
+        CancellationToken cancellationToken) =>
+        ToActionResult(authService.RefreshTokenAsync(request, cancellationToken));
+
+    private static async Task<IActionResult> ToActionResult<T>(
+    Task<AuthResult<T>> resultTask)
+{
+    var result = await resultTask;
+
+    if (result.IsSuccess)
     {
-        var result = await resultTask;
-
-        if (result.IsSuccess)
-        {
-            return new OkObjectResult(result.Response);
-        }
-
-        return result.ErrorKind switch
-        {
-            AuthErrorKind.Validation => new BadRequestObjectResult(new { message = result.ErrorMessage }),
-            AuthErrorKind.EmailAlreadyExists => new ConflictObjectResult(new { message = result.ErrorMessage }),
-            AuthErrorKind.InvalidCredentials => new UnauthorizedObjectResult(new { message = result.ErrorMessage }),
-            _ => new BadRequestObjectResult(new { message = result.ErrorMessage })
-        };
+        return new OkObjectResult(result.Response);
     }
+
+    return result.ErrorKind switch
+    {
+        AuthErrorKind.Validation =>
+            new BadRequestObjectResult(
+                new { message = result.ErrorMessage }),
+
+        AuthErrorKind.EmailAlreadyExists =>
+            new ConflictObjectResult(
+                new { message = result.ErrorMessage }),
+
+        AuthErrorKind.InvalidCredentials =>
+            new UnauthorizedObjectResult(
+                new { message = result.ErrorMessage }),
+
+        AuthErrorKind.NotImplemented =>
+            new ObjectResult(
+                new { message = result.ErrorMessage })
+            {
+                StatusCode = StatusCodes.Status501NotImplemented
+            },
+
+        _ =>
+            new BadRequestObjectResult(
+                new { message = result.ErrorMessage })
+    };
+}
 }

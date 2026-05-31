@@ -2,9 +2,6 @@ using System.Text;
 using InteresMe.API.Configuration;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Auth.Services;
-using InteresMe.API.Modules.Chat.Services;
-using InteresMe.API.Modules.Feed.Services;
-using InteresMe.API.Modules.Users.Services;
 using InteresMe.API.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -26,10 +23,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-builder.Services.AddSingleton<IUserService, UserService>();
-builder.Services.AddSingleton<IFeedService, FeedService>();
-builder.Services.AddSingleton<IChatService, ChatService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

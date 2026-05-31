@@ -4,7 +4,15 @@ namespace InteresMe.API.Modules.Auth.Services;
 
 public interface IAuthService
 {
-    Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
+    Task<AuthResult<AuthResponse>> RegisterAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
+    Task<AuthResult<AuthResponse>> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<AuthResult<RefreshResponse>> RefreshTokenAsync(
+        RefreshRequest request,
+        CancellationToken cancellationToken = default);
 }
