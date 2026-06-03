@@ -40,7 +40,7 @@ services:
 
   frontend:
     build:
-      context: ./InteresMe.Client
+      context: ./interesme-web
 
     container_name: interesme-client
 
