@@ -30,6 +30,8 @@ services:
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      FRONTEND_ORIGINS: http://localhost:4200,http://127.0.0.1:4200,http://localhost:4201,http://127.0.0.1:4201
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
 
     ports:
       - "8080:8080"
@@ -44,8 +46,12 @@ services:
 
     container_name: interesme-client
 
+    environment:
+      API_BASE_URL: http://localhost:8080/api
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+
     ports:
-      - "4200:4200"
+      - "${FRONTEND_PORT:-4201}:4200"
 
     depends_on:
       - backend

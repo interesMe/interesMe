@@ -1,0 +1,19 @@
+<section class="profile-shell">
+  <header class="profile-header">
+    <p class="eyebrow">InteresMe</p>
+    <h1>Profile</h1>
+  </header>
+
+  <div class="profile-card">
+    <div class="avatar" aria-hidden="true">
+      {{ user()?.displayName?.charAt(0) || 'I' }}
+    </div>
+
+    <div class="profile-info">
+      <h2>{{ user()?.displayName || 'InteresMe user' }}</h2>
+      <p>{{ user()?.email }}</p>
+    </div>
+
+    <button type="button" (click)="logout()">Sign out</button>
+  </div>
+</section>

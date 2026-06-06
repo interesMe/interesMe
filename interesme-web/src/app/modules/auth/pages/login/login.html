@@ -1,0 +1,41 @@
+<section class="auth-card">
+  <header class="auth-header">
+    <p class="eyebrow">InteresMe</p>
+    <h1>Sign in</h1>
+  </header>
+
+  <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label>
+      Email
+      <input type="email" autocomplete="email" formControlName="email" placeholder="you@example.com" />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="hint">Enter a valid email.</span>
+      }
+    </label>
+
+    <label>
+      Password
+      <input type="password" autocomplete="current-password" formControlName="password" placeholder="Your password" />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="hint">Password is required.</span>
+      }
+    </label>
+
+    @if (errorMessage()) {
+      <p class="error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <button type="submit" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Sending request...' : 'Sign in' }}
+    </button>
+
+    <button class="secondary" type="button" (click)="continueWithGoogle()" [disabled]="isSubmitting() || !isGoogleConfigured">
+      Continue with Google
+    </button>
+  </form>
+
+  <p class="auth-switch">
+    New here?
+    <a [routerLink]="registerPath()">Create an account</a>
+  </p>
+</section>

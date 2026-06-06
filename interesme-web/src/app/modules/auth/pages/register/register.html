@@ -1,0 +1,53 @@
+<section class="auth-card">
+  <header class="auth-header">
+    <p class="eyebrow">InteresMe</p>
+    <h1>Create account</h1>
+  </header>
+
+  <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label>
+      Display name
+      <input type="text" autocomplete="name" formControlName="displayName" placeholder="How should we call you?" />
+      @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+        <span class="hint">Display name is required.</span>
+      }
+    </label>
+
+    <label>
+      Email
+      <input type="email" autocomplete="email" formControlName="email" placeholder="you@example.com" />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="hint">Enter a valid email.</span>
+      }
+    </label>
+
+    <label>
+      Password
+      <input type="password" autocomplete="new-password" formControlName="password" placeholder="At least 8 characters" />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="hint">Use at least 8 characters.</span>
+      }
+    </label>
+
+    <label>
+      Confirm password
+      <input type="password" autocomplete="new-password" formControlName="confirmPassword" placeholder="Repeat password" />
+      @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.invalid) {
+        <span class="hint">Confirm your password.</span>
+      }
+    </label>
+
+    @if (errorMessage()) {
+      <p class="error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <button type="submit" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Sending request...' : 'Create account' }}
+    </button>
+  </form>
+
+  <p class="auth-switch">
+    Already registered?
+    <a [routerLink]="loginPath()">Sign in</a>
+  </p>
+</section>
