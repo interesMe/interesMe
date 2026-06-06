@@ -29,9 +29,13 @@
       {{ isSubmitting() ? 'Sending request...' : 'Sign in' }}
     </button>
 
-    <button class="secondary" type="button" (click)="continueWithGoogle()" [disabled]="isSubmitting() || !isGoogleConfigured">
-      Continue with Google
-    </button>
+    <app-google-button
+      [clientId]="googleClientId"
+      [disabled]="isSubmitting()"
+      (idToken)="continueWithGoogle($event)"
+      (error)="showGoogleError($event)"
+      (loadingChange)="setGoogleLoading($event)"
+    />
   </form>
 
   <p class="auth-switch">

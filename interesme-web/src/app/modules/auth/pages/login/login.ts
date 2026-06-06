@@ -5,24 +5,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { APP_ENVIRONMENT } from '../../../../core/constants/app-environment.constants';
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
+import { GoogleButton } from '../../components/google-button/google-button';
 import { AuthService } from '../../services/auth.service';
-
-interface GoogleCredentialResponse {
-  credential?: string;
-}
-
-interface GoogleIdentityServices {
-  accounts: {
-    id: {
-      initialize: (config: { client_id: string; callback: (response: GoogleCredentialResponse) => void }) => void;
-      prompt: () => void;
-    };
-  };
-}
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, GoogleButton],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -35,7 +23,7 @@ export class LoginComponent {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly registerPath = computed(() => `/${APP_ROUTES.register}`);
-  readonly isGoogleConfigured = Boolean(APP_ENVIRONMENT.googleClientId);
+  readonly googleClientId = APP_ENVIRONMENT.googleClientId;
 
   readonly form = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
@@ -63,37 +51,11 @@ export class LoginComponent {
     });
   }
 
-  continueWithGoogle(): void {
-    if (!APP_ENVIRONMENT.googleClientId) {
-      this.errorMessage.set('Google sign in is not configured yet.');
-      return;
-    }
-
+  continueWithGoogle(idToken: string): void {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
-    this.loadGoogleIdentityScript()
-      .then((google) => {
-        google.accounts.id.initialize({
-          client_id: APP_ENVIRONMENT.googleClientId,
-          callback: (response) => this.handleGoogleCredential(response),
-        });
-        google.accounts.id.prompt();
-      })
-      .catch(() => {
-        this.errorMessage.set('Google sign in could not be loaded.');
-        this.isSubmitting.set(false);
-      });
-  }
-
-  private handleGoogleCredential(response: GoogleCredentialResponse): void {
-    if (!response.credential) {
-      this.errorMessage.set('Google sign in did not return a credential.');
-      this.isSubmitting.set(false);
-      return;
-    }
-
-    this.authService.googleLogin({ idToken: response.credential }).subscribe({
+    this.authService.googleLogin({ idToken }).subscribe({
       next: () => {
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? `/${APP_ROUTES.profile}`;
         void this.router.navigateByUrl(returnUrl);
@@ -105,28 +67,14 @@ export class LoginComponent {
     });
   }
 
-  private loadGoogleIdentityScript(): Promise<GoogleIdentityServices> {
-    const googleWindow = window as Window & { google?: GoogleIdentityServices };
+  setGoogleLoading(isLoading: boolean): void {
+    this.isSubmitting.set(isLoading);
+    this.errorMessage.set(null);
+  }
 
-    if (googleWindow.google) {
-      return Promise.resolve(googleWindow.google);
-    }
-
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        if (googleWindow.google) {
-          resolve(googleWindow.google);
-        } else {
-          reject(new Error('Google Identity Services was not available.'));
-        }
-      };
-      script.onerror = () => reject(new Error('Google Identity Services failed to load.'));
-      document.head.appendChild(script);
-    });
+  showGoogleError(message: string): void {
+    this.errorMessage.set(message);
+    this.isSubmitting.set(false);
   }
 
   private readErrorMessage(error: unknown, fallback: string): string {

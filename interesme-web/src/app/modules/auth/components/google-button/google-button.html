@@ -1,1 +1,3 @@
-<p>google-button works!</p>
+<button class="google-button" type="button" (click)="continueWithGoogle()" [disabled]="isDisabled()">
+  {{ isLoading() ? 'Connecting to Google...' : 'Continue with Google' }}
+</button>
