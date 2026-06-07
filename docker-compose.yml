@@ -32,6 +32,9 @@ services:
       POSTGRES_PORT: 5432
       FRONTEND_ORIGINS: http://localhost:4200,http://127.0.0.1:4200,http://localhost:4201,http://127.0.0.1:4201
       Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
+      GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
+      FRONTEND_OAUTH_CALLBACK_URL: ${FRONTEND_OAUTH_CALLBACK_URL:-http://localhost:4201/auth/callback}
 
     ports:
       - "8080:8080"

@@ -1,9 +1,12 @@
 using System.Data;
+using System.Security.Cryptography;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Auth.DTOs;
 using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Auth.Services.Contracts;
 using InteresMe.API.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Npgsql;
 
 namespace InteresMe.API.Modules.Auth.Services;
@@ -11,11 +14,14 @@ namespace InteresMe.API.Modules.Auth.Services;
 public class AuthService(
     AppDbContext dbContext,
     JwtTokenService jwtTokenService,
-    IOAuthProviderService oAuthProviderService)
+    IOAuthProviderService oAuthProviderService,
+    IMemoryCache memoryCache)
     : IAuthService
 {
     private const int MinPasswordLength = 8;
     private const int RefreshTokenLifetimeDays = 7;
+    private const int GithubSessionLifetimeMinutes = 5;
+    private const string GithubSessionCachePrefix = "github-session:";
     private const string PostgresUniqueViolation = "23505";
 
     public async Task<AuthResult<AuthResponse>> RegisterAsync(
@@ -245,6 +251,170 @@ public class AuthService(
         }
     }
 
+    public async Task<AuthResult<AuthResponse>> GithubLoginAsync(
+        GithubAuthRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var githubUser = await oAuthProviderService.ValidateGithubCodeAsync(
+                request.Code,
+                request.RedirectUri,
+                cancellationToken);
+
+            var email = githubUser.Email
+                .Trim()
+                .ToLowerInvariant();
+
+            var githubId = githubUser.ProviderUserId.Trim();
+
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(
+                    u => u.GithubId == githubId,
+                    cancellationToken);
+
+            if (user is null)
+            {
+                user = await dbContext.Users
+                    .FirstOrDefaultAsync(
+                        u => u.Email == email,
+                        cancellationToken);
+            }
+
+            if (user is null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    DisplayName = githubUser.DisplayName,
+                    GithubId = githubId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                dbContext.Users.Add(user);
+
+                await dbContext.SaveChangesAsync(
+                    cancellationToken);
+            }
+            else if (string.IsNullOrWhiteSpace(user.GithubId))
+            {
+                user.GithubId = githubId;
+
+                await dbContext.SaveChangesAsync(
+                    cancellationToken);
+            }
+            else if (user.GithubId != githubId)
+            {
+                return AuthResult<AuthResponse>.Failure(
+                    AuthErrorKind.InvalidCredentials,
+                    "This email is already linked to another GitHub account.");
+            }
+
+            var refreshToken = await CreateRefreshTokenAsync(
+                user.Id,
+                cancellationToken);
+
+            return AuthResult<AuthResponse>.Success(
+                BuildAuthResponse(
+                    user,
+                    refreshToken));
+        }
+        catch (Exception)
+        {
+            return AuthResult<AuthResponse>.Failure(
+                AuthErrorKind.InvalidCredentials,
+                "Invalid GitHub authorization code.");
+        }
+    }
+
+    public AuthResult<GithubAuthorizationStart> StartGithubLogin(
+        string redirectUri)
+    {
+        try
+        {
+            var state = GenerateSecureToken();
+            var authorizationUrl = oAuthProviderService.BuildGithubAuthorizationUrl(
+                state,
+                redirectUri);
+
+            return AuthResult<GithubAuthorizationStart>.Success(
+                new GithubAuthorizationStart
+                {
+                    AuthorizationUrl = authorizationUrl,
+                    State = state
+                });
+        }
+        catch (Exception)
+        {
+            return AuthResult<GithubAuthorizationStart>.Failure(
+                AuthErrorKind.Validation,
+                "GitHub sign in is not configured.");
+        }
+    }
+
+    public async Task<AuthResult<string>> CompleteGithubCallbackAsync(
+        GithubAuthRequest request,
+        string expectedState,
+        string actualState,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(expectedState) ||
+            string.IsNullOrWhiteSpace(actualState) ||
+            !string.Equals(expectedState, actualState, StringComparison.Ordinal))
+        {
+            return AuthResult<string>.Failure(
+                AuthErrorKind.InvalidCredentials,
+                "Invalid GitHub OAuth state.");
+        }
+
+        var authResult = await GithubLoginAsync(
+            request,
+            cancellationToken);
+
+        if (!authResult.IsSuccess || authResult.Response is null)
+        {
+            return AuthResult<string>.Failure(
+                authResult.ErrorKind ?? AuthErrorKind.InvalidCredentials,
+                authResult.ErrorMessage ?? "GitHub sign in failed.");
+        }
+
+        var sessionCode = GenerateSecureToken();
+        memoryCache.Set(
+            GetGithubSessionCacheKey(sessionCode),
+            authResult.Response,
+            TimeSpan.FromMinutes(GithubSessionLifetimeMinutes));
+
+        return AuthResult<string>.Success(sessionCode);
+    }
+
+    public AuthResult<AuthResponse> CompleteGithubSession(
+        GithubSessionRequest request)
+    {
+        var sessionCode = request.SessionCode?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(sessionCode))
+        {
+            return AuthResult<AuthResponse>.Failure(
+                AuthErrorKind.Validation,
+                "GitHub session code is required.");
+        }
+
+        var cacheKey = GetGithubSessionCacheKey(sessionCode);
+
+        if (!memoryCache.TryGetValue(cacheKey, out AuthResponse? response) ||
+            response is null)
+        {
+            return AuthResult<AuthResponse>.Failure(
+                AuthErrorKind.InvalidCredentials,
+                "Invalid or expired GitHub session code.");
+        }
+
+        memoryCache.Remove(cacheKey);
+
+        return AuthResult<AuthResponse>.Success(response);
+    }
+
     private async Task<string> CreateRefreshTokenAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -276,6 +446,19 @@ public class AuthService(
 
         return (refreshToken, refreshTokenEntity);
     }
+
+    private static string GenerateSecureToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    private static string GetGithubSessionCacheKey(string sessionCode) =>
+        $"{GithubSessionCachePrefix}{sessionCode}";
 
 
     private static bool IsUniqueConstraintViolation(DbUpdateException exception) =>

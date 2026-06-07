@@ -1,6 +1,17 @@
 .callback {
   display: grid;
+  gap: 12px;
   min-height: 160px;
   place-items: center;
   color: #475569;
+  text-align: center;
+}
+
+.callback p {
+  margin: 0;
+}
+
+.callback a {
+  color: #0f766e;
+  font-weight: 700;
 }

@@ -1,0 +1,16 @@
+.github-button {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.github-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

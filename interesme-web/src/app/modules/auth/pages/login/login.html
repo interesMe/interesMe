@@ -36,6 +36,14 @@
       (error)="showGoogleError($event)"
       (loadingChange)="setGoogleLoading($event)"
     />
+
+    <app-github-button
+      [authUrl]="githubLoginUrl"
+      [returnUrl]="returnUrl()"
+      [disabled]="isSubmitting()"
+      (error)="showGithubError($event)"
+      (loadingChange)="setGithubLoading($event)"
+    />
   </form>
 
   <p class="auth-switch">

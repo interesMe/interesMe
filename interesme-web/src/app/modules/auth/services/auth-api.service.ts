@@ -4,7 +4,15 @@ import { map, Observable } from 'rxjs';
 
 import { AUTH_API_ENDPOINTS } from '../../../core/constants/api.constants';
 import { BYPASS_AUTH, BYPASS_REFRESH } from '../../../core/interceptors/http-context.tokens';
-import { AuthResponse, BackendAuthResponse, GoogleAuthRequest, LoginRequest, RefreshResponse, RegisterRequest } from '../models';
+import {
+  AuthResponse,
+  BackendAuthResponse,
+  GithubSessionRequest,
+  GoogleAuthRequest,
+  LoginRequest,
+  RefreshResponse,
+  RegisterRequest,
+} from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -50,6 +58,14 @@ export class AuthApiService {
   googleLogin(request: GoogleAuthRequest): Observable<AuthResponse> {
     return this.http
       .post<BackendAuthResponse>(AUTH_API_ENDPOINTS.googleLogin, request, {
+        context: this.unauthenticatedContext,
+      })
+      .pipe(map((response) => this.mapAuthResponse(response)));
+  }
+
+  completeGithubSession(request: GithubSessionRequest): Observable<AuthResponse> {
+    return this.http
+      .post<BackendAuthResponse>(AUTH_API_ENDPOINTS.githubSession, request, {
         context: this.unauthenticatedContext,
       })
       .pipe(map((response) => this.mapAuthResponse(response)));

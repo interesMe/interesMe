@@ -19,7 +19,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasMaxLength(256)
                 .IsRequired();
 
+            entity.Property(user => user.GithubId)
+                .HasMaxLength(64);
+
             entity.HasIndex(user => user.Email)
+                .IsUnique();
+
+            entity.HasIndex(user => user.GithubId)
                 .IsUnique();
 
             entity.Property(user => user.DisplayName)

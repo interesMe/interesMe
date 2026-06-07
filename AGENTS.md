@@ -204,3 +204,5 @@ First understand the existing frontend implementation.
 Then make the smallest useful change.
 
 Do not introduce new patterns, libraries, abstractions, or unnecessary complexity unless explicitly requested.
+
+You can all test run curl without my acseess

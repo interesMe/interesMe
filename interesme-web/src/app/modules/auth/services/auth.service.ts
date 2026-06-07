@@ -4,7 +4,7 @@ import { catchError, map, Observable, tap, throwError } from 'rxjs';
 
 import { APP_ROUTES } from '../../../core/constants/routes.constants';
 import { TokenService } from '../../../core/services/token.service';
-import { AuthResponse, GoogleAuthRequest, LoginRequest, RegisterRequest } from '../models';
+import { AuthResponse, GithubSessionRequest, GoogleAuthRequest, LoginRequest, RegisterRequest } from '../models';
 import { AuthStore } from '../state/auth.store';
 import { AuthApiService } from './auth-api.service';
 
@@ -67,6 +67,17 @@ export class AuthService {
     this.authStore.setError(null);
 
     return this.authApi.googleLogin(request).pipe(
+      tap((response) => this.authStore.setSession(response)),
+      tap(() => this.authStore.setLoading(false)),
+      catchError((error: unknown) => this.handleAuthError(error)),
+    );
+  }
+
+  completeGithubSession(request: GithubSessionRequest): Observable<AuthResponse> {
+    this.authStore.setLoading(true);
+    this.authStore.setError(null);
+
+    return this.authApi.completeGithubSession(request).pipe(
       tap((response) => this.authStore.setSession(response)),
       tap(() => this.authStore.setLoading(false)),
       catchError((error: unknown) => this.handleAuthError(error)),

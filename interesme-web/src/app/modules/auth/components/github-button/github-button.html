@@ -1,0 +1,3 @@
+<button class="github-button" type="button" (click)="continueWithGithub()" [disabled]="isDisabled()">
+  {{ isLoading() ? 'Connecting to GitHub...' : 'Continue with GitHub' }}
+</button>

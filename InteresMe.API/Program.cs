@@ -18,6 +18,7 @@ var frontendOrigins = (Environment.GetEnvironmentVariable("FRONTEND_ORIGINS") ??
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerWithJwt();
+builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
@@ -34,7 +35,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<
+builder.Services.AddHttpClient<
     IOAuthProviderService,
     OAuthProviderService>();
 

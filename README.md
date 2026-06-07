@@ -72,6 +72,10 @@ openssl rand -base64 48   # AUTH_TOKEN_SECRET
 | `POSTGRES_HOST` | `localhost` for local run, `postgres` in Docker |
 | `POSTGRES_PORT` | Default `5432` |
 | `AUTH_TOKEN_SECRET` | JWT signing key (min 32 chars) |
+| `GOOGLE_CLIENT_ID` | Google OAuth web client ID |
+| `GITHUB_CLIENT_ID` | GitHub OAuth app client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret |
+| `FRONTEND_OAUTH_CALLBACK_URL` | Frontend route used after backend OAuth callback |
 
 Never commit `.env` — it is listed in `.gitignore`.
 

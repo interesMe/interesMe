@@ -7,4 +7,6 @@ export const AUTH_API_ENDPOINTS = {
   register: `${API_BASE_URL}/auth/register`,
   refreshToken: `${API_BASE_URL}/auth/refresh`,
   googleLogin: `${API_BASE_URL}/auth/google`,
+  githubLogin: `${API_BASE_URL}/auth/github`,
+  githubSession: `${API_BASE_URL}/auth/github/session`,
 } as const;

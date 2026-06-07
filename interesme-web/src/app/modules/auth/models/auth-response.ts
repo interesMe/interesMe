@@ -22,3 +22,7 @@ export interface RefreshResponse {
 export interface GoogleAuthRequest {
   idToken: string;
 }
+
+export interface GithubSessionRequest {
+  sessionCode: string;
+}
