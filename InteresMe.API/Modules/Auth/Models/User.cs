@@ -1,3 +1,6 @@
+using InteresMe.API.Modules.Interests.Models;
+using InteresMe.API.Modules.Profile.Models;
+
 namespace InteresMe.API.Modules.Auth.Models;
 
 public class User
@@ -17,4 +20,8 @@ public class User
     public DateTime CreatedAt { get; set; }
 
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+    public UserProfile? Profile { get; set; }
+
+    public ICollection<UserInterest> UserInterests { get; set; } = [];
 }

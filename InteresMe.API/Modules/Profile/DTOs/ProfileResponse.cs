@@ -1,0 +1,20 @@
+namespace InteresMe.API.Modules.Profile.DTOs;
+
+public class ProfileResponse
+{
+    public Guid Id { get; set; }
+
+    public Guid UserId { get; set; }
+
+    public string DisplayName { get; set; } = string.Empty;
+
+    public string? City { get; set; }
+
+    public string? AvatarUrl { get; set; }
+
+    public DateOnly? BirthDate { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+}

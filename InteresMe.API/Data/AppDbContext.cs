@@ -1,4 +1,6 @@
 using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Interests.Models;
+using InteresMe.API.Modules.Profile.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace InteresMe.API.Data;
@@ -6,6 +8,12 @@ namespace InteresMe.API.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+
+    public DbSet<Interest> Interests => Set<Interest>();
+
+    public DbSet<UserInterest> UserInterests => Set<UserInterest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,6 +46,84 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(user => user.CreatedAt)
                 .IsRequired();
+
+            entity.HasOne(user => user.Profile)
+                .WithOne(profile => profile.User)
+                .HasForeignKey<UserProfile>(profile => profile.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserProfile>(entity =>
+        {
+            entity.ToTable("user_profiles", "profile");
+
+            entity.HasKey(profile => profile.Id);
+
+            entity.Property(profile => profile.DisplayName)
+                .HasMaxLength(80)
+                .IsRequired();
+
+            entity.Property(profile => profile.City)
+                .HasMaxLength(120);
+
+            entity.Property(profile => profile.AvatarUrl)
+                .HasMaxLength(2048);
+
+            entity.Property(profile => profile.BirthDate);
+
+            entity.Property(profile => profile.CreatedAt)
+                .IsRequired();
+
+            entity.Property(profile => profile.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(profile => profile.UserId)
+                .IsUnique();
+        });
+
+        modelBuilder.Entity<Interest>(entity =>
+        {
+            entity.ToTable("interests", "interests");
+
+            entity.HasKey(interest => interest.Id);
+
+            entity.Property(interest => interest.Name)
+                .HasMaxLength(80)
+                .IsRequired();
+
+            entity.Property(interest => interest.Slug)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.HasIndex(interest => interest.Slug)
+                .IsUnique();
+
+            entity.Property(interest => interest.CreatedAt)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<UserInterest>(entity =>
+        {
+            entity.ToTable("user_interests", "interests");
+
+            entity.HasKey(userInterest => new
+            {
+                userInterest.UserId,
+                userInterest.InterestId
+            });
+
+            entity.Property(userInterest => userInterest.CreatedAt)
+                .IsRequired();
+
+            entity.HasOne(userInterest => userInterest.User)
+                .WithMany(user => user.UserInterests)
+                .HasForeignKey(userInterest => userInterest.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(userInterest => userInterest.Interest)
+                .WithMany(interest => interest.UserInterests)
+                .HasForeignKey(userInterest => userInterest.InterestId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
 

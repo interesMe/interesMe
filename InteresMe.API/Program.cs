@@ -2,6 +2,8 @@ using System.Text;
 using InteresMe.API.Configuration;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Auth.Services;
+using InteresMe.API.Modules.Interests.Services;
+using InteresMe.API.Modules.Profile.Services;
 using InteresMe.API.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +37,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IInterestService, InterestService>();
 builder.Services.AddHttpClient<
     IOAuthProviderService,
     OAuthProviderService>();

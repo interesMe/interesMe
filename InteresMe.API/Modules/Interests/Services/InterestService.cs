@@ -1,0 +1,124 @@
+using System.Text;
+using InteresMe.API.Data;
+using InteresMe.API.Modules.Auth.Services;
+using InteresMe.API.Modules.Interests.DTOs;
+using InteresMe.API.Modules.Interests.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace InteresMe.API.Modules.Interests.Services;
+
+public sealed class InterestService(AppDbContext dbContext) : IInterestService
+{
+    private const int NameMaxLength = 80;
+    private const int SlugMaxLength = 100;
+
+    public async Task<List<InterestResponse>> GetAllAsync(
+        CancellationToken cancellationToken = default) =>
+        await dbContext.Interests
+            .AsNoTracking()
+            .OrderBy(interest => interest.Name)
+            .Select(interest => new InterestResponse
+            {
+                Id = interest.Id,
+                Name = interest.Name,
+                Slug = interest.Slug,
+                CreatedAt = interest.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+    public async Task<AuthResult<InterestResponse>> CreateAsync(
+        CreateInterestRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var name = request.Name?.Trim() ?? string.Empty;
+        var slug = string.IsNullOrWhiteSpace(request.Slug)
+            ? CreateSlug(name)
+            : CreateSlug(request.Slug);
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return AuthResult<InterestResponse>.Failure(
+                AuthErrorKind.Validation,
+                "Interest name is required.");
+        }
+
+        if (name.Length > NameMaxLength)
+        {
+            return AuthResult<InterestResponse>.Failure(
+                AuthErrorKind.Validation,
+                $"Interest name must be at most {NameMaxLength} characters.");
+        }
+
+        if (string.IsNullOrWhiteSpace(slug))
+        {
+            return AuthResult<InterestResponse>.Failure(
+                AuthErrorKind.Validation,
+                "Interest slug is required.");
+        }
+
+        if (slug.Length > SlugMaxLength)
+        {
+            return AuthResult<InterestResponse>.Failure(
+                AuthErrorKind.Validation,
+                $"Interest slug must be at most {SlugMaxLength} characters.");
+        }
+
+        var existing = await dbContext.Interests
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                interest => interest.Slug == slug,
+                cancellationToken);
+
+        if (existing is not null)
+        {
+            return AuthResult<InterestResponse>.Success(ToResponse(existing));
+        }
+
+        var interest = new Interest
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Slug = slug,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        dbContext.Interests.Add(interest);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return AuthResult<InterestResponse>.Success(ToResponse(interest));
+    }
+
+    private static InterestResponse ToResponse(Interest interest) => new()
+    {
+        Id = interest.Id,
+        Name = interest.Name,
+        Slug = interest.Slug,
+        CreatedAt = interest.CreatedAt
+    };
+
+    private static string CreateSlug(string value)
+    {
+        var builder = new StringBuilder();
+        var previousWasDash = false;
+
+        foreach (var character in value.Trim().ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(character))
+            {
+                builder.Append(character);
+                previousWasDash = false;
+                continue;
+            }
+
+            if (previousWasDash)
+            {
+                continue;
+            }
+
+            builder.Append('-');
+            previousWasDash = true;
+        }
+
+        return builder.ToString().Trim('-');
+    }
+}
