@@ -4,43 +4,49 @@ on:
   push:
     branches:
       - main
-
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  POSTGRES_USER: interesme_ci
+  POSTGRES_PASSWORD: ci-only-password-9b1f2c3d4e5f6789
+  POSTGRES_DB: interesme_ci
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  AUTH_TOKEN_SECRET: ci-only-auth-token-secret-9b1f2c3d4e5f67890a1b2c3d4e5f67890
 
 jobs:
-
   backend:
-
+    name: Backend
     runs-on: ubuntu-latest
-
-    # Ephemeral credentials for CI only — not used in production (.env)
-    env:
-      POSTGRES_USER: interesme
-      POSTGRES_PASSWORD: Wp8kN2mQ9xR4vL7tY1zA6bC0dE3fG5hJ8kM1nP4qS7u
-      POSTGRES_DB: interesme
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-      AUTH_TOKEN_SECRET: CiOnly7kM9nP2qS5uV8wX1yZ4aB6cD0eF3gH5jK8mN1pQ4rT7vW0xY3zA6bC9dE2fG
 
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: interesme
-          POSTGRES_PASSWORD: Wp8kN2mQ9xR4vL7tY1zA6bC0dE3fG5hJ8kM1nP4qS7u
-          POSTGRES_DB: interesme
+          POSTGRES_USER: interesme_ci
+          POSTGRES_PASSWORD: ci-only-password-9b1f2c3d4e5f6789
+          POSTGRES_DB: interesme_ci
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U interesme -d interesme"
+          --health-cmd "pg_isready -U interesme_ci -d interesme_ci"
           --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -50,19 +56,109 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore backend
-        run: dotnet restore
-        working-directory: ./InteresMe.API
+        run: dotnet restore InteresMe.sln
 
       - name: Build backend
-        run: dotnet build --no-restore
-        working-directory: ./InteresMe.API
+        run: dotnet build InteresMe.sln --configuration Release --no-restore
+
+      - name: Test backend
+        run: |
+          mapfile -t test_projects < <(find . -type f \( -name '*Tests.csproj' -o -name '*Test.csproj' \))
+
+          if [ "${#test_projects[@]}" -eq 0 ]; then
+            echo "No backend test projects found; skipping dotnet test."
+            exit 0
+          fi
+
+          for project in "${test_projects[@]}"; do
+            dotnet test "$project" --configuration Release --no-restore --verbosity normal
+          done
+
+      - name: Start backend API
+        run: |
+          dotnet run \
+            --project InteresMe.API/InteresMe.API.csproj \
+            --configuration Release \
+            --no-build \
+            --urls http://localhost:8080 \
+            > /tmp/interesme-api.log 2>&1 &
+
+          echo "$!" > /tmp/interesme-api.pid
+
+          for attempt in {1..30}; do
+            if curl -fsS http://localhost:8080/swagger/v1/swagger.json > /dev/null; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          cat /tmp/interesme-api.log
+          exit 1
+
+      - name: Smoke test backend API
+        run: |
+          set -euo pipefail
+
+          base_url="http://localhost:8080"
+          email="ci-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}@example.com"
+          password="Smoke12345!"
+
+          register_response="$(curl -fsS \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${email}\",\"displayName\":\"CI Smoke\",\"password\":\"${password}\"}" \
+            "${base_url}/api/auth/register")"
+
+          access_token="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["token"])' "$register_response")"
+          refresh_token="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["refreshToken"])' "$register_response")"
+
+          curl -fsS \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${email}\",\"password\":\"${password}\"}" \
+            "${base_url}/api/auth/login" > /dev/null
+
+          unauthorized_status="$(curl -sS -o /dev/null -w "%{http_code}" "${base_url}/api/profile/me")"
+          test "$unauthorized_status" = "401"
+
+          profile_response="$(curl -fsS \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${access_token}" \
+            -d '{"displayName":"CI Smoke","city":"Kyiv","avatarUrl":null,"birthDate":"2000-01-01"}' \
+            "${base_url}/api/profile/me")"
+
+          python3 -c 'import json,sys; assert json.loads(sys.argv[1])["displayName"] == "CI Smoke"' "$profile_response"
+
+          curl -fsS \
+            -H "Authorization: Bearer ${access_token}" \
+            "${base_url}/api/profile/me" > /dev/null
+
+          curl -fsS \
+            -H "Content-Type: application/json" \
+            -d "{\"refreshToken\":\"${refresh_token}\"}" \
+            "${base_url}/api/auth/refresh" > /dev/null
+
+          google_status="$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "Content-Type: application/json" \
+            -d '{"idToken":"invalid"}' \
+            "${base_url}/api/auth/google")"
+          test "$google_status" = "401"
+
+      - name: Print backend logs on failure
+        if: failure()
+        run: cat /tmp/interesme-api.log || true
+
+      - name: Stop backend API
+        if: always()
+        run: |
+          if [ -f /tmp/interesme-api.pid ]; then
+            kill "$(cat /tmp/interesme-api.pid)" || true
+          fi
 
   frontend:
-
+    name: Frontend
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -70,11 +166,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: interesme-web/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm install
-        working-directory: ./InteresMe.Client
+        run: npm ci
+        working-directory: ./interesme-web
 
       - name: Build frontend
         run: npm run build
-        working-directory: ./InteresMe.Client
+        working-directory: ./interesme-web
+
+  docker:
+    name: Docker Images
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build --tag interesme-api:ci ./InteresMe.API
+
+      - name: Build frontend image
+        run: docker build --tag interesme-web:ci ./interesme-web
