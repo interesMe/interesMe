@@ -15,9 +15,26 @@ public interface IProfileService
         CreateProfileRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<AuthResult<ProfileResponse>> CreateMyProfileWithAvatarAsync(
+        Guid userId,
+        CreateProfileRequest request,
+        IFormFile? avatarFile,
+        CancellationToken cancellationToken = default);
+
     Task<AuthResult<ProfileResponse>> UpdateMyProfileAsync(
         Guid userId,
         UpdateProfileRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<AuthResult<ProfileResponse>> UpdateMyProfileWithAvatarAsync(
+        Guid userId,
+        UpdateProfileRequest request,
+        IFormFile? avatarFile,
+        CancellationToken cancellationToken = default);
+
+    Task<AuthResult<ProfileResponse>> UploadMyAvatarAsync(
+        Guid userId,
+        IFormFile file,
         CancellationToken cancellationToken = default);
 
     Task<AuthResult<List<InterestResponse>>> ReplaceMyInterestsAsync(

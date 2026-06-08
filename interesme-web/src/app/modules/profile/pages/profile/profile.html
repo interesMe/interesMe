@@ -1,12 +1,19 @@
 <section class="profile-shell">
   <header class="profile-header">
     <p class="eyebrow">InteresMe</p>
-    <h1>Profile</h1>
+    <div>
+      <h1>Profile</h1>
+      <p class="subtitle">Set up your profile and choose interests for matching.</p>
+    </div>
   </header>
 
-  <div class="profile-card">
+  <section class="profile-card account-card">
     <div class="avatar" aria-hidden="true">
-      {{ user()?.displayName?.charAt(0) || 'I' }}
+      @if (resolvedAvatarUrl()) {
+        <img [src]="resolvedAvatarUrl()!" alt="" />
+      } @else {
+        <span>{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
+      }
     </div>
 
     <div class="profile-info">
@@ -15,5 +22,104 @@
     </div>
 
     <button type="button" (click)="logout()">Sign out</button>
-  </div>
+  </section>
+
+  @if (isLoading()) {
+    <section class="profile-card">
+      <p class="status">Loading profile...</p>
+    </section>
+  } @else {
+    @if (errorMessage()) {
+      <p class="message error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    @if (successMessage()) {
+      <p class="message success" role="status">{{ successMessage() }}</p>
+    }
+
+    <section class="profile-card form-card">
+      <header class="section-header">
+        <div>
+          <h2>{{ profileExists() ? 'Update profile' : 'Create profile' }}</h2>
+          <p>{{ profileExists() ? 'Your profile is ready. You can update it anytime.' : 'No profile found yet. Fill the form to create one.' }}</p>
+        </div>
+      </header>
+
+      <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()" novalidate>
+        <section class="avatar-upload">
+          <div class="avatar-preview">
+            @if (avatarPreviewUrl()) {
+              <img [src]="avatarPreviewUrl()!" alt="Profile avatar preview" />
+            } @else {
+              <span aria-hidden="true">{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
+            }
+          </div>
+
+          <div class="avatar-actions">
+            <label>
+              Avatar image
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="selectAvatar($event)" />
+              <span class="hint neutral">JPG, PNG, or WEBP. Max 2 MB. Saved with the profile form.</span>
+            </label>
+          </div>
+        </section>
+
+        <label>
+          Display name
+          <input type="text" formControlName="displayName" autocomplete="name" placeholder="Your display name" />
+          @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+            <span class="hint">Display name is required and must be at most 80 characters.</span>
+          }
+        </label>
+
+        <label>
+          City
+          <input type="text" formControlName="city" autocomplete="address-level2" placeholder="Kyiv" />
+          @if (form.controls.city.touched && form.controls.city.invalid) {
+            <span class="hint">City must be at most 120 characters.</span>
+          }
+        </label>
+
+        <label>
+          Birth date
+          <input type="date" formControlName="birthDate" />
+        </label>
+
+        <button type="submit" [disabled]="isSavingProfile()">
+          {{ isSavingProfile() ? 'Saving profile...' : 'Save profile' }}
+        </button>
+      </form>
+    </section>
+
+    <section class="profile-card interests-card">
+      <header class="section-header">
+        <div>
+          <h2>Interests</h2>
+          <p>Select the tags that describe what you want to connect around.</p>
+        </div>
+      </header>
+
+      @if (interests().length === 0) {
+        <p class="status">No interests are available yet.</p>
+      } @else {
+        <div class="chips" aria-label="Available interests">
+          @for (interest of interests(); track interest.id) {
+            <button
+              type="button"
+              class="chip"
+              [class.selected]="isInterestSelected(interest.id)"
+              [attr.aria-pressed]="isInterestSelected(interest.id)"
+              (click)="toggleInterest(interest.id)"
+            >
+              {{ interest.name }}
+            </button>
+          }
+        </div>
+
+        <button type="button" class="save-interests" [disabled]="isSavingInterests()" (click)="saveInterests()">
+          {{ isSavingInterests() ? 'Saving interests...' : 'Save interests' }}
+        </button>
+      }
+    </section>
+  }
 </section>

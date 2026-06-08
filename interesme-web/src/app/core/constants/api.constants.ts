@@ -10,3 +10,12 @@ export const AUTH_API_ENDPOINTS = {
   githubLogin: `${API_BASE_URL}/auth/github`,
   githubSession: `${API_BASE_URL}/auth/github/session`,
 } as const;
+
+export const PROFILE_API_ENDPOINTS = {
+  me: `${API_BASE_URL}/profile/me`,
+  myInterests: `${API_BASE_URL}/profile/me/interests`,
+} as const;
+
+export const INTERESTS_API_ENDPOINTS = {
+  list: `${API_BASE_URL}/interests`,
+} as const;

@@ -8,11 +8,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InteresMe.API.Modules.Profile.Services;
 
-public sealed class ProfileService(AppDbContext dbContext) : IProfileService
+public sealed class ProfileService(
+    AppDbContext dbContext,
+    IWebHostEnvironment webHostEnvironment) : IProfileService
 {
     private const int DisplayNameMaxLength = 80;
     private const int CityMaxLength = 120;
     private const int AvatarUrlMaxLength = 2048;
+    private const long AvatarMaxSizeBytes = 2 * 1024 * 1024;
+    private const string AvatarUploadPathPrefix = "/uploads/avatars/";
+    private static readonly Dictionary<string, string> AllowedAvatarExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        [".jpg"] = "image/jpeg",
+        [".jpeg"] = "image/jpeg",
+        [".png"] = "image/png",
+        [".webp"] = "image/webp"
+    };
 
     public async Task<AuthResult<ProfileResponse>> GetMyProfileAsync(
         Guid userId,
@@ -37,6 +48,17 @@ public sealed class ProfileService(AppDbContext dbContext) : IProfileService
     public async Task<AuthResult<ProfileResponse>> CreateMyProfileAsync(
         Guid userId,
         CreateProfileRequest request,
+        CancellationToken cancellationToken = default) =>
+        await CreateMyProfileWithAvatarAsync(
+            userId,
+            request,
+            avatarFile: null,
+            cancellationToken);
+
+    public async Task<AuthResult<ProfileResponse>> CreateMyProfileWithAvatarAsync(
+        Guid userId,
+        CreateProfileRequest request,
+        IFormFile? avatarFile,
         CancellationToken cancellationToken = default)
     {
         var validation = ValidateProfile(
@@ -76,6 +98,18 @@ public sealed class ProfileService(AppDbContext dbContext) : IProfileService
                 "User was not found.");
         }
 
+        if (avatarFile is not null)
+        {
+            var avatarValidation = ValidateAvatarFile(avatarFile);
+
+            if (avatarValidation is not null)
+            {
+                return AuthResult<ProfileResponse>.Failure(
+                    AuthErrorKind.Validation,
+                    avatarValidation);
+            }
+        }
+
         var now = DateTime.UtcNow;
         var profile = new UserProfile
         {
@@ -89,6 +123,14 @@ public sealed class ProfileService(AppDbContext dbContext) : IProfileService
             UpdatedAt = now
         };
 
+        if (avatarFile is not null)
+        {
+            profile.AvatarUrl = await SaveAvatarFileAsync(
+                userId,
+                avatarFile,
+                cancellationToken);
+        }
+
         dbContext.UserProfiles.Add(profile);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -98,6 +140,17 @@ public sealed class ProfileService(AppDbContext dbContext) : IProfileService
     public async Task<AuthResult<ProfileResponse>> UpdateMyProfileAsync(
         Guid userId,
         UpdateProfileRequest request,
+        CancellationToken cancellationToken = default) =>
+        await UpdateMyProfileWithAvatarAsync(
+            userId,
+            request,
+            avatarFile: null,
+            cancellationToken);
+
+    public async Task<AuthResult<ProfileResponse>> UpdateMyProfileWithAvatarAsync(
+        Guid userId,
+        UpdateProfileRequest request,
+        IFormFile? avatarFile,
         CancellationToken cancellationToken = default)
     {
         var validation = ValidateProfile(
@@ -125,13 +178,74 @@ public sealed class ProfileService(AppDbContext dbContext) : IProfileService
                 "Profile was not found.");
         }
 
+        if (avatarFile is not null)
+        {
+            var avatarValidation = ValidateAvatarFile(avatarFile);
+
+            if (avatarValidation is not null)
+            {
+                return AuthResult<ProfileResponse>.Failure(
+                    AuthErrorKind.Validation,
+                    avatarValidation);
+            }
+        }
+
+        var previousAvatarUrl = profile.AvatarUrl;
+
         profile.DisplayName = request.DisplayName.Trim();
         profile.City = NormalizeOptional(request.City);
-        profile.AvatarUrl = NormalizeOptional(request.AvatarUrl);
+        profile.AvatarUrl = avatarFile is null
+            ? NormalizeOptional(request.AvatarUrl)
+            : await SaveAvatarFileAsync(userId, avatarFile, cancellationToken);
         profile.BirthDate = request.BirthDate;
         profile.UpdatedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (avatarFile is not null)
+        {
+            DeletePreviousLocalAvatar(previousAvatarUrl, GetWebRootPath());
+        }
+
+        return AuthResult<ProfileResponse>.Success(ToProfileResponse(profile));
+    }
+
+    public async Task<AuthResult<ProfileResponse>> UploadMyAvatarAsync(
+        Guid userId,
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        var validation = ValidateAvatarFile(file);
+
+        if (validation is not null)
+        {
+            return AuthResult<ProfileResponse>.Failure(
+                AuthErrorKind.Validation,
+                validation);
+        }
+
+        var profile = await dbContext.UserProfiles
+            .FirstOrDefaultAsync(
+                userProfile => userProfile.UserId == userId,
+                cancellationToken);
+
+        if (profile is null)
+        {
+            return AuthResult<ProfileResponse>.Failure(
+                AuthErrorKind.InvalidCredentials,
+                "Profile was not found.");
+        }
+
+        var webRootPath = GetWebRootPath();
+        var previousAvatarUrl = profile.AvatarUrl;
+        profile.AvatarUrl = await SaveAvatarFileAsync(
+            userId,
+            file,
+            cancellationToken);
+        profile.UpdatedAt = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        DeletePreviousLocalAvatar(previousAvatarUrl, webRootPath);
 
         return AuthResult<ProfileResponse>.Success(ToProfileResponse(profile));
     }
@@ -220,6 +334,97 @@ public sealed class ProfileService(AppDbContext dbContext) : IProfileService
         }
 
         return null;
+    }
+
+    private async Task<string> SaveAvatarFileAsync(
+        Guid userId,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var fileName = $"{Guid.NewGuid():N}{extension}";
+        var avatarDirectory = Path.Combine(
+            GetWebRootPath(),
+            "uploads",
+            "avatars",
+            userId.ToString());
+
+        Directory.CreateDirectory(avatarDirectory);
+
+        var filePath = Path.Combine(avatarDirectory, fileName);
+
+        await using var stream = File.Create(filePath);
+        await file.CopyToAsync(stream, cancellationToken);
+
+        return $"{AvatarUploadPathPrefix}{userId}/{fileName}";
+    }
+
+    private static string? ValidateAvatarFile(IFormFile file)
+    {
+        if (file.Length <= 0)
+        {
+            return "Avatar file is required.";
+        }
+
+        if (file.Length > AvatarMaxSizeBytes)
+        {
+            return "Avatar file must be 2 MB or smaller.";
+        }
+
+        var extension = Path.GetExtension(file.FileName);
+
+        if (string.IsNullOrWhiteSpace(extension) ||
+            !AllowedAvatarExtensions.TryGetValue(extension, out var expectedContentType))
+        {
+            return "Avatar file must be a JPG, PNG, or WEBP image.";
+        }
+
+        if (!string.Equals(file.ContentType, expectedContentType, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Avatar file content type is not supported.";
+        }
+
+        return null;
+    }
+
+    private string GetWebRootPath()
+    {
+        if (!string.IsNullOrWhiteSpace(webHostEnvironment.WebRootPath))
+        {
+            return webHostEnvironment.WebRootPath;
+        }
+
+        return Path.Combine(webHostEnvironment.ContentRootPath, "wwwroot");
+    }
+
+    private static void DeletePreviousLocalAvatar(
+        string? previousAvatarUrl,
+        string webRootPath)
+    {
+        if (string.IsNullOrWhiteSpace(previousAvatarUrl) ||
+            !previousAvatarUrl.StartsWith(AvatarUploadPathPrefix, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var relativePath = previousAvatarUrl
+            .TrimStart('/')
+            .Replace('/', Path.DirectorySeparatorChar);
+        var filePath = Path.GetFullPath(Path.Combine(webRootPath, relativePath));
+        var rootPath = Path.GetFullPath(webRootPath);
+        var rootPathWithSeparator = rootPath.EndsWith(Path.DirectorySeparatorChar)
+            ? rootPath
+            : $"{rootPath}{Path.DirectorySeparatorChar}";
+
+        if (!filePath.StartsWith(rootPathWithSeparator, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
     }
 
     private static ProfileResponse ToProfileResponse(UserProfile profile) => new()
