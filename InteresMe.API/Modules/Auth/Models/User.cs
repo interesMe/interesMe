@@ -1,4 +1,5 @@
 using InteresMe.API.Modules.Interests.Models;
+using InteresMe.API.Modules.Profile.Models;
 
 namespace InteresMe.API.Modules.Auth.Models;
 
