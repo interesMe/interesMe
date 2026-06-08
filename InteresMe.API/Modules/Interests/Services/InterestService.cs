@@ -1,6 +1,6 @@
 using System.Text;
+using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
-using InteresMe.API.Modules.Auth.Services;
 using InteresMe.API.Modules.Interests.DTOs;
 using InteresMe.API.Modules.Interests.Models;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +26,7 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
             })
             .ToListAsync(cancellationToken);
 
-    public async Task<AuthResult<InterestResponse>> CreateAsync(
+    public async Task<ApplicationResult<InterestResponse>> CreateAsync(
         CreateInterestRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -37,29 +37,29 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            return AuthResult<InterestResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<InterestResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 "Interest name is required.");
         }
 
         if (name.Length > NameMaxLength)
         {
-            return AuthResult<InterestResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<InterestResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 $"Interest name must be at most {NameMaxLength} characters.");
         }
 
         if (string.IsNullOrWhiteSpace(slug))
         {
-            return AuthResult<InterestResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<InterestResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 "Interest slug is required.");
         }
 
         if (slug.Length > SlugMaxLength)
         {
-            return AuthResult<InterestResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<InterestResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 $"Interest slug must be at most {SlugMaxLength} characters.");
         }
 
@@ -71,7 +71,7 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
 
         if (existing is not null)
         {
-            return AuthResult<InterestResponse>.Success(ToResponse(existing));
+            return ApplicationResult<InterestResponse>.Success(ToResponse(existing));
         }
 
         var interest = new Interest
@@ -85,7 +85,7 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
         dbContext.Interests.Add(interest);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return AuthResult<InterestResponse>.Success(ToResponse(interest));
+        return ApplicationResult<InterestResponse>.Success(ToResponse(interest));
     }
 
     private static InterestResponse ToResponse(Interest interest) => new()

@@ -1,5 +1,5 @@
+using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
-using InteresMe.API.Modules.Auth.Services;
 using InteresMe.API.Modules.Interests.DTOs;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.DTOs;
@@ -25,7 +25,7 @@ public sealed class ProfileService(
         [".webp"] = "image/webp"
     };
 
-    public async Task<AuthResult<ProfileResponse>> GetMyProfileAsync(
+    public async Task<ApplicationResult<ProfileResponse>> GetMyProfileAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
@@ -37,15 +37,15 @@ public sealed class ProfileService(
 
         if (profile is null)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.NotFound,
                 "Profile was not found.");
         }
 
-        return AuthResult<ProfileResponse>.Success(ToProfileResponse(profile));
+        return ApplicationResult<ProfileResponse>.Success(ToProfileResponse(profile));
     }
 
-    public async Task<AuthResult<ProfileResponse>> CreateMyProfileAsync(
+    public async Task<ApplicationResult<ProfileResponse>> CreateMyProfileAsync(
         Guid userId,
         CreateProfileRequest request,
         CancellationToken cancellationToken = default) =>
@@ -55,7 +55,7 @@ public sealed class ProfileService(
             avatarFile: null,
             cancellationToken);
 
-    public async Task<AuthResult<ProfileResponse>> CreateMyProfileWithAvatarAsync(
+    public async Task<ApplicationResult<ProfileResponse>> CreateMyProfileWithAvatarAsync(
         Guid userId,
         CreateProfileRequest request,
         IFormFile? avatarFile,
@@ -69,8 +69,8 @@ public sealed class ProfileService(
 
         if (validation is not null)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 validation);
         }
 
@@ -81,8 +81,8 @@ public sealed class ProfileService(
 
         if (profileExists)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.EmailAlreadyExists,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.Conflict,
                 "Profile already exists.");
         }
 
@@ -93,8 +93,8 @@ public sealed class ProfileService(
 
         if (!userExists)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.NotFound,
                 "User was not found.");
         }
 
@@ -104,8 +104,8 @@ public sealed class ProfileService(
 
             if (avatarValidation is not null)
             {
-                return AuthResult<ProfileResponse>.Failure(
-                    AuthErrorKind.Validation,
+                return ApplicationResult<ProfileResponse>.Failure(
+                    ApplicationErrorKind.Validation,
                     avatarValidation);
             }
         }
@@ -134,10 +134,10 @@ public sealed class ProfileService(
         dbContext.UserProfiles.Add(profile);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return AuthResult<ProfileResponse>.Success(ToProfileResponse(profile));
+        return ApplicationResult<ProfileResponse>.Success(ToProfileResponse(profile));
     }
 
-    public async Task<AuthResult<ProfileResponse>> UpdateMyProfileAsync(
+    public async Task<ApplicationResult<ProfileResponse>> UpdateMyProfileAsync(
         Guid userId,
         UpdateProfileRequest request,
         CancellationToken cancellationToken = default) =>
@@ -147,7 +147,7 @@ public sealed class ProfileService(
             avatarFile: null,
             cancellationToken);
 
-    public async Task<AuthResult<ProfileResponse>> UpdateMyProfileWithAvatarAsync(
+    public async Task<ApplicationResult<ProfileResponse>> UpdateMyProfileWithAvatarAsync(
         Guid userId,
         UpdateProfileRequest request,
         IFormFile? avatarFile,
@@ -161,8 +161,8 @@ public sealed class ProfileService(
 
         if (validation is not null)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 validation);
         }
 
@@ -173,8 +173,8 @@ public sealed class ProfileService(
 
         if (profile is null)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.NotFound,
                 "Profile was not found.");
         }
 
@@ -184,8 +184,8 @@ public sealed class ProfileService(
 
             if (avatarValidation is not null)
             {
-                return AuthResult<ProfileResponse>.Failure(
-                    AuthErrorKind.Validation,
+                return ApplicationResult<ProfileResponse>.Failure(
+                    ApplicationErrorKind.Validation,
                     avatarValidation);
             }
         }
@@ -207,10 +207,10 @@ public sealed class ProfileService(
             DeletePreviousLocalAvatar(previousAvatarUrl, GetWebRootPath());
         }
 
-        return AuthResult<ProfileResponse>.Success(ToProfileResponse(profile));
+        return ApplicationResult<ProfileResponse>.Success(ToProfileResponse(profile));
     }
 
-    public async Task<AuthResult<ProfileResponse>> UploadMyAvatarAsync(
+    public async Task<ApplicationResult<ProfileResponse>> UploadMyAvatarAsync(
         Guid userId,
         IFormFile file,
         CancellationToken cancellationToken = default)
@@ -219,8 +219,8 @@ public sealed class ProfileService(
 
         if (validation is not null)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 validation);
         }
 
@@ -231,8 +231,8 @@ public sealed class ProfileService(
 
         if (profile is null)
         {
-            return AuthResult<ProfileResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.NotFound,
                 "Profile was not found.");
         }
 
@@ -247,10 +247,10 @@ public sealed class ProfileService(
         await dbContext.SaveChangesAsync(cancellationToken);
         DeletePreviousLocalAvatar(previousAvatarUrl, webRootPath);
 
-        return AuthResult<ProfileResponse>.Success(ToProfileResponse(profile));
+        return ApplicationResult<ProfileResponse>.Success(ToProfileResponse(profile));
     }
 
-    public async Task<AuthResult<List<InterestResponse>>> ReplaceMyInterestsAsync(
+    public async Task<ApplicationResult<List<InterestResponse>>> ReplaceMyInterestsAsync(
         Guid userId,
         UpdateUserInterestsRequest request,
         CancellationToken cancellationToken = default)
@@ -265,7 +265,7 @@ public sealed class ProfileService(
                 .Where(userInterest => userInterest.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken);
 
-            return AuthResult<List<InterestResponse>>.Success([]);
+            return ApplicationResult<List<InterestResponse>>.Success([]);
         }
 
         var interests = await dbContext.Interests
@@ -275,8 +275,8 @@ public sealed class ProfileService(
 
         if (interests.Count != interestIds.Count)
         {
-            return AuthResult<List<InterestResponse>>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<List<InterestResponse>>.Failure(
+                ApplicationErrorKind.Validation,
                 "One or more interests do not exist.");
         }
 
@@ -295,7 +295,7 @@ public sealed class ProfileService(
         dbContext.UserInterests.AddRange(userInterests);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return AuthResult<List<InterestResponse>>.Success(
+        return ApplicationResult<List<InterestResponse>>.Success(
             interests.Select(ToInterestResponse).ToList());
     }
 

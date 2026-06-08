@@ -1,3 +1,4 @@
+using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Modules.Auth.DTOs;
 using InteresMe.API.Modules.Auth.Services.Contracts;
 
@@ -5,35 +6,43 @@ namespace InteresMe.API.Modules.Auth.Services;
 
 public interface IAuthService
 {
-    Task<AuthResult<AuthResponse>> RegisterAsync(
+    Task<ApplicationResult<AuthResponse>> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<AuthResult<AuthResponse>> LoginAsync(
+    Task<ApplicationResult<AuthResponse>> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<AuthResult<RefreshResponse>> RefreshTokenAsync(
+    Task<ApplicationResult<RefreshResponse>> RefreshTokenAsync(
         RefreshRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<AuthResult<AuthResponse>> GoogleLoginAsync(
+    Task LogoutAsync(
+        RefreshRequest? request,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteMyAccountAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApplicationResult<AuthResponse>> GoogleLoginAsync(
         GoogleAuthRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<AuthResult<AuthResponse>> GithubLoginAsync(
+    Task<ApplicationResult<AuthResponse>> GithubLoginAsync(
         GithubAuthRequest request,
         CancellationToken cancellationToken = default);
 
-    AuthResult<GithubAuthorizationStart> StartGithubLogin(
+    ApplicationResult<GithubAuthorizationStart> StartGithubLogin(
         string redirectUri);
 
-    Task<AuthResult<string>> CompleteGithubCallbackAsync(
+    Task<ApplicationResult<string>> CompleteGithubCallbackAsync(
         GithubAuthRequest request,
         string expectedState,
         string actualState,
         CancellationToken cancellationToken = default);
 
-    AuthResult<AuthResponse> CompleteGithubSession(
+    ApplicationResult<AuthResponse> CompleteGithubSession(
         GithubSessionRequest request);
 }

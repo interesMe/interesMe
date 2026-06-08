@@ -1,0 +1,5 @@
+Hi {{DisplayName}},
+
+Thank you for joining InteresMe.
+
+People discover people through shared interests.

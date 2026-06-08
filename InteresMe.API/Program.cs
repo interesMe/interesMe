@@ -1,9 +1,13 @@
 using System.Text;
+using InteresMe.API.BuildingBlocks.Email;
+using InteresMe.API.BuildingBlocks.Security;
 using InteresMe.API.Configuration;
 using InteresMe.API.Data;
+using InteresMe.API.Modules.Auth.Options;
 using InteresMe.API.Modules.Auth.Services;
 using InteresMe.API.Modules.Interests.Services;
 using InteresMe.API.Modules.Profile.Services;
+using InteresMe.API.Modules.Verification.Services;
 using InteresMe.API.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +26,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerWithJwt();
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.Configure<AuthFrontendOptions>(
+    builder.Configuration.GetSection(AuthFrontendOptions.SectionName));
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
@@ -38,8 +47,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IOAuthRedirectService, OAuthRedirectService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IInterestService, InterestService>();
+builder.Services.AddScoped<IVerificationService, VerificationService>();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddSingleton<EmailTemplateLoader>();
+builder.Services.AddSingleton<EmailTemplateRenderer>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddHttpClient<
     IOAuthProviderService,
     OAuthProviderService>();

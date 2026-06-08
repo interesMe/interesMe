@@ -1,5 +1,7 @@
 using System.Data;
 using System.Security.Cryptography;
+using InteresMe.API.BuildingBlocks.Email;
+using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Auth.DTOs;
 using InteresMe.API.Modules.Auth.Models;
@@ -15,7 +17,9 @@ public class AuthService(
     AppDbContext dbContext,
     JwtTokenService jwtTokenService,
     IOAuthProviderService oAuthProviderService,
-    IMemoryCache memoryCache)
+    IMemoryCache memoryCache,
+    IEmailService emailService,
+    ILogger<AuthService> logger)
     : IAuthService
 {
     private const int MinPasswordLength = 8;
@@ -24,7 +28,7 @@ public class AuthService(
     private const string GithubSessionCachePrefix = "github-session:";
     private const string PostgresUniqueViolation = "23505";
 
-    public async Task<AuthResult<AuthResponse>> RegisterAsync(
+    public async Task<ApplicationResult<AuthResponse>> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -36,15 +40,15 @@ public class AuthService(
             string.IsNullOrWhiteSpace(displayName) ||
             string.IsNullOrWhiteSpace(password))
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 "Email, display name, and password are required.");
         }
 
         if (password.Length < MinPasswordLength)
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 $"Password must be at least {MinPasswordLength} characters.");
         }
 
@@ -53,8 +57,8 @@ public class AuthService(
 
         if (emailExists)
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.EmailAlreadyExists,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Conflict,
                 "A user with this email already exists.");
         }
 
@@ -79,16 +83,21 @@ public class AuthService(
         }
         catch (DbUpdateException exception) when (IsUniqueConstraintViolation(exception))
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.EmailAlreadyExists,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Conflict,
                 "A user with this email already exists.");
         }
 
-        return AuthResult<AuthResponse>.Success(
+        await SendWelcomeEmailIfPossibleAsync(
+            user.Email,
+            user.DisplayName,
+            cancellationToken);
+
+        return ApplicationResult<AuthResponse>.Success(
             BuildAuthResponse(user, refreshToken));
     }
 
-    public async Task<AuthResult<AuthResponse>> LoginAsync(
+    public async Task<ApplicationResult<AuthResponse>> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -98,8 +107,8 @@ public class AuthService(
         if (string.IsNullOrWhiteSpace(email) ||
             string.IsNullOrWhiteSpace(password))
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 "Email and password are required.");
         }
 
@@ -111,8 +120,8 @@ public class AuthService(
         if (user is null ||
             !PasswordHasher.Verify(password, user.PasswordHash))
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid email or password.");
         }
 
@@ -120,11 +129,11 @@ public class AuthService(
             user.Id,
             cancellationToken);
 
-        return AuthResult<AuthResponse>.Success(
+        return ApplicationResult<AuthResponse>.Success(
             BuildAuthResponse(user, refreshToken));
     }
 
-    public async Task<AuthResult<RefreshResponse>> RefreshTokenAsync(
+    public async Task<ApplicationResult<RefreshResponse>> RefreshTokenAsync(
         RefreshRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -132,8 +141,8 @@ public class AuthService(
 
         if (string.IsNullOrWhiteSpace(requestRefreshToken))
         {
-            return AuthResult<RefreshResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<RefreshResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 "Refresh token is required.");
         }
 
@@ -154,8 +163,8 @@ public class AuthService(
             refreshToken.ExpiresAt <= now ||
             refreshToken.RevokedAt != null)
         {
-            return AuthResult<RefreshResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<RefreshResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid or expired refresh token.");
         }
 
@@ -170,8 +179,8 @@ public class AuthService(
 
         if (revokedRows != 1)
         {
-            return AuthResult<RefreshResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<RefreshResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid or expired refresh token.");
         }
 
@@ -184,13 +193,76 @@ public class AuthService(
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        return AuthResult<RefreshResponse>.Success(new RefreshResponse
+        return ApplicationResult<RefreshResponse>.Success(new RefreshResponse
         {
             AccessToken = jwtTokenService.CreateToken(refreshToken.user),
             RefreshToken = newRefreshToken
         });
     }
-    public async Task<AuthResult<AuthResponse>> GoogleLoginAsync(
+
+    public async Task LogoutAsync(
+        RefreshRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        var requestRefreshToken = request?.RefreshToken?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(requestRefreshToken))
+        {
+            return;
+        }
+
+        var tokenHash = RefreshTokenHasher.HashToken(requestRefreshToken);
+        var now = DateTime.UtcNow;
+
+        await dbContext.Set<RefreshToken>()
+            .Where(refreshToken =>
+                refreshToken.TokenHash == tokenHash &&
+                refreshToken.RevokedAt == null &&
+                refreshToken.ExpiresAt > now)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    refreshToken => refreshToken.RevokedAt,
+                    now),
+                cancellationToken);
+    }
+
+    public async Task DeleteMyAccountAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(
+                user => user.Id == userId,
+                cancellationToken);
+
+        if (user is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+
+        await dbContext.Set<RefreshToken>()
+            .Where(refreshToken =>
+                refreshToken.UserId == userId &&
+                refreshToken.RevokedAt == null)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    refreshToken => refreshToken.RevokedAt,
+                    now),
+                cancellationToken);
+
+        dbContext.Users.Remove(user);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task<ApplicationResult<AuthResponse>> GoogleLoginAsync(
         GoogleAuthRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -204,54 +276,68 @@ public class AuthService(
             var email = payload.Email
                 .Trim()
                 .ToLowerInvariant();
+            var googleId = payload.Subject.Trim();
 
             var user = await dbContext.Users
                 .FirstOrDefaultAsync(
-                    u => u.Email == email,
+                    u => u.GoogleId == googleId,
                     cancellationToken);
 
             if (user is null)
             {
-                user = new User
+                user = await dbContext.Users
+                    .FirstOrDefaultAsync(
+                        u => u.Email == email,
+                        cancellationToken);
+
+                if (user is null)
                 {
-                    Id = Guid.NewGuid(),
-                    Email = email,
-                    DisplayName = payload.Name ?? email,
-                    GoogleId = payload.Subject,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    user = new User
+                    {
+                        Id = Guid.NewGuid(),
+                        Email = email,
+                        DisplayName = payload.Name ?? email,
+                        GoogleId = googleId,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                dbContext.Users.Add(user);
+                    dbContext.Users.Add(user);
 
-                await dbContext.SaveChangesAsync(
-                    cancellationToken);
+                    await dbContext.SaveChangesAsync(
+                        cancellationToken);
+                }
+                else if (string.IsNullOrWhiteSpace(user.GoogleId))
+                {
+                    user.GoogleId = googleId;
+
+                    await dbContext.SaveChangesAsync(
+                        cancellationToken);
+                }
+                else if (user.GoogleId != googleId)
+                {
+                    return ApplicationResult<AuthResponse>.Failure(
+                        ApplicationErrorKind.Unauthorized,
+                        "This email is already linked to another Google account.");
+                }
             }
-            else if (string.IsNullOrWhiteSpace(user.GoogleId))
-            {
-                user.GoogleId = payload.Subject;
-
-                await dbContext.SaveChangesAsync(
-                    cancellationToken);
-            }
-
             var refreshToken = await CreateRefreshTokenAsync(
                 user.Id,
                 cancellationToken);
 
-            return AuthResult<AuthResponse>.Success(
+            return ApplicationResult<AuthResponse>.Success(
                 BuildAuthResponse(
                     user,
                     refreshToken));
         }
         catch (Exception)
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid Google token.");
         }
     }
 
-    public async Task<AuthResult<AuthResponse>> GithubLoginAsync(
+    public async Task<ApplicationResult<AuthResponse>> GithubLoginAsync(
         GithubAuthRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -306,8 +392,8 @@ public class AuthService(
             }
             else if (user.GithubId != githubId)
             {
-                return AuthResult<AuthResponse>.Failure(
-                    AuthErrorKind.InvalidCredentials,
+                return ApplicationResult<AuthResponse>.Failure(
+                    ApplicationErrorKind.Unauthorized,
                     "This email is already linked to another GitHub account.");
             }
 
@@ -315,20 +401,20 @@ public class AuthService(
                 user.Id,
                 cancellationToken);
 
-            return AuthResult<AuthResponse>.Success(
+            return ApplicationResult<AuthResponse>.Success(
                 BuildAuthResponse(
                     user,
                     refreshToken));
         }
         catch (Exception)
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid GitHub authorization code.");
         }
     }
 
-    public AuthResult<GithubAuthorizationStart> StartGithubLogin(
+    public ApplicationResult<GithubAuthorizationStart> StartGithubLogin(
         string redirectUri)
     {
         try
@@ -338,7 +424,7 @@ public class AuthService(
                 state,
                 redirectUri);
 
-            return AuthResult<GithubAuthorizationStart>.Success(
+            return ApplicationResult<GithubAuthorizationStart>.Success(
                 new GithubAuthorizationStart
                 {
                     AuthorizationUrl = authorizationUrl,
@@ -347,13 +433,13 @@ public class AuthService(
         }
         catch (Exception)
         {
-            return AuthResult<GithubAuthorizationStart>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<GithubAuthorizationStart>.Failure(
+                ApplicationErrorKind.Validation,
                 "GitHub sign in is not configured.");
         }
     }
 
-    public async Task<AuthResult<string>> CompleteGithubCallbackAsync(
+    public async Task<ApplicationResult<string>> CompleteGithubCallbackAsync(
         GithubAuthRequest request,
         string expectedState,
         string actualState,
@@ -363,8 +449,8 @@ public class AuthService(
             string.IsNullOrWhiteSpace(actualState) ||
             !string.Equals(expectedState, actualState, StringComparison.Ordinal))
         {
-            return AuthResult<string>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<string>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid GitHub OAuth state.");
         }
 
@@ -374,8 +460,8 @@ public class AuthService(
 
         if (!authResult.IsSuccess || authResult.Response is null)
         {
-            return AuthResult<string>.Failure(
-                authResult.ErrorKind ?? AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<string>.Failure(
+                authResult.ErrorKind ?? ApplicationErrorKind.Unauthorized,
                 authResult.ErrorMessage ?? "GitHub sign in failed.");
         }
 
@@ -385,18 +471,18 @@ public class AuthService(
             authResult.Response,
             TimeSpan.FromMinutes(GithubSessionLifetimeMinutes));
 
-        return AuthResult<string>.Success(sessionCode);
+        return ApplicationResult<string>.Success(sessionCode);
     }
 
-    public AuthResult<AuthResponse> CompleteGithubSession(
+    public ApplicationResult<AuthResponse> CompleteGithubSession(
         GithubSessionRequest request)
     {
         var sessionCode = request.SessionCode?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(sessionCode))
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.Validation,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Validation,
                 "GitHub session code is required.");
         }
 
@@ -405,14 +491,14 @@ public class AuthService(
         if (!memoryCache.TryGetValue(cacheKey, out AuthResponse? response) ||
             response is null)
         {
-            return AuthResult<AuthResponse>.Failure(
-                AuthErrorKind.InvalidCredentials,
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
                 "Invalid or expired GitHub session code.");
         }
 
         memoryCache.Remove(cacheKey);
 
-        return AuthResult<AuthResponse>.Success(response);
+        return ApplicationResult<AuthResponse>.Success(response);
     }
 
     private async Task<string> CreateRefreshTokenAsync(
@@ -466,6 +552,27 @@ public class AuthService(
         {
             SqlState: PostgresUniqueViolation
         };
+
+    private async Task SendWelcomeEmailIfPossibleAsync(
+        string email,
+        string displayName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await emailService.SendWelcomeEmailAsync(
+                email,
+                displayName,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Failed to send welcome email to {Email}.",
+                email);
+        }
+    }
 
     private AuthResponse BuildAuthResponse(
         User user,

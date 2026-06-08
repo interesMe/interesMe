@@ -1,0 +1,7 @@
+Hi {{DisplayName}},
+
+Use this verification token to verify your email address:
+
+{{VerificationToken}}
+
+This token expires in 24 hours.

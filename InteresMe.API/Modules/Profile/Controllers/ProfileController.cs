@@ -1,18 +1,20 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using InteresMe.API.Modules.Auth.Services;
+using InteresMe.API.BuildingBlocks.Results;
+using InteresMe.API.BuildingBlocks.Security;
 using InteresMe.API.Modules.Interests.DTOs;
 using InteresMe.API.Modules.Profile.DTOs;
 using InteresMe.API.Modules.Profile.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static InteresMe.API.BuildingBlocks.Results.ApplicationResultMapper;
 
 namespace InteresMe.API.Modules.Profile.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/profile")]
-public class ProfileController(IProfileService profileService) : ControllerBase
+public class ProfileController(
+    IProfileService profileService,
+    ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet("me")]
     public Task<IActionResult> GetMyProfile(
@@ -84,27 +86,20 @@ public class ProfileController(IProfileService profileService) : ControllerBase
             userId => profileService.ReplaceMyInterestsAsync(userId, request, cancellationToken));
 
     private async Task<IActionResult> WithCurrentUserId<T>(
-        Func<Guid, Task<AuthResult<T>>> action)
+        Func<Guid, Task<ApplicationResult<T>>> action)
     {
-        var userId = GetCurrentUserId();
+        Guid userId;
 
-        if (userId is null)
+        try
+        {
+            userId = currentUser.UserId;
+        }
+        catch (InvalidOperationException)
         {
             return Unauthorized(new { message = "Invalid access token." });
         }
 
-        return ToActionResult(await action(userId.Value));
-    }
-
-    private Guid? GetCurrentUserId()
-    {
-        var userIdClaim =
-            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        return Guid.TryParse(userIdClaim, out var userId)
-            ? userId
-            : null;
+        return ToActionResult(await action(userId));
     }
 
     private async Task<ProfileRequestBinding<TRequest>> ReadProfileRequestAsync<TRequest>(
@@ -166,41 +161,6 @@ public class ProfileController(IProfileService profileService) : ControllerBase
         var normalized = value?.Trim();
 
         return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
-    }
-
-    private static IActionResult ToActionResult<T>(
-        AuthResult<T> result)
-    {
-        if (result.IsSuccess)
-        {
-            return new OkObjectResult(result.Response);
-        }
-
-        return result.ErrorKind switch
-        {
-            AuthErrorKind.Validation =>
-                new BadRequestObjectResult(
-                    new { message = result.ErrorMessage }),
-
-            AuthErrorKind.EmailAlreadyExists =>
-                new ConflictObjectResult(
-                    new { message = result.ErrorMessage }),
-
-            AuthErrorKind.InvalidCredentials =>
-                new NotFoundObjectResult(
-                    new { message = result.ErrorMessage }),
-
-            AuthErrorKind.NotImplemented =>
-                new ObjectResult(
-                    new { message = result.ErrorMessage })
-                {
-                    StatusCode = StatusCodes.Status501NotImplemented
-                },
-
-            _ =>
-                new BadRequestObjectResult(
-                    new { message = result.ErrorMessage })
-        };
     }
 
     private sealed record ProfileRequestBinding<TRequest>(

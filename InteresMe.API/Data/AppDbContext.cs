@@ -1,6 +1,7 @@
 using InteresMe.API.Modules.Auth.Models;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.Models;
+using InteresMe.API.Modules.Verification.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace InteresMe.API.Data;
@@ -14,6 +15,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Interest> Interests => Set<Interest>();
 
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
+
+    public DbSet<UserVerification> UserVerifications => Set<UserVerification>();
+
+    public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +36,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasMaxLength(64);
 
             entity.HasIndex(user => user.Email)
+                .IsUnique();
+
+            entity.HasIndex(user => user.GoogleId)
                 .IsUnique();
 
             entity.HasIndex(user => user.GithubId)
@@ -148,6 +156,53 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasOne(token => token.user)
                 .WithMany(user => user.RefreshTokens)
+                .HasForeignKey(token => token.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserVerification>(entity =>
+        {
+            entity.ToTable("user_verifications", "verification");
+
+            entity.HasKey(verification => verification.UserId);
+
+            entity.Property(verification => verification.TrustScore)
+                .IsRequired();
+
+            entity.Property(verification => verification.CreatedAt)
+                .IsRequired();
+
+            entity.Property(verification => verification.UpdatedAt)
+                .IsRequired();
+
+            entity.HasOne(verification => verification.User)
+                .WithOne()
+                .HasForeignKey<UserVerification>(verification => verification.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<VerificationToken>(entity =>
+        {
+            entity.ToTable("verification_tokens", "verification");
+
+            entity.HasKey(token => token.Id);
+
+            entity.Property(token => token.TokenHash)
+                .HasMaxLength(512)
+                .IsRequired();
+
+            entity.Property(token => token.ExpiresAt)
+                .IsRequired();
+
+            entity.Property(token => token.CreatedAt)
+                .IsRequired();
+
+            entity.HasIndex(token => token.TokenHash);
+
+            entity.HasIndex(token => token.UserId);
+
+            entity.HasOne(token => token.User)
+                .WithMany()
                 .HasForeignKey(token => token.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

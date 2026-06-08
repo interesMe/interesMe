@@ -1,26 +1,28 @@
+using InteresMe.API.BuildingBlocks.Security;
 using InteresMe.API.Modules.Auth.DTOs;
 using InteresMe.API.Modules.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using static InteresMe.API.BuildingBlocks.Results.ApplicationResultMapper;
 
 namespace InteresMe.API.Modules.Auth.Controllers;
 
 [ApiController]
-[AllowAnonymous]
 [Route("api/auth")]
 public class AuthController(
     IAuthService authService,
-    IConfiguration configuration) : ControllerBase
+    IOAuthRedirectService oauthRedirectService,
+    ICurrentUser currentUser) : ControllerBase
 {
-    private const string GithubStateCookieName = "interesme.github.state";
-
     [HttpPost("register")]
+    [AllowAnonymous]
     public Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(authService.RegisterAsync(request, cancellationToken));
 
     [HttpPost("google")]
+    [AllowAnonymous]
     public Task<IActionResult> GoogleLogin(
         [FromBody] GoogleAuthRequest request,
         CancellationToken cancellationToken) =>
@@ -30,9 +32,10 @@ public class AuthController(
                 cancellationToken));
 
     [HttpGet("github")]
+    [AllowAnonymous]
     public IActionResult StartGithubLogin()
     {
-        var callbackUrl = BuildGithubCallbackUrl();
+        var callbackUrl = oauthRedirectService.BuildGithubCallbackUrl(Request);
         var result = authService.StartGithubLogin(callbackUrl);
 
         if (!result.IsSuccess || result.Response is null)
@@ -40,22 +43,16 @@ public class AuthController(
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        Response.Cookies.Append(
-            GithubStateCookieName,
-            result.Response.State,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                MaxAge = TimeSpan.FromMinutes(10),
-                SameSite = SameSiteMode.Lax,
-                Secure = Request.IsHttps
-            });
+        oauthRedirectService.SetGithubStateCookie(
+            Response,
+            Request,
+            result.Response.State);
 
         return Redirect(result.Response.AuthorizationUrl);
     }
 
     [HttpGet("github/callback")]
+    [AllowAnonymous]
     public async Task<IActionResult> GithubCallback(
         [FromQuery] string? code,
         [FromQuery] string? state,
@@ -64,23 +61,23 @@ public class AuthController(
     {
         if (!string.IsNullOrWhiteSpace(error))
         {
-            return Redirect(BuildFrontendCallbackUrl(error: "github_denied"));
+            return Redirect(oauthRedirectService.BuildFrontendCallbackUrl(error: "github_denied"));
         }
 
         if (string.IsNullOrWhiteSpace(code) ||
             string.IsNullOrWhiteSpace(state))
         {
-            return Redirect(BuildFrontendCallbackUrl(error: "github_invalid_callback"));
+            return Redirect(oauthRedirectService.BuildFrontendCallbackUrl(error: "github_invalid_callback"));
         }
 
-        var expectedState = Request.Cookies[GithubStateCookieName] ?? string.Empty;
-        Response.Cookies.Delete(GithubStateCookieName);
+        var expectedState = oauthRedirectService.GetGithubStateCookie(Request);
+        oauthRedirectService.DeleteGithubStateCookie(Response);
 
         var result = await authService.CompleteGithubCallbackAsync(
             new GithubAuthRequest
             {
                 Code = code,
-                RedirectUri = BuildGithubCallbackUrl()
+                RedirectUri = oauthRedirectService.BuildGithubCallbackUrl(Request)
             },
             expectedState,
             state,
@@ -88,13 +85,14 @@ public class AuthController(
 
         if (!result.IsSuccess || string.IsNullOrWhiteSpace(result.Response))
         {
-            return Redirect(BuildFrontendCallbackUrl(error: "github_auth_failed"));
+            return Redirect(oauthRedirectService.BuildFrontendCallbackUrl(error: "github_auth_failed"));
         }
 
-        return Redirect(BuildFrontendCallbackUrl(sessionCode: result.Response));
+        return Redirect(oauthRedirectService.BuildFrontendCallbackUrl(sessionCode: result.Response));
     }
 
     [HttpPost("github")]
+    [AllowAnonymous]
     public Task<IActionResult> GithubLogin(
         [FromBody] GithubAuthRequest request,
         CancellationToken cancellationToken) =>
@@ -104,98 +102,55 @@ public class AuthController(
                 cancellationToken));
 
     [HttpPost("github/session")]
+    [AllowAnonymous]
     public Task<IActionResult> CompleteGithubSession(
         [FromBody] GithubSessionRequest request) =>
         ToActionResult(Task.FromResult(authService.CompleteGithubSession(request)));
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(authService.LoginAsync(request, cancellationToken));
 
     [HttpPost("refresh")]
+    [AllowAnonymous]
     public Task<IActionResult> RefreshToken(
         [FromBody] RefreshRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(authService.RefreshTokenAsync(request, cancellationToken));
 
-    private string BuildGithubCallbackUrl() =>
-        $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/auth/github/callback";
-
-    private string BuildFrontendCallbackUrl(
-        string? sessionCode = null,
-        string? error = null)
+    [HttpPost("logout")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Logout(
+        [FromBody] RefreshRequest? request,
+        CancellationToken cancellationToken)
     {
-        var callbackUrl =
-            configuration["Frontend:OAuthCallbackUrl"] ??
-            configuration["FRONTEND_OAUTH_CALLBACK_URL"] ??
-            "http://localhost:4201/auth/callback";
+        await authService.LogoutAsync(request, cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(sessionCode))
-        {
-            return AppendQueryParameter(
-                callbackUrl,
-                "githubSessionCode",
-                sessionCode);
-        }
-
-        if (!string.IsNullOrWhiteSpace(error))
-        {
-            return AppendQueryParameter(
-                callbackUrl,
-                "error",
-                error);
-        }
-
-        return callbackUrl;
+        return NoContent();
     }
 
-    private static string AppendQueryParameter(
-        string url,
-        string name,
-        string value)
+    [HttpDelete("me")]
+    [Authorize]
+    public async Task<IActionResult> DeleteMyAccount(
+        CancellationToken cancellationToken)
     {
-        var separator = url.Contains('?') ? '&' : '?';
+        Guid userId;
 
-        return $"{url}{separator}{Uri.EscapeDataString(name)}={Uri.EscapeDataString(value)}";
-    }
-
-    private static async Task<IActionResult> ToActionResult<T>(
-    Task<AuthResult<T>> resultTask)
-    {
-        var result = await resultTask;
-
-        if (result.IsSuccess)
+        try
         {
-            return new OkObjectResult(result.Response);
+            userId = currentUser.UserId;
+        }
+        catch (InvalidOperationException)
+        {
+            return Unauthorized(new { message = "Invalid access token." });
         }
 
-        return result.ErrorKind switch
-        {
-            AuthErrorKind.Validation =>
-                new BadRequestObjectResult(
-                    new { message = result.ErrorMessage }),
+        await authService.DeleteMyAccountAsync(userId, cancellationToken);
 
-            AuthErrorKind.EmailAlreadyExists =>
-                new ConflictObjectResult(
-                    new { message = result.ErrorMessage }),
-
-            AuthErrorKind.InvalidCredentials =>
-                new UnauthorizedObjectResult(
-                    new { message = result.ErrorMessage }),
-
-            AuthErrorKind.NotImplemented =>
-                new ObjectResult(
-                    new { message = result.ErrorMessage })
-                {
-                    StatusCode = StatusCodes.Status501NotImplemented
-                },
-
-            _ =>
-                new BadRequestObjectResult(
-                    new { message = result.ErrorMessage })
-        };
+        return NoContent();
     }
 
 }
