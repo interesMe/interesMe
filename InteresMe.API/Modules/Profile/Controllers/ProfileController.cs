@@ -65,7 +65,7 @@ public class ProfileController(
     [HttpPost("me/avatar")]
     [Consumes("multipart/form-data")]
     public Task<IActionResult> UploadMyAvatar(
-        [FromForm] IFormFile? file,
+        IFormFile? file,
         CancellationToken cancellationToken)
     {
         if (file is null)

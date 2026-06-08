@@ -131,7 +131,6 @@ public sealed class VerificationService(
     }
 
     public async Task<ApplicationResult<VerificationSummaryResponse>> ConfirmEmailVerificationAsync(
-        Guid userId,
         ConfirmEmailVerificationRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -154,7 +153,6 @@ public sealed class VerificationService(
         var verificationToken = await dbContext.VerificationTokens
             .FirstOrDefaultAsync(
                 currentToken =>
-                    currentToken.UserId == userId &&
                     currentToken.TokenHash == tokenHash,
                 cancellationToken);
 
@@ -168,7 +166,7 @@ public sealed class VerificationService(
         }
 
         var verification = await GetOrCreateVerificationAsync(
-            userId,
+            verificationToken.UserId,
             now,
             cancellationToken);
 

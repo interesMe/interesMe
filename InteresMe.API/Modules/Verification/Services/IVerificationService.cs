@@ -14,7 +14,6 @@ public interface IVerificationService
         CancellationToken cancellationToken = default);
 
     Task<ApplicationResult<VerificationSummaryResponse>> ConfirmEmailVerificationAsync(
-        Guid userId,
         ConfirmEmailVerificationRequest request,
         CancellationToken cancellationToken = default);
 }

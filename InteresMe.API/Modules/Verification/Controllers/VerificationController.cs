@@ -32,14 +32,13 @@ public class VerificationController(
             userId => verificationService.SendEmailVerificationAsync(userId, cancellationToken));
 
     [HttpPost("email/confirm")]
-    public Task<IActionResult> ConfirmEmailVerification(
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmailVerification(
         [FromBody] ConfirmEmailVerificationRequest request,
         CancellationToken cancellationToken) =>
-        WithCurrentUserId(
-            userId => verificationService.ConfirmEmailVerificationAsync(
-                userId,
-                request,
-                cancellationToken));
+        ToActionResult(await verificationService.ConfirmEmailVerificationAsync(
+            request,
+            cancellationToken));
 
     [HttpPost("test-email")]
     [AllowAnonymous]
