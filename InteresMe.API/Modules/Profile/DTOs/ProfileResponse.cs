@@ -8,6 +8,10 @@ public class ProfileResponse
 
     public string DisplayName { get; set; } = string.Empty;
 
+    public string? Headline { get; set; }
+
+    public string? Bio { get; set; }
+
     public string? City { get; set; }
 
     public string? AvatarUrl { get; set; }

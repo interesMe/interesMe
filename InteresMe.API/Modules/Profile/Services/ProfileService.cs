@@ -13,6 +13,8 @@ public sealed class ProfileService(
     IWebHostEnvironment webHostEnvironment) : IProfileService
 {
     private const int DisplayNameMaxLength = 80;
+    private const int HeadlineMaxLength = 120;
+    private const int BioMaxLength = 500;
     private const int CityMaxLength = 120;
     private const int AvatarUrlMaxLength = 2048;
     private const long AvatarMaxSizeBytes = 2 * 1024 * 1024;
@@ -63,6 +65,8 @@ public sealed class ProfileService(
     {
         var validation = ValidateProfile(
             request.DisplayName,
+            request.Headline,
+            request.Bio,
             request.City,
             request.AvatarUrl,
             request.BirthDate);
@@ -116,6 +120,8 @@ public sealed class ProfileService(
             Id = Guid.NewGuid(),
             UserId = userId,
             DisplayName = request.DisplayName.Trim(),
+            Headline = NormalizeOptional(request.Headline),
+            Bio = NormalizeOptional(request.Bio),
             City = NormalizeOptional(request.City),
             AvatarUrl = NormalizeOptional(request.AvatarUrl),
             BirthDate = request.BirthDate,
@@ -155,6 +161,8 @@ public sealed class ProfileService(
     {
         var validation = ValidateProfile(
             request.DisplayName,
+            request.Headline,
+            request.Bio,
             request.City,
             request.AvatarUrl,
             request.BirthDate);
@@ -193,6 +201,8 @@ public sealed class ProfileService(
         var previousAvatarUrl = profile.AvatarUrl;
 
         profile.DisplayName = request.DisplayName.Trim();
+        profile.Headline = NormalizeOptional(request.Headline);
+        profile.Bio = NormalizeOptional(request.Bio);
         profile.City = NormalizeOptional(request.City);
         profile.AvatarUrl = avatarFile is null
             ? NormalizeOptional(request.AvatarUrl)
@@ -301,6 +311,8 @@ public sealed class ProfileService(
 
     private static string? ValidateProfile(
         string displayName,
+        string? headline,
+        string? bio,
         string? city,
         string? avatarUrl,
         DateOnly? birthDate)
@@ -313,6 +325,18 @@ public sealed class ProfileService(
         if (displayName.Trim().Length > DisplayNameMaxLength)
         {
             return $"Display name must be at most {DisplayNameMaxLength} characters.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(headline) &&
+            headline.Trim().Length > HeadlineMaxLength)
+        {
+            return $"Headline must be at most {HeadlineMaxLength} characters.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(bio) &&
+            bio.Trim().Length > BioMaxLength)
+        {
+            return $"Bio must be at most {BioMaxLength} characters.";
         }
 
         if (!string.IsNullOrWhiteSpace(city) &&
@@ -432,6 +456,8 @@ public sealed class ProfileService(
         Id = profile.Id,
         UserId = profile.UserId,
         DisplayName = profile.DisplayName,
+        Headline = profile.Headline,
+        Bio = profile.Bio,
         City = profile.City,
         AvatarUrl = profile.AvatarUrl,
         BirthDate = profile.BirthDate,

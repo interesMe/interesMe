@@ -1,4 +1,5 @@
 using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Discovery.Models;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.Models;
 using InteresMe.API.Modules.Verification.Models;
@@ -15,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Interest> Interests => Set<Interest>();
 
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
+
+    public DbSet<UserDiscoveryPreference> UserDiscoveryPreferences => Set<UserDiscoveryPreference>();
 
     public DbSet<UserVerification> UserVerifications => Set<UserVerification>();
 
@@ -70,6 +73,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(profile => profile.DisplayName)
                 .HasMaxLength(80)
                 .IsRequired();
+
+            entity.Property(profile => profile.Headline)
+                .HasMaxLength(120);
+
+            entity.Property(profile => profile.Bio)
+                .HasMaxLength(500);
 
             entity.Property(profile => profile.City)
                 .HasMaxLength(120);
@@ -131,6 +140,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(userInterest => userInterest.Interest)
                 .WithMany(interest => interest.UserInterests)
                 .HasForeignKey(userInterest => userInterest.InterestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserDiscoveryPreference>(entity =>
+        {
+            entity.ToTable("user_discovery_preferences", "discovery");
+
+            entity.HasKey(preference => preference.UserId);
+
+            entity.Property(preference => preference.Goal)
+                .IsRequired();
+
+            entity.Property(preference => preference.CreatedAt)
+                .IsRequired();
+
+            entity.Property(preference => preference.UpdatedAt)
+                .IsRequired();
+
+            entity.HasOne(preference => preference.User)
+                .WithOne()
+                .HasForeignKey<UserDiscoveryPreference>(preference => preference.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

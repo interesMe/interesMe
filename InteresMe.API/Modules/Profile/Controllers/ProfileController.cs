@@ -139,12 +139,16 @@ public class ProfileController(
         {
             case CreateProfileRequest createRequest:
                 createRequest.DisplayName = form["displayName"].ToString();
+                createRequest.Headline = NormalizeOptional(form["headline"].ToString());
+                createRequest.Bio = NormalizeOptional(form["bio"].ToString());
                 createRequest.City = NormalizeOptional(form["city"].ToString());
                 createRequest.BirthDate = birthDate;
                 break;
 
             case UpdateProfileRequest updateRequest:
                 updateRequest.DisplayName = form["displayName"].ToString();
+                updateRequest.Headline = NormalizeOptional(form["headline"].ToString());
+                updateRequest.Bio = NormalizeOptional(form["bio"].ToString());
                 updateRequest.City = NormalizeOptional(form["city"].ToString());
                 updateRequest.BirthDate = birthDate;
                 break;
