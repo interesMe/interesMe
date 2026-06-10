@@ -41,6 +41,23 @@ public sealed class InitiativesController(
         WithCurrentUserId(
             userId => initiativeService.UpdateAsync(userId, id, request, cancellationToken));
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId, out var unauthorizedResult))
+        {
+            return unauthorizedResult;
+        }
+
+        var result = await initiativeService.DeleteAsync(userId, id, cancellationToken);
+
+        return result.IsSuccess
+            ? NoContent()
+            : ToActionResult(result);
+    }
+
     [HttpPost("{id:guid}/join-requests")]
     public Task<IActionResult> CreateJoinRequest(
         Guid id,
@@ -90,17 +107,29 @@ public sealed class InitiativesController(
     private async Task<IActionResult> WithCurrentUserId<T>(
         Func<Guid, Task<ApplicationResult<T>>> action)
     {
-        Guid userId;
-
-        try
+        if (!TryGetCurrentUserId(out var userId, out var unauthorizedResult))
         {
-            userId = currentUser.UserId;
-        }
-        catch (InvalidOperationException)
-        {
-            return Unauthorized(new { message = "Invalid access token." });
+            return unauthorizedResult;
         }
 
         return ToActionResult(await action(userId));
+    }
+
+    private bool TryGetCurrentUserId(
+        out Guid userId,
+        out IActionResult unauthorizedResult)
+    {
+        try
+        {
+            userId = currentUser.UserId;
+            unauthorizedResult = default!;
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            userId = default;
+            unauthorizedResult = Unauthorized(new { message = "Invalid access token." });
+            return false;
+        }
     }
 }

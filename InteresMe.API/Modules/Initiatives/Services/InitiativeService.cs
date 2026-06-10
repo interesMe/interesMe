@@ -18,7 +18,9 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
         CancellationToken cancellationToken = default)
     {
         var initiatives = await BaseInitiativeQuery()
-            .Where(initiative => initiative.Status != InitiativeStatus.Completed)
+            .Where(initiative =>
+                initiative.Status != InitiativeStatus.Completed &&
+                initiative.Status != InitiativeStatus.Archived)
             .OrderByDescending(initiative => initiative.UpdatedAt)
             .ToListAsync(cancellationToken);
 
@@ -166,6 +168,52 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
                 cancellationToken);
 
         return ApplicationResult<InitiativeResponse>.Success(ToResponse(updated));
+    }
+
+    public async Task<ApplicationResult<bool>> DeleteAsync(
+        Guid ownerUserId,
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var initiative = await dbContext.Initiatives
+            .FirstOrDefaultAsync(
+                currentInitiative => currentInitiative.Id == id,
+                cancellationToken);
+
+        if (initiative is null)
+        {
+            return ApplicationResult<bool>.Failure(
+                ApplicationErrorKind.NotFound,
+                "Initiative was not found.");
+        }
+
+        if (initiative.OwnerUserId != ownerUserId)
+        {
+            return ApplicationResult<bool>.Failure(
+                ApplicationErrorKind.Forbidden,
+                "Only the initiative owner can delete this initiative.");
+        }
+
+        var hasAcceptedMembers = await dbContext.InitiativeJoinRequests
+            .AnyAsync(
+                joinRequest =>
+                    joinRequest.InitiativeId == id &&
+                    joinRequest.Status == InitiativeJoinRequestStatus.Accepted,
+                cancellationToken);
+
+        if (hasAcceptedMembers)
+        {
+            initiative.Status = InitiativeStatus.Archived;
+            initiative.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            dbContext.Initiatives.Remove(initiative);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ApplicationResult<bool>.Success(true);
     }
 
     public async Task<ApplicationResult<InitiativeJoinRequestResponse>> CreateJoinRequestAsync(

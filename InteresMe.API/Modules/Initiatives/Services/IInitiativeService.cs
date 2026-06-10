@@ -23,6 +23,11 @@ public interface IInitiativeService
         UpdateInitiativeRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<ApplicationResult<bool>> DeleteAsync(
+        Guid ownerUserId,
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     Task<ApplicationResult<InitiativeJoinRequestResponse>> CreateJoinRequestAsync(
         Guid userId,
         Guid initiativeId,
