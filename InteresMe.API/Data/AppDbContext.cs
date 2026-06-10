@@ -1,5 +1,6 @@
 using InteresMe.API.Modules.Auth.Models;
 using InteresMe.API.Modules.Discovery.Models;
+using InteresMe.API.Modules.Initiatives.Models;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.Models;
 using InteresMe.API.Modules.Verification.Models;
@@ -18,6 +19,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
 
     public DbSet<UserDiscoveryPreference> UserDiscoveryPreferences => Set<UserDiscoveryPreference>();
+
+    public DbSet<Initiative> Initiatives => Set<Initiative>();
+
+    public DbSet<InitiativeInterest> InitiativeInterests => Set<InitiativeInterest>();
+
+    public DbSet<InitiativeRole> InitiativeRoles => Set<InitiativeRole>();
+
+    public DbSet<InitiativeJoinRequest> InitiativeJoinRequests => Set<InitiativeJoinRequest>();
 
     public DbSet<UserVerification> UserVerifications => Set<UserVerification>();
 
@@ -163,6 +172,121 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(preference => preference.User)
                 .WithOne()
                 .HasForeignKey<UserDiscoveryPreference>(preference => preference.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Initiative>(entity =>
+        {
+            entity.ToTable("initiatives", "initiatives");
+
+            entity.HasKey(initiative => initiative.Id);
+
+            entity.Property(initiative => initiative.Title)
+                .HasMaxLength(120)
+                .IsRequired();
+
+            entity.Property(initiative => initiative.ShortDescription)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(initiative => initiative.GoalType)
+                .IsRequired();
+
+            entity.Property(initiative => initiative.University)
+                .HasMaxLength(160);
+
+            entity.Property(initiative => initiative.Status)
+                .IsRequired();
+
+            entity.Property(initiative => initiative.CreatedAt)
+                .IsRequired();
+
+            entity.Property(initiative => initiative.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(initiative => initiative.OwnerUserId);
+
+            entity.HasIndex(initiative => initiative.Status);
+
+            entity.HasIndex(initiative => initiative.GoalType);
+
+            entity.HasOne(initiative => initiative.OwnerUser)
+                .WithMany()
+                .HasForeignKey(initiative => initiative.OwnerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InitiativeInterest>(entity =>
+        {
+            entity.ToTable("initiative_interests", "initiatives");
+
+            entity.HasKey(initiativeInterest => new
+            {
+                initiativeInterest.InitiativeId,
+                initiativeInterest.InterestId
+            });
+
+            entity.HasIndex(initiativeInterest => initiativeInterest.InterestId);
+
+            entity.HasOne(initiativeInterest => initiativeInterest.Initiative)
+                .WithMany(initiative => initiative.InitiativeInterests)
+                .HasForeignKey(initiativeInterest => initiativeInterest.InitiativeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(initiativeInterest => initiativeInterest.Interest)
+                .WithMany()
+                .HasForeignKey(initiativeInterest => initiativeInterest.InterestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InitiativeRole>(entity =>
+        {
+            entity.ToTable("initiative_roles", "initiatives");
+
+            entity.HasKey(role => role.Id);
+
+            entity.Property(role => role.Name)
+                .HasMaxLength(80)
+                .IsRequired();
+
+            entity.HasIndex(role => role.InitiativeId);
+
+            entity.HasOne(role => role.Initiative)
+                .WithMany(initiative => initiative.Roles)
+                .HasForeignKey(role => role.InitiativeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InitiativeJoinRequest>(entity =>
+        {
+            entity.ToTable("initiative_join_requests", "initiatives");
+
+            entity.HasKey(joinRequest => joinRequest.Id);
+
+            entity.Property(joinRequest => joinRequest.Message)
+                .HasMaxLength(500);
+
+            entity.Property(joinRequest => joinRequest.Status)
+                .IsRequired();
+
+            entity.Property(joinRequest => joinRequest.CreatedAt)
+                .IsRequired();
+
+            entity.Property(joinRequest => joinRequest.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(joinRequest => joinRequest.InitiativeId);
+
+            entity.HasIndex(joinRequest => joinRequest.UserId);
+
+            entity.HasOne(joinRequest => joinRequest.Initiative)
+                .WithMany(initiative => initiative.JoinRequests)
+                .HasForeignKey(joinRequest => joinRequest.InitiativeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(joinRequest => joinRequest.User)
+                .WithMany()
+                .HasForeignKey(joinRequest => joinRequest.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

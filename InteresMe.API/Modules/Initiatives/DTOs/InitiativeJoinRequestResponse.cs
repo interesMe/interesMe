@@ -1,0 +1,20 @@
+using InteresMe.API.Modules.Initiatives.Models;
+
+namespace InteresMe.API.Modules.Initiatives.DTOs;
+
+public sealed class InitiativeJoinRequestResponse
+{
+    public Guid Id { get; set; }
+
+    public Guid InitiativeId { get; set; }
+
+    public Guid UserId { get; set; }
+
+    public string? Message { get; set; }
+
+    public InitiativeJoinRequestStatus Status { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+}
