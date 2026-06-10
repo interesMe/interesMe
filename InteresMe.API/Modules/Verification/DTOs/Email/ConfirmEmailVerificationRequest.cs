@@ -1,4 +1,4 @@
-namespace InteresMe.API.Modules.Verification.DTOs;
+namespace InteresMe.API.Modules.Verification.DTOs.Email;
 
 public sealed class ConfirmEmailVerificationRequest
 {

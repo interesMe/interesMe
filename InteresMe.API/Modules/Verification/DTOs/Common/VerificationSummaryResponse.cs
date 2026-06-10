@@ -1,4 +1,6 @@
-namespace InteresMe.API.Modules.Verification.DTOs;
+using System.Text.Json.Serialization;
+
+namespace InteresMe.API.Modules.Verification.DTOs.Common;
 
 public sealed class VerificationSummaryResponse
 {
@@ -9,6 +11,9 @@ public sealed class VerificationSummaryResponse
     public bool PhoneVerified { get; set; }
 
     public bool IdentityVerified { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PhoneNumber { get; set; }
 
     public DateTime? EmailVerifiedAt { get; set; }
 

@@ -2,9 +2,10 @@ using System.Data;
 using InteresMe.API.BuildingBlocks.Email;
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
-using InteresMe.API.Modules.Verification.DTOs;
+using InteresMe.API.Modules.Verification.DTOs.Common;
+using InteresMe.API.Modules.Verification.DTOs.Email;
+using InteresMe.API.Modules.Verification.DTOs.Phone;
 using InteresMe.API.Modules.Verification.Models;
-using InteresMe.API.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace InteresMe.API.Modules.Verification.Services;
@@ -12,10 +13,13 @@ namespace InteresMe.API.Modules.Verification.Services;
 public sealed class VerificationService(
     AppDbContext dbContext,
     IEmailService emailService,
+    IVerificationTokenService verificationTokenService,
+    IPhoneNumberNormalizer phoneNumberNormalizer,
     IWebHostEnvironment webHostEnvironment,
     ILogger<VerificationService> logger) : IVerificationService
 {
     private static readonly TimeSpan EmailVerificationTokenLifetime = TimeSpan.FromHours(24);
+    private static readonly TimeSpan PhoneVerificationTokenLifetime = TimeSpan.FromMinutes(10);
 
     public async Task<ApplicationResult<VerificationSummaryResponse>> GetMyVerificationAsync(
         Guid userId,
@@ -73,8 +77,6 @@ public sealed class VerificationService(
         }
 
         var now = DateTime.UtcNow;
-        var token = RefreshTokenGenerator.GenerateToken();
-        var expiresAt = now.Add(EmailVerificationTokenLifetime);
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
             IsolationLevel.ReadCommitted,
@@ -82,34 +84,27 @@ public sealed class VerificationService(
 
         try
         {
-            await dbContext.VerificationTokens
-                .Where(verificationToken =>
-                    verificationToken.UserId == userId &&
-                    verificationToken.ConsumedAt == null &&
-                    verificationToken.ExpiresAt > now)
-                .ExecuteUpdateAsync(
-                    setters => setters.SetProperty(
-                        verificationToken => verificationToken.ConsumedAt,
-                        now),
-                    cancellationToken);
+            var createdToken = await verificationTokenService.CreateAsync(
+                userId,
+                VerificationType.Email,
+                user.Email,
+                EmailVerificationTokenLifetime,
+                now,
+                cancellationToken);
 
-            dbContext.VerificationTokens.Add(new VerificationToken
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                TokenHash = RefreshTokenHasher.HashToken(token),
-                ExpiresAt = expiresAt,
-                CreatedAt = now
-            });
-
-            await dbContext.SaveChangesAsync(cancellationToken);
             await emailService.SendEmailVerificationAsync(
                 user.Email,
                 user.DisplayName,
-                token,
+                createdToken.Token,
                 cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
+
+            return ApplicationResult<SendEmailVerificationResponse>.Success(new SendEmailVerificationResponse
+            {
+                Token = webHostEnvironment.IsDevelopment() ? createdToken.Token : null,
+                ExpiresAt = createdToken.ExpiresAt
+            });
         }
         catch (Exception exception)
         {
@@ -122,12 +117,6 @@ public sealed class VerificationService(
                 ApplicationErrorKind.InternalServerError,
                 "Failed to send email verification message.");
         }
-
-        return ApplicationResult<SendEmailVerificationResponse>.Success(new SendEmailVerificationResponse
-        {
-            Token = webHostEnvironment.IsDevelopment() ? token : null,
-            ExpiresAt = expiresAt
-        });
     }
 
     public async Task<ApplicationResult<VerificationSummaryResponse>> ConfirmEmailVerificationAsync(
@@ -143,22 +132,20 @@ public sealed class VerificationService(
                 "Verification token is required.");
         }
 
-        var tokenHash = RefreshTokenHasher.HashToken(token);
         var now = DateTime.UtcNow;
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(
             IsolationLevel.ReadCommitted,
             cancellationToken);
 
-        var verificationToken = await dbContext.VerificationTokens
-            .FirstOrDefaultAsync(
-                currentToken =>
-                    currentToken.TokenHash == tokenHash,
-                cancellationToken);
+        var verificationToken = await verificationTokenService.FindValidTokenAsync(
+            token,
+            VerificationType.Email,
+            userId: null,
+            now,
+            cancellationToken);
 
-        if (verificationToken is null ||
-            verificationToken.ExpiresAt <= now ||
-            verificationToken.ConsumedAt is not null)
+        if (verificationToken is null)
         {
             return ApplicationResult<VerificationSummaryResponse>.Failure(
                 ApplicationErrorKind.Unauthorized,
@@ -172,6 +159,122 @@ public sealed class VerificationService(
 
         verificationToken.ConsumedAt = now;
         verification.EmailVerifiedAt = now;
+        verification.UpdatedAt = now;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return ApplicationResult<VerificationSummaryResponse>.Success(
+            ToSummaryResponse(verification));
+    }
+
+    public async Task<ApplicationResult<SendPhoneVerificationResponse>> SendPhoneVerificationAsync(
+        Guid userId,
+        SendPhoneVerificationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var phoneNumber = phoneNumberNormalizer.Normalize(request.PhoneNumber);
+
+        if (phoneNumber is null)
+        {
+            return ApplicationResult<SendPhoneVerificationResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                "Valid phone number is required.");
+        }
+
+        var userExists = await dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(
+                user => user.Id == userId,
+                cancellationToken);
+
+        if (!userExists)
+        {
+            return ApplicationResult<SendPhoneVerificationResponse>.Failure(
+                ApplicationErrorKind.NotFound,
+                "User was not found.");
+        }
+
+        var now = DateTime.UtcNow;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+
+        try
+        {
+            var createdToken = await verificationTokenService.CreateAsync(
+                userId,
+                VerificationType.Phone,
+                phoneNumber,
+                PhoneVerificationTokenLifetime,
+                now,
+                cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            return ApplicationResult<SendPhoneVerificationResponse>.Success(new SendPhoneVerificationResponse
+            {
+                Token = webHostEnvironment.IsDevelopment() ? createdToken.Token : null,
+                ExpiresAt = createdToken.ExpiresAt
+            });
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Failed to create phone verification token for user {UserId}.",
+                userId);
+
+            return ApplicationResult<SendPhoneVerificationResponse>.Failure(
+                ApplicationErrorKind.InternalServerError,
+                "Failed to create phone verification token.");
+        }
+    }
+
+    public async Task<ApplicationResult<VerificationSummaryResponse>> ConfirmPhoneVerificationAsync(
+        Guid userId,
+        ConfirmPhoneVerificationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var token = request.Token?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return ApplicationResult<VerificationSummaryResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                "Verification token is required.");
+        }
+
+        var now = DateTime.UtcNow;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+
+        var verificationToken = await verificationTokenService.FindValidTokenAsync(
+            token,
+            VerificationType.Phone,
+            userId,
+            now,
+            cancellationToken);
+
+        if (verificationToken is null ||
+            string.IsNullOrWhiteSpace(verificationToken.Target))
+        {
+            return ApplicationResult<VerificationSummaryResponse>.Failure(
+                ApplicationErrorKind.Unauthorized,
+                "Invalid or expired verification token.");
+        }
+
+        var verification = await GetOrCreateVerificationAsync(
+            userId,
+            now,
+            cancellationToken);
+
+        verificationToken.ConsumedAt = now;
+        verification.PhoneNumber = verificationToken.Target;
+        verification.PhoneVerifiedAt = now;
         verification.UpdatedAt = now;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -216,9 +319,11 @@ public sealed class VerificationService(
         EmailVerified = verification.EmailVerifiedAt is not null,
         PhoneVerified = verification.PhoneVerifiedAt is not null,
         IdentityVerified = verification.IdentityVerifiedAt is not null,
+        PhoneNumber = verification.PhoneNumber,
         EmailVerifiedAt = verification.EmailVerifiedAt,
         PhoneVerifiedAt = verification.PhoneVerifiedAt,
         IdentityVerifiedAt = verification.IdentityVerifiedAt,
         TrustScore = verification.TrustScore
     };
+
 }

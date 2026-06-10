@@ -1,7 +1,7 @@
-using InteresMe.API.BuildingBlocks.Email;
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.BuildingBlocks.Security;
-using InteresMe.API.Modules.Verification.DTOs;
+using InteresMe.API.Modules.Verification.DTOs.Email;
+using InteresMe.API.Modules.Verification.DTOs.Phone;
 using InteresMe.API.Modules.Verification.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +14,7 @@ namespace InteresMe.API.Modules.Verification.Controllers;
 [Route("api/verification")]
 public class VerificationController(
     ICurrentUser currentUser,
-    IVerificationService verificationService,
-    IEmailService emailService,
-    IWebHostEnvironment webHostEnvironment,
-    ILogger<VerificationController> logger) : ControllerBase
+    IVerificationService verificationService) : ControllerBase
 {
     [HttpGet("me")]
     public Task<IActionResult> GetMyVerification(
@@ -40,45 +37,25 @@ public class VerificationController(
             request,
             cancellationToken));
 
-    [HttpPost("test-email")]
-    [AllowAnonymous]
-    public async Task<IActionResult> SendTestEmail(
-        [FromBody] TestEmailRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!webHostEnvironment.IsDevelopment())
-        {
-            return NotFound();
-        }
+    [HttpPost("phone/send")]
+    public Task<IActionResult> SendPhoneVerification(
+        [FromBody] SendPhoneVerificationRequest request,
+        CancellationToken cancellationToken) =>
+        WithCurrentUserId(
+            userId => verificationService.SendPhoneVerificationAsync(
+                userId,
+                request,
+                cancellationToken));
 
-        var email = request.Email?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return BadRequest(new { message = "Email is required." });
-        }
-
-        try
-        {
-            await emailService.SendWelcomeEmailAsync(
-                email,
-                "Max",
-                cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                exception,
-                "Failed to send development test email to {Email}.",
-                email);
-
-            return StatusCode(
-                StatusCodes.Status500InternalServerError,
-                new { message = "Failed to send test email." });
-        }
-
-        return Ok(new { message = "Test email sent." });
-    }
+    [HttpPost("phone/confirm")]
+    public Task<IActionResult> ConfirmPhoneVerification(
+        [FromBody] ConfirmPhoneVerificationRequest request,
+        CancellationToken cancellationToken) =>
+        WithCurrentUserId(
+            userId => verificationService.ConfirmPhoneVerificationAsync(
+                userId,
+                request,
+                cancellationToken));
 
     private async Task<IActionResult> WithCurrentUserId<T>(
         Func<Guid, Task<ApplicationResult<T>>> action)

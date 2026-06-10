@@ -169,6 +169,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(verification => verification.TrustScore)
                 .IsRequired();
 
+            entity.Property(verification => verification.PhoneNumber)
+                .HasMaxLength(32);
+
             entity.Property(verification => verification.CreatedAt)
                 .IsRequired();
 
@@ -186,6 +189,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("verification_tokens", "verification");
 
             entity.HasKey(token => token.Id);
+
+            entity.Property(token => token.Type)
+                .IsRequired();
+
+            entity.Property(token => token.Target)
+                .HasMaxLength(256);
 
             entity.Property(token => token.TokenHash)
                 .HasMaxLength(512)

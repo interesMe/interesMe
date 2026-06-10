@@ -8,6 +8,10 @@ public sealed class VerificationToken
 
     public Guid UserId { get; set; }
 
+    public VerificationType Type { get; set; }
+
+    public string? Target { get; set; }
+
     public string TokenHash { get; set; } = string.Empty;
 
     public DateTime ExpiresAt { get; set; }

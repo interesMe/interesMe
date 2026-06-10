@@ -51,6 +51,8 @@ builder.Services.AddScoped<IOAuthRedirectService, OAuthRedirectService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IInterestService, InterestService>();
 builder.Services.AddScoped<IVerificationService, VerificationService>();
+builder.Services.AddScoped<IVerificationTokenService, VerificationTokenService>();
+builder.Services.AddScoped<IPhoneNumberNormalizer, PhoneNumberNormalizer>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddSingleton<EmailTemplateLoader>();
 builder.Services.AddSingleton<EmailTemplateRenderer>();

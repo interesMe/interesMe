@@ -8,6 +8,8 @@ public sealed class UserVerification
 
     public DateTime? EmailVerifiedAt { get; set; }
 
+    public string? PhoneNumber { get; set; }
+
     public DateTime? PhoneVerifiedAt { get; set; }
 
     public DateTime? IdentityVerifiedAt { get; set; }
