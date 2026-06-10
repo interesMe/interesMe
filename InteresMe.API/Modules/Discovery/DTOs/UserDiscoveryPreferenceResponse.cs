@@ -6,5 +6,7 @@ public sealed class UserDiscoveryPreferenceResponse
 {
     public UserGoal? Goal { get; set; }
 
+    public bool IsGoalSelected { get; set; }
+
     public DateTime? UpdatedAt { get; set; }
 }

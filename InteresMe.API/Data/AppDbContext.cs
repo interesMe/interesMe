@@ -158,6 +158,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(preference => preference.UpdatedAt)
                 .IsRequired();
 
+            entity.HasIndex(preference => preference.Goal);
+
             entity.HasOne(preference => preference.User)
                 .WithOne()
                 .HasForeignKey<UserDiscoveryPreference>(preference => preference.UserId)

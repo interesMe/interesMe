@@ -9,6 +9,7 @@ using static InteresMe.API.BuildingBlocks.Results.ApplicationResultMapper;
 namespace InteresMe.API.Modules.Discovery.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/discovery")]
 public sealed class DiscoveryController(
     IDiscoveryService discoveryService,
@@ -19,14 +20,12 @@ public sealed class DiscoveryController(
     public IActionResult GetGoals() => Ok(discoveryService.GetGoals());
 
     [HttpGet("me")]
-    [Authorize]
     public Task<IActionResult> GetMyPreference(
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
             userId => discoveryService.GetMyPreferenceAsync(userId, cancellationToken));
 
     [HttpPut("me/goal")]
-    [Authorize]
     public Task<IActionResult> UpdateMyGoal(
         [FromBody] UpdateUserGoalRequest request,
         CancellationToken cancellationToken) =>
