@@ -242,13 +242,30 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
                 "Initiative owner cannot request to join their own initiative.");
         }
 
-        var message = NormalizeOptional(request.Message);
+        var normalized = NormalizeJoinRequest(request);
 
-        if (message?.Length > JoinRequestMessageMaxLength)
+        if (normalized.Message?.Length > JoinRequestMessageMaxLength)
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.Validation,
                 $"Message must be at most {JoinRequestMessageMaxLength} characters.");
+        }
+
+        if (normalized.RoleId is not null)
+        {
+            var roleBelongsToInitiative = await dbContext.InitiativeRoles
+                .AnyAsync(
+                    role =>
+                        role.Id == normalized.RoleId.Value &&
+                        role.InitiativeId == initiativeId,
+                    cancellationToken);
+
+            if (!roleBelongsToInitiative)
+            {
+                return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
+                    ApplicationErrorKind.Validation,
+                    "Role must belong to the initiative.");
+            }
         }
 
         var duplicatePendingRequest = await dbContext.InitiativeJoinRequests
@@ -272,7 +289,12 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
             Id = Guid.NewGuid(),
             InitiativeId = initiativeId,
             UserId = userId,
-            Message = message,
+            RoleId = normalized.RoleId,
+            Message = normalized.Message,
+            Motivation = normalized.Motivation,
+            Experience = normalized.Experience,
+            Contribution = normalized.Contribution,
+            Availability = normalized.Availability,
             Status = InitiativeJoinRequestStatus.Pending,
             CreatedAt = now,
             UpdatedAt = now
@@ -525,6 +547,15 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList() ?? [];
 
+    private static NormalizedJoinRequest NormalizeJoinRequest(
+        CreateInitiativeJoinRequestRequest request) => new(
+        request.RoleId,
+        NormalizeOptional(request.Message),
+        NormalizeOptional(request.Motivation),
+        NormalizeOptional(request.Experience),
+        NormalizeOptional(request.Contribution),
+        NormalizeOptional(request.Availability));
+
     private static string? NormalizeOptional(string? value)
     {
         var normalized = value?.Trim();
@@ -598,7 +629,12 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
         Id = joinRequest.Id,
         InitiativeId = joinRequest.InitiativeId,
         UserId = joinRequest.UserId,
+        RoleId = joinRequest.RoleId,
         Message = joinRequest.Message,
+        Motivation = joinRequest.Motivation,
+        Experience = joinRequest.Experience,
+        Contribution = joinRequest.Contribution,
+        Availability = joinRequest.Availability,
         Status = joinRequest.Status,
         CreatedAt = joinRequest.CreatedAt,
         UpdatedAt = joinRequest.UpdatedAt
@@ -613,6 +649,14 @@ public sealed class InitiativeService(AppDbContext dbContext) : IInitiativeServi
         string? University,
         int? TeamSize,
         InitiativeStatus? Status);
+
+    private sealed record NormalizedJoinRequest(
+        Guid? RoleId,
+        string? Message,
+        string? Motivation,
+        string? Experience,
+        string? Contribution,
+        string? Availability);
 
     private readonly record struct OwnerAccessError(
         ApplicationErrorKind Kind,

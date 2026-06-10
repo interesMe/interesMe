@@ -10,7 +10,17 @@ public sealed class InitiativeJoinRequestResponse
 
     public Guid UserId { get; set; }
 
+    public Guid? RoleId { get; set; }
+
     public string? Message { get; set; }
+
+    public string? Motivation { get; set; }
+
+    public string? Experience { get; set; }
+
+    public string? Contribution { get; set; }
+
+    public string? Availability { get; set; }
 
     public InitiativeJoinRequestStatus Status { get; set; }
 

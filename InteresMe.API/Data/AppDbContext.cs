@@ -266,6 +266,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(joinRequest => joinRequest.Message)
                 .HasMaxLength(500);
 
+            entity.Property(joinRequest => joinRequest.Motivation);
+
+            entity.Property(joinRequest => joinRequest.Experience);
+
+            entity.Property(joinRequest => joinRequest.Contribution);
+
+            entity.Property(joinRequest => joinRequest.Availability);
+
             entity.Property(joinRequest => joinRequest.Status)
                 .IsRequired();
 
@@ -279,6 +287,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(joinRequest => joinRequest.UserId);
 
+            entity.HasIndex(joinRequest => joinRequest.RoleId);
+
             entity.HasOne(joinRequest => joinRequest.Initiative)
                 .WithMany(initiative => initiative.JoinRequests)
                 .HasForeignKey(joinRequest => joinRequest.InitiativeId)
@@ -288,6 +298,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(joinRequest => joinRequest.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(joinRequest => joinRequest.Role)
+                .WithMany()
+                .HasForeignKey(joinRequest => joinRequest.RoleId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
 

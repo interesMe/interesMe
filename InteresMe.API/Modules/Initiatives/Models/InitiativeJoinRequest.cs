@@ -10,7 +10,17 @@ public sealed class InitiativeJoinRequest
 
     public Guid UserId { get; set; }
 
+    public Guid? RoleId { get; set; }
+
     public string? Message { get; set; }
+
+    public string? Motivation { get; set; }
+
+    public string? Experience { get; set; }
+
+    public string? Contribution { get; set; }
+
+    public string? Availability { get; set; }
 
     public InitiativeJoinRequestStatus Status { get; set; }
 
@@ -21,4 +31,6 @@ public sealed class InitiativeJoinRequest
     public Initiative Initiative { get; set; } = null!;
 
     public User User { get; set; } = null!;
+
+    public InitiativeRole? Role { get; set; }
 }
