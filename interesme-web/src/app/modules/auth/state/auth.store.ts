@@ -17,13 +17,7 @@ interface AuthState {
 })
 export class AuthStore {
   private readonly tokenService = inject(TokenService);
-  private readonly state = signal<AuthState>({
-    user: this.tokenService.getUser(),
-    accessToken: this.tokenService.getAccessToken(),
-    refreshToken: this.tokenService.getRefreshToken(),
-    isLoading: false,
-    error: null,
-  });
+  private readonly state = signal<AuthState>(this.createInitialState());
 
   readonly user = computed(() => this.state().user);
   readonly accessToken = computed(() => this.state().accessToken);
@@ -63,8 +57,28 @@ export class AuthStore {
     this.patch({ accessToken, refreshToken });
   }
 
+  hasCompleteSession(): boolean {
+    const { user, accessToken } = this.state();
+
+    if ((user && !accessToken) || (accessToken && !user)) {
+      this.clear();
+      return false;
+    }
+
+    if (!user || !accessToken) {
+      return false;
+    }
+
+    if (this.tokenService.isAccessTokenExpired()) {
+      this.clear();
+      return false;
+    }
+
+    return true;
+  }
+
   clear(): void {
-    this.tokenService.clear();
+    this.tokenService.clearSession();
     this.state.set({
       user: null,
       accessToken: null,
@@ -72,6 +86,34 @@ export class AuthStore {
       isLoading: false,
       error: null,
     });
+  }
+
+  private createInitialState(): AuthState {
+    const user = this.tokenService.getUser();
+    const accessToken = this.tokenService.getAccessToken();
+
+    if ((user && !accessToken) || (accessToken && !user)) {
+      this.tokenService.clearSession();
+      return this.emptyState();
+    }
+
+    return {
+      user,
+      accessToken,
+      refreshToken: this.tokenService.getRefreshToken(),
+      isLoading: false,
+      error: null,
+    };
+  }
+
+  private emptyState(): AuthState {
+    return {
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isLoading: false,
+      error: null,
+    };
   }
 
   private patch(state: Partial<AuthState>): void {

@@ -47,6 +47,31 @@ export class TokenService {
     this.setItem(REFRESH_TOKEN_KEY, refreshToken);
   }
 
+  hasCompleteSession(): boolean {
+    const accessToken = this.getAccessToken();
+    const user = this.getUser();
+
+    if ((user && !accessToken) || (accessToken && !user)) {
+      this.clearSession();
+      return false;
+    }
+
+    if (!user || !accessToken) {
+      return false;
+    }
+
+    if (this.isAccessTokenExpired()) {
+      this.clearSession();
+      return false;
+    }
+
+    return true;
+  }
+
+  clearSession(): void {
+    this.clear();
+  }
+
   clear(): void {
     this.removeItem(ACCESS_TOKEN_KEY);
     this.removeItem(REFRESH_TOKEN_KEY);
