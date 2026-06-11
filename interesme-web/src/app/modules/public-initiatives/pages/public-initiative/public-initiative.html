@@ -1,0 +1,137 @@
+<main class="public-page">
+  <nav class="topbar" [attr.aria-label]="t('publicInitiative.nav.aria')">
+    <a class="brand" routerLink="/initiatives" [attr.aria-label]="t('publicInitiative.nav.homeAria')">
+      <span class="brand-mark">I</span>
+      <span>InteresMe</span>
+    </a>
+  </nav>
+
+  @if (isLoading()) {
+    <section class="state-card" aria-live="polite">
+      <span class="loader" aria-hidden="true"></span>
+      <h1>{{ t('publicInitiative.loading.title') }}</h1>
+      <p>{{ t('publicInitiative.loading.description') }}</p>
+    </section>
+  } @else if (isNotFound()) {
+    <section class="state-card">
+      <span class="state-icon" aria-hidden="true">?</span>
+      <h1>{{ t('publicInitiative.notFound.title') }}</h1>
+      <p>{{ t('publicInitiative.notFound.description') }}</p>
+      <a class="button button-primary" routerLink="/initiatives">{{ t('publicInitiative.notFound.action') }}</a>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="state-card">
+      <span class="state-icon error" aria-hidden="true">!</span>
+      <h1>{{ t('publicInitiative.error.title') }}</h1>
+      <p>{{ errorMessage() }}</p>
+      <button class="button button-primary" type="button" (click)="ngOnInit()">{{ t('publicInitiative.error.retry') }}</button>
+    </section>
+  } @else if (initiative(); as currentInitiative) {
+    <section class="hero-grid">
+      <article class="hero-card">
+        <span class="goal-badge" [ngClass]="goalClass()">{{ goalLabel() }}</span>
+
+        <div class="hero-copy">
+          <p class="eyebrow">{{ t('publicInitiative.hero.eyebrow') }}</p>
+          <h1>{{ currentInitiative.title }}</h1>
+          <p class="description">{{ currentInitiative.shortDescription }}</p>
+        </div>
+
+        @if (currentInitiative.ownerDisplayName) {
+          <p class="owner-note">{{ t('publicInitiative.hero.startedBy', { name: currentInitiative.ownerDisplayName }) }}</p>
+        }
+      </article>
+
+      <aside class="action-panel" [attr.aria-label]="t('publicInitiative.actions.aria')">
+        <p class="panel-label">{{ t('publicInitiative.actions.eyebrow') }}</p>
+        <h2>{{ t('publicInitiative.actions.title') }}</h2>
+        <p>{{ t('publicInitiative.actions.description') }}</p>
+        <button class="button button-primary" type="button" (click)="goToApply()">{{ t('publicInitiative.actions.apply') }}</button>
+        <button class="button button-secondary" type="button" (click)="copyLink()">
+          @if (copyState() === 'copied') {
+            {{ t('publicInitiative.actions.copied') }}
+          } @else if (copyState() === 'failed') {
+            {{ t('publicInitiative.actions.copyFailed') }}
+          } @else {
+            {{ t('publicInitiative.actions.copy') }}
+          }
+        </button>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <article class="section-card">
+        <div class="section-heading">
+          <span aria-hidden="true">#</span>
+          <div>
+            <h2>{{ t('publicInitiative.interests.title') }}</h2>
+            <p>{{ t('publicInitiative.interests.description') }}</p>
+          </div>
+        </div>
+
+        @if (currentInitiative.interests.length > 0) {
+          <div class="chip-list">
+            @for (interest of currentInitiative.interests; track interest.id) {
+              <span class="chip interest-chip">{{ interest.name }}</span>
+            }
+          </div>
+        } @else {
+          <p class="empty-copy">{{ t('publicInitiative.interests.empty') }}</p>
+        }
+      </article>
+
+      <article class="section-card">
+        <div class="section-heading">
+          <span aria-hidden="true">+</span>
+          <div>
+            <h2>{{ t('publicInitiative.roles.title') }}</h2>
+            <p>{{ t('publicInitiative.roles.description') }}</p>
+          </div>
+        </div>
+
+        @if (currentInitiative.roles.length > 0) {
+          <div class="role-list">
+            @for (role of currentInitiative.roles; track role.id) {
+              <span class="role-chip">{{ role.name }}</span>
+            }
+          </div>
+        } @else {
+          <p class="empty-copy">{{ t('publicInitiative.roles.empty') }}</p>
+        }
+      </article>
+
+      @if (currentInitiative.university || currentInitiative.teamSize) {
+        <article class="section-card context-card">
+          <div class="section-heading">
+            <span aria-hidden="true">i</span>
+            <div>
+              <h2>{{ t('publicInitiative.context.title') }}</h2>
+              <p>{{ t('publicInitiative.context.description') }}</p>
+            </div>
+          </div>
+
+          <dl class="context-list">
+            @if (currentInitiative.university) {
+              <div>
+                <dt>{{ t('publicInitiative.context.university') }}</dt>
+                <dd>{{ currentInitiative.university }}</dd>
+              </div>
+            }
+
+            @if (currentInitiative.teamSize) {
+              <div>
+                <dt>{{ t('publicInitiative.context.teamSize') }}</dt>
+                <dd>{{ t('publicInitiative.context.teamSizeValue', { count: currentInitiative.teamSize }) }}</dd>
+              </div>
+            }
+          </dl>
+        </article>
+      }
+    </section>
+
+    <div class="mobile-cta" [attr.aria-label]="t('publicInitiative.actions.aria')">
+      <button class="button button-primary" type="button" (click)="goToApply()">{{ t('publicInitiative.actions.apply') }}</button>
+      <button class="button button-secondary" type="button" (click)="copyLink()">{{ t('publicInitiative.actions.copy') }}</button>
+    </div>
+  }
+</main>

@@ -1,0 +1,96 @@
+<main class="initiatives-page">
+  <section class="list-hero">
+    <div>
+      <p class="eyebrow">{{ t('initiativesList.header.eyebrow') }}</p>
+      <h1>{{ t('initiativesList.header.title') }}</h1>
+      <p>{{ t('initiativesList.header.description') }}</p>
+    </div>
+
+    <a class="button button-primary" [routerLink]="createPath">{{ t('initiativesList.header.create') }}</a>
+  </section>
+
+  @if (isLoading()) {
+    <section class="state-card" aria-live="polite">
+      <span class="loader" aria-hidden="true"></span>
+      <h1>{{ t('initiativesList.loading.title') }}</h1>
+      <p>{{ t('initiativesList.loading.description') }}</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="state-card">
+      <span class="state-icon error" aria-hidden="true">!</span>
+      <h1>{{ t('initiativesList.error.title') }}</h1>
+      <p>{{ errorMessage() }}</p>
+      <button class="button button-primary" type="button" (click)="loadInitiatives()">
+        {{ t('initiativesList.error.retry') }}
+      </button>
+    </section>
+  } @else if (initiatives().length === 0) {
+    <section class="state-card">
+      <span class="state-icon" aria-hidden="true">+</span>
+      <h1>{{ t('initiativesList.empty.title') }}</h1>
+      <p>{{ t('initiativesList.empty.description') }}</p>
+      <a class="button button-primary" [routerLink]="createPath">{{ t('initiativesList.empty.create') }}</a>
+    </section>
+  } @else {
+    <section class="initiative-grid" aria-live="polite">
+      @for (initiative of initiatives(); track initiative.id) {
+        <article class="initiative-card">
+          <div class="card-topline">
+            <span class="goal-badge" [ngClass]="goalClass(initiative.goalType)">
+              {{ goalLabel(initiative.goalType) }}
+            </span>
+          </div>
+
+          <div class="card-copy">
+            <h2>{{ initiative.title }}</h2>
+            <p>{{ initiative.shortDescription }}</p>
+          </div>
+
+          @if (initiative.university || initiative.teamSize) {
+            <dl class="card-context">
+              @if (initiative.university) {
+                <div>
+                  <dt>{{ t('initiativesList.card.university') }}</dt>
+                  <dd>{{ initiative.university }}</dd>
+                </div>
+              }
+
+              @if (initiative.teamSize) {
+                <div>
+                  <dt>{{ t('initiativesList.card.teamSize') }}</dt>
+                  <dd>{{ t('initiativesList.card.teamSizeValue', { count: initiative.teamSize }) }}</dd>
+                </div>
+              }
+            </dl>
+          }
+
+          @if (initiative.interests.length > 0) {
+            <div class="chip-block">
+              <span class="chip-label">{{ t('initiativesList.card.interests') }}</span>
+              <div class="chip-list">
+                @for (interest of initiative.interests.slice(0, 4); track interest.id) {
+                  <span class="chip interest-chip">{{ interest.name }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          @if (initiative.roles.length > 0) {
+            <div class="chip-block">
+              <span class="chip-label">{{ t('initiativesList.card.roles') }}</span>
+              <div class="chip-list">
+                @for (role of initiative.roles.slice(0, 3); track role.id) {
+                  <span class="chip role-chip">{{ role.name }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <a class="card-link" [routerLink]="initiativePath(initiative)">
+            {{ t('initiativesList.card.open') }}
+          </a>
+        </article>
+      }
+    </section>
+  }
+</main>

@@ -44,6 +44,97 @@ input {
   font-family: inherit;
 }
 
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border: 1px solid transparent;
+  border-radius: var(--im-radius-md);
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.button-primary {
+  background: var(--im-primary);
+  color: #fff;
+}
+
+.button-primary:hover {
+  background: var(--im-primary-hover);
+}
+
+.button-secondary {
+  border-color: var(--im-border);
+  background: var(--im-surface);
+  color: var(--im-text);
+}
+
+.button-secondary:hover {
+  background: var(--im-surface-soft);
+}
+
+.state-card {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(620px, 100%);
+  margin: 80px auto 0;
+  padding: 34px 24px;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-lg);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--im-shadow-card);
+  text-align: center;
+}
+
+.state-card h1,
+.state-card p {
+  margin: 0;
+}
+
+.state-card h1 {
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.05;
+}
+
+.state-card p {
+  color: var(--im-muted);
+  line-height: 1.55;
+}
+
+.state-icon,
+.loader {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(20, 184, 166, 0.12);
+  color: var(--im-primary-hover);
+  font-weight: 900;
+}
+
+.state-icon.error {
+  background: rgba(255, 64, 64, 0.12);
+  color: var(--im-connect);
+}
+
+.loader {
+  border: 3px solid rgba(20, 184, 166, 0.15);
+  border-top-color: var(--im-primary);
+  animation: im-spin 800ms linear infinite;
+}
+
+@keyframes im-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .placeholder-page {
   max-width: 880px;
   margin: 0 auto;
