@@ -63,7 +63,7 @@ export class TokenService {
     const expiresAt = this.getJwtExpiry(token);
 
     if (!expiresAt) {
-      return false;
+      return true;
     }
 
     return Date.now() >= expiresAt - offsetSeconds * 1000;

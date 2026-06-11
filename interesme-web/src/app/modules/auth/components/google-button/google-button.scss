@@ -1,13 +1,17 @@
 .google-button {
   width: 100%;
-  min-height: 46px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #111827;
+  min-height: 48px;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-md);
+  background: var(--im-surface);
+  color: var(--im-text);
   cursor: pointer;
   font: inherit;
-  font-weight: 700;
+  font-weight: 900;
+}
+
+.google-button:hover {
+  background: var(--im-surface-soft);
 }
 
 .google-button:disabled {

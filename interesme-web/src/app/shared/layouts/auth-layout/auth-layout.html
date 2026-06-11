@@ -1,8 +1,30 @@
-<div class="auth-layout">
-  <router-outlet />
-</div>
 <main class="auth-shell">
-  <section class="auth-panel" aria-label="Authentication">
+  <section class="auth-story" aria-labelledby="auth-story-title">
+    <p class="auth-eyebrow">{{ t('auth.layout.eyebrow') }}</p>
+    <h1 id="auth-story-title">{{ t('auth.layout.title') }}</h1>
+    <p>{{ t('auth.layout.subtitle') }}</p>
+
+    <div class="intent-board" [attr.aria-label]="t('auth.layout.boardAria')">
+      <article class="intent-card connect">
+        <span>{{ t('auth.layout.card.connectType') }}</span>
+        <strong>{{ t('auth.layout.card.connectTitle') }}</strong>
+      </article>
+      <article class="intent-card learn">
+        <span>{{ t('auth.layout.card.learnType') }}</span>
+        <strong>{{ t('auth.layout.card.learnTitle') }}</strong>
+      </article>
+      <article class="intent-card play">
+        <span>{{ t('auth.layout.card.playType') }}</span>
+        <strong>{{ t('auth.layout.card.playTitle') }}</strong>
+      </article>
+      <article class="intent-card build">
+        <span>{{ t('auth.layout.card.buildType') }}</span>
+        <strong>{{ t('auth.layout.card.buildTitle') }}</strong>
+      </article>
+    </div>
+  </section>
+
+  <section class="auth-panel" [attr.aria-label]="t('auth.layout.panelAria')">
     <router-outlet></router-outlet>
   </section>
 </main>

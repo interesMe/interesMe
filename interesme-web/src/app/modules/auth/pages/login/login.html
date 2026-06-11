@@ -1,23 +1,29 @@
 <section class="auth-card">
   <header class="auth-header">
     <p class="eyebrow">InteresMe</p>
-    <h1>Sign in</h1>
+    <h1>{{ t('auth.login.title') }}</h1>
+    <p>{{ t('auth.login.subtitle') }}</p>
   </header>
 
   <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <label>
-      Email
-      <input type="email" autocomplete="email" formControlName="email" placeholder="you@example.com" />
-      @if (form.controls.email.touched && form.controls.email.invalid) {
-        <span class="hint">Enter a valid email.</span>
+    <label class="field">
+      <span>{{ t('auth.common.email') }}</span>
+      <input type="email" autocomplete="email" formControlName="email" [placeholder]="t('auth.common.emailPlaceholder')" />
+      @if (showRequiredError('email')) {
+        <span class="hint">{{ t('auth.validation.email') }}</span>
       }
     </label>
 
-    <label>
-      Password
-      <input type="password" autocomplete="current-password" formControlName="password" placeholder="Your password" />
-      @if (form.controls.password.touched && form.controls.password.invalid) {
-        <span class="hint">Password is required.</span>
+    <label class="field">
+      <span>{{ t('auth.common.password') }}</span>
+      <input
+        type="password"
+        autocomplete="current-password"
+        formControlName="password"
+        [placeholder]="t('auth.login.passwordPlaceholder')"
+      />
+      @if (showRequiredError('password')) {
+        <span class="hint">{{ t('auth.validation.passwordRequired') }}</span>
       }
     </label>
 
@@ -25,9 +31,11 @@
       <p class="error" role="alert">{{ errorMessage() }}</p>
     }
 
-    <button type="submit" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? 'Sending request...' : 'Sign in' }}
+    <button class="auth-submit" type="submit" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? t('auth.common.loading') : t('auth.login.submit') }}
     </button>
+
+    <div class="auth-divider"><span>{{ t('auth.common.or') }}</span></div>
 
     <app-google-button
       [clientId]="googleClientId"
@@ -46,8 +54,12 @@
     />
   </form>
 
+  @if (hasReturnUrl()) {
+    <a class="return-link" [routerLink]="returnUrl()">{{ t('auth.login.backToIntent') }}</a>
+  }
+
   <p class="auth-switch">
-    New here?
-    <a [routerLink]="registerPath()">Create an account</a>
+    {{ t('auth.login.switchPrompt') }}
+    <a [routerLink]="registerPath()" [queryParams]="registerQueryParams()">{{ t('auth.login.switchAction') }}</a>
   </p>
 </section>

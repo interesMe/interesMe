@@ -3,7 +3,10 @@ import { ReactiveFormsModule, Validators, NonNullableFormBuilder } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslationKey } from '../../../../core/i18n/translations';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
+import { isValidReturnUrl, normalizeReturnUrl } from '../../../../core/utils/return-url.util';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -17,11 +20,18 @@ export class RegisterComponent {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(I18nService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly loginPath = computed(() => `/${APP_ROUTES.login}`);
-  readonly returnUrl = computed(() => this.route.snapshot.queryParamMap.get('returnUrl') ?? `/${APP_ROUTES.initiatives}`);
+  readonly returnUrlParam = computed(() => this.route.snapshot.queryParamMap.get('returnUrl'));
+  readonly loginQueryParams = computed(() => {
+    const returnUrl = this.returnUrlParam();
+    return isValidReturnUrl(returnUrl) ? { returnUrl } : null;
+  });
+  readonly returnUrl = computed(() => normalizeReturnUrl(this.returnUrlParam()));
+  readonly hasReturnUrl = computed(() => isValidReturnUrl(this.returnUrlParam()));
 
   readonly form = this.formBuilder.group({
     displayName: ['', [Validators.required, Validators.maxLength(80)]],
@@ -39,7 +49,7 @@ export class RegisterComponent {
     const request = this.form.getRawValue();
 
     if (request.password !== request.confirmPassword) {
-      this.errorMessage.set('Passwords do not match.');
+      this.errorMessage.set(this.t('auth.register.passwordMismatch'));
       return;
     }
 
@@ -49,9 +59,18 @@ export class RegisterComponent {
     this.authService.register(request).subscribe({
       next: () => void this.router.navigateByUrl(this.returnUrl()),
       error: (error: unknown) => {
-        this.errorMessage.set(getApiErrorMessage(error, 'Unable to create your account right now.'));
+        this.errorMessage.set(getApiErrorMessage(error, this.t('auth.register.errorFallback')));
         this.isSubmitting.set(false);
       },
     });
+  }
+
+  showRequiredError(controlName: 'displayName' | 'email' | 'password' | 'confirmPassword'): boolean {
+    const control = this.form.controls[controlName];
+    return control.touched && control.invalid;
+  }
+
+  t(key: TranslationKey, params?: Record<string, string | number | boolean | null | undefined>): string {
+    return this.i18n.t(key, params);
   }
 }

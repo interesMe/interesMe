@@ -1,4 +1,7 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
+
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslationKey } from '../../../../core/i18n/translations';
 
 interface GoogleCredentialResponse {
   credential?: string;
@@ -28,6 +31,7 @@ type GoogleWindow = Window & { google?: GoogleIdentityServices };
 })
 export class GoogleButton {
   private static scriptPromise: Promise<GoogleIdentityServices> | null = null;
+  private readonly i18n = inject(I18nService);
 
   readonly clientId = input('');
   readonly disabled = input(false);
@@ -42,7 +46,7 @@ export class GoogleButton {
   continueWithGoogle(): void {
     if (this.isDisabled()) {
       if (!this.clientId()) {
-        this.error.emit('Google sign in is not configured yet.');
+        this.error.emit(this.t('auth.google.notConfigured'));
       }
 
       return;
@@ -64,7 +68,7 @@ export class GoogleButton {
         });
       })
       .catch(() => {
-        this.error.emit('Google sign in could not be loaded.');
+        this.error.emit(this.t('auth.google.loadFailed'));
         this.setLoading(false);
       });
   }
@@ -73,11 +77,15 @@ export class GoogleButton {
     this.setLoading(false);
 
     if (!response.credential) {
-      this.error.emit('Google sign in did not return a credential.');
+      this.error.emit(this.t('auth.google.noCredential'));
       return;
     }
 
     this.idToken.emit(response.credential);
+  }
+
+  t(key: TranslationKey, params?: Record<string, string | number | boolean | null | undefined>): string {
+    return this.i18n.t(key, params);
   }
 
   private loadGoogleIdentityScript(): Promise<GoogleIdentityServices> {

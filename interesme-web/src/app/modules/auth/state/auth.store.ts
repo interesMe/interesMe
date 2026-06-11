@@ -30,7 +30,9 @@ export class AuthStore {
   readonly refreshToken = computed(() => this.state().refreshToken);
   readonly isLoading = computed(() => this.state().isLoading);
   readonly error = computed(() => this.state().error);
-  readonly isAuthenticated = computed(() => Boolean(this.state().accessToken && this.state().user));
+  readonly isAuthenticated = computed(() =>
+    Boolean(this.state().accessToken && this.state().user && !this.tokenService.isAccessTokenExpired()),
+  );
 
   setLoading(isLoading: boolean): void {
     this.patch({ isLoading });

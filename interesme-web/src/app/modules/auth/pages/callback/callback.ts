@@ -2,7 +2,10 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslationKey } from '../../../../core/i18n/translations';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
+import { normalizeReturnUrl } from '../../../../core/utils/return-url.util';
 import { GITHUB_RETURN_URL_KEY } from '../../components/github-button/github-button';
 import { AuthService } from '../../services/auth.service';
 
@@ -16,22 +19,23 @@ export class CallbackComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
-  readonly message = signal('Completing GitHub sign in...');
+  readonly message = signal(this.t('auth.callback.loading'));
   readonly loginPath = `/${APP_ROUTES.login}`;
 
   ngOnInit(): void {
     const error = this.route.snapshot.queryParamMap.get('error');
 
     if (error) {
-      this.message.set('GitHub sign in was cancelled or failed.');
+      this.message.set(this.t('auth.callback.cancelled'));
       return;
     }
 
     const sessionCode = this.route.snapshot.queryParamMap.get('githubSessionCode');
 
     if (!sessionCode) {
-      this.message.set('GitHub sign in did not return a session.');
+      this.message.set(this.t('auth.callback.missingSession'));
       return;
     }
 
@@ -41,9 +45,13 @@ export class CallbackComponent implements OnInit {
         void this.router.navigateByUrl(returnUrl);
       },
       error: (authError: unknown) => {
-        this.message.set(getApiErrorMessage(authError, 'GitHub sign in failed.'));
+        this.message.set(getApiErrorMessage(authError, this.t('auth.callback.errorFallback')));
       },
     });
+  }
+
+  t(key: TranslationKey, params?: Record<string, string | number | boolean | null | undefined>): string {
+    return this.i18n.t(key, params);
   }
 
   private readAndClearReturnUrl(): string {
@@ -51,7 +59,7 @@ export class CallbackComponent implements OnInit {
       return `/${APP_ROUTES.initiatives}`;
     }
 
-    const returnUrl = sessionStorage.getItem(GITHUB_RETURN_URL_KEY) ?? `/${APP_ROUTES.initiatives}`;
+    const returnUrl = normalizeReturnUrl(sessionStorage.getItem(GITHUB_RETURN_URL_KEY));
     sessionStorage.removeItem(GITHUB_RETURN_URL_KEY);
 
     return returnUrl;

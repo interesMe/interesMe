@@ -1,39 +1,50 @@
 <section class="auth-card">
   <header class="auth-header">
     <p class="eyebrow">InteresMe</p>
-    <h1>Create account</h1>
+    <h1>{{ t('auth.register.title') }}</h1>
+    <p>{{ t('auth.register.subtitle') }}</p>
   </header>
 
   <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <label>
-      Display name
-      <input type="text" autocomplete="name" formControlName="displayName" placeholder="How should we call you?" />
-      @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
-        <span class="hint">Display name is required.</span>
+    <label class="field">
+      <span>{{ t('auth.register.displayName') }}</span>
+      <input type="text" autocomplete="name" formControlName="displayName" [placeholder]="t('auth.register.displayNamePlaceholder')" />
+      @if (showRequiredError('displayName')) {
+        <span class="hint">{{ t('auth.validation.displayName') }}</span>
       }
     </label>
 
-    <label>
-      Email
-      <input type="email" autocomplete="email" formControlName="email" placeholder="you@example.com" />
-      @if (form.controls.email.touched && form.controls.email.invalid) {
-        <span class="hint">Enter a valid email.</span>
+    <label class="field">
+      <span>{{ t('auth.common.email') }}</span>
+      <input type="email" autocomplete="email" formControlName="email" [placeholder]="t('auth.common.emailPlaceholder')" />
+      @if (showRequiredError('email')) {
+        <span class="hint">{{ t('auth.validation.email') }}</span>
       }
     </label>
 
-    <label>
-      Password
-      <input type="password" autocomplete="new-password" formControlName="password" placeholder="At least 8 characters" />
-      @if (form.controls.password.touched && form.controls.password.invalid) {
-        <span class="hint">Use at least 8 characters.</span>
+    <label class="field">
+      <span>{{ t('auth.common.password') }}</span>
+      <input
+        type="password"
+        autocomplete="new-password"
+        formControlName="password"
+        [placeholder]="t('auth.register.passwordPlaceholder')"
+      />
+      @if (showRequiredError('password')) {
+        <span class="hint">{{ t('auth.validation.passwordLength') }}</span>
       }
     </label>
 
-    <label>
-      Confirm password
-      <input type="password" autocomplete="new-password" formControlName="confirmPassword" placeholder="Repeat password" />
-      @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.invalid) {
-        <span class="hint">Confirm your password.</span>
+    <label class="field">
+      <span>{{ t('auth.register.confirmPassword') }}</span>
+      <input
+        type="password"
+        autocomplete="new-password"
+        formControlName="confirmPassword"
+        [placeholder]="t('auth.register.confirmPasswordPlaceholder')"
+      />
+      @if (showRequiredError('confirmPassword')) {
+        <span class="hint">{{ t('auth.validation.confirmPassword') }}</span>
       }
     </label>
 
@@ -41,13 +52,17 @@
       <p class="error" role="alert">{{ errorMessage() }}</p>
     }
 
-    <button type="submit" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? 'Sending request...' : 'Create account' }}
+    <button class="auth-submit" type="submit" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? t('auth.common.loading') : t('auth.register.submit') }}
     </button>
   </form>
 
+  @if (hasReturnUrl()) {
+    <a class="return-link" [routerLink]="returnUrl()">{{ t('auth.register.backToIntent') }}</a>
+  }
+
   <p class="auth-switch">
-    Already registered?
-    <a [routerLink]="loginPath()">Sign in</a>
+    {{ t('auth.register.switchPrompt') }}
+    <a [routerLink]="loginPath()" [queryParams]="loginQueryParams()">{{ t('auth.register.switchAction') }}</a>
   </p>
 </section>
