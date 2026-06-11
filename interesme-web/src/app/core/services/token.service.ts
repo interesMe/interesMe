@@ -49,7 +49,17 @@ export class TokenService {
 
   hasCompleteSession(): boolean {
     const accessToken = this.getAccessToken();
+    const refreshToken = this.getRefreshToken();
     const user = this.getUser();
+    const hasCompleteSession = Boolean(user && accessToken && !this.isAccessTokenExpired());
+
+    console.debug('[TokenService.hasCompleteSession]', {
+      hasUser: Boolean(user),
+      hasAccessToken: Boolean(accessToken),
+      hasRefreshToken: Boolean(refreshToken),
+      isAccessTokenExpired: this.isAccessTokenExpired(),
+      hasCompleteSession,
+    });
 
     if ((user && !accessToken) || (accessToken && !user)) {
       this.clearSession();
@@ -60,12 +70,12 @@ export class TokenService {
       return false;
     }
 
-    if (this.isAccessTokenExpired()) {
+    if (this.isAccessTokenExpired() && !refreshToken) {
       this.clearSession();
       return false;
     }
 
-    return true;
+    return !this.isAccessTokenExpired();
   }
 
   clearSession(): void {

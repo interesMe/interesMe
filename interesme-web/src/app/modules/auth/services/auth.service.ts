@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, finalize, map, Observable, of, shareReplay, tap, throwError } from 'rxjs';
 
 import { APP_ROUTES } from '../../../core/constants/routes.constants';
 import { TokenService } from '../../../core/services/token.service';
@@ -16,6 +16,7 @@ export class AuthService {
   private readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
   private readonly tokenService = inject(TokenService);
+  private validationRequest$: Observable<boolean> | null = null;
 
   readonly user = this.authStore.user;
   readonly isAuthenticated = this.authStore.isAuthenticated;
@@ -60,6 +61,26 @@ export class AuthService {
         return throwError(() => error);
       }),
     );
+  }
+
+  validateSession(): Observable<boolean> {
+    const user = this.tokenService.getUser();
+    const accessToken = this.tokenService.getAccessToken();
+    const refreshToken = this.tokenService.getRefreshToken();
+
+    if ((user && !accessToken) || (accessToken && !user) || !user || !accessToken || !refreshToken) {
+      this.clearSession();
+      return of(false);
+    }
+
+    this.validationRequest$ ??= this.refreshSession().pipe(
+      map(() => true),
+      catchError(() => of(false)),
+      finalize(() => (this.validationRequest$ = null)),
+      shareReplay(1),
+    );
+
+    return this.validationRequest$;
   }
 
   googleLogin(request: GoogleAuthRequest): Observable<AuthResponse> {

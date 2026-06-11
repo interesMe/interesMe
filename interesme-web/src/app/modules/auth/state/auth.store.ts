@@ -24,9 +24,19 @@ export class AuthStore {
   readonly refreshToken = computed(() => this.state().refreshToken);
   readonly isLoading = computed(() => this.state().isLoading);
   readonly error = computed(() => this.state().error);
-  readonly isAuthenticated = computed(() =>
-    Boolean(this.state().accessToken && this.state().user && !this.tokenService.isAccessTokenExpired()),
-  );
+  readonly isAuthenticated = computed(() => {
+    const state = this.state();
+    const isAuthenticated = Boolean(state.accessToken && state.user && !this.tokenService.isAccessTokenExpired());
+
+    console.debug('[AuthStore.isAuthenticated]', {
+      hasUser: Boolean(state.user),
+      hasAccessToken: Boolean(state.accessToken),
+      isAccessTokenExpired: this.tokenService.isAccessTokenExpired(),
+      isAuthenticated,
+    });
+
+    return isAuthenticated;
+  });
 
   setLoading(isLoading: boolean): void {
     this.patch({ isLoading });
@@ -59,6 +69,15 @@ export class AuthStore {
 
   hasCompleteSession(): boolean {
     const { user, accessToken } = this.state();
+    const hasCompleteSession = Boolean(user && accessToken && !this.tokenService.isAccessTokenExpired());
+
+    console.debug('[AuthStore.hasCompleteSession]', {
+      hasUser: Boolean(user),
+      hasAccessToken: Boolean(accessToken),
+      hasRefreshToken: Boolean(this.state().refreshToken),
+      isAccessTokenExpired: this.tokenService.isAccessTokenExpired(),
+      hasCompleteSession,
+    });
 
     if ((user && !accessToken) || (accessToken && !user)) {
       this.clear();
@@ -69,12 +88,12 @@ export class AuthStore {
       return false;
     }
 
-    if (this.tokenService.isAccessTokenExpired()) {
+    if (this.tokenService.isAccessTokenExpired() && !this.state().refreshToken) {
       this.clear();
       return false;
     }
 
-    return true;
+    return !this.tokenService.isAccessTokenExpired();
   }
 
   clear(): void {
