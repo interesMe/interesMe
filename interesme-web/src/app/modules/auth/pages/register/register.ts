@@ -1,9 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, Validators, NonNullableFormBuilder } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
+import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -16,10 +16,12 @@ export class RegisterComponent {
   private readonly authService = inject(AuthService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly loginPath = computed(() => `/${APP_ROUTES.login}`);
+  readonly returnUrl = computed(() => this.route.snapshot.queryParamMap.get('returnUrl') ?? `/${APP_ROUTES.initiatives}`);
 
   readonly form = this.formBuilder.group({
     displayName: ['', [Validators.required, Validators.maxLength(80)]],
@@ -45,19 +47,11 @@ export class RegisterComponent {
     this.errorMessage.set(null);
 
     this.authService.register(request).subscribe({
-      next: () => void this.router.navigate([APP_ROUTES.profile]),
+      next: () => void this.router.navigateByUrl(this.returnUrl()),
       error: (error: unknown) => {
-        this.errorMessage.set(this.readErrorMessage(error, 'Unable to create your account right now.'));
+        this.errorMessage.set(getApiErrorMessage(error, 'Unable to create your account right now.'));
         this.isSubmitting.set(false);
       },
     });
-  }
-
-  private readErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
-      return error.error.message;
-    }
-
-    return fallback;
   }
 }

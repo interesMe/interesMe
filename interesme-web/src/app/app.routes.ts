@@ -9,8 +9,15 @@ import { AuthLayout } from './shared/layouts/auth-layout/auth-layout';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: APP_ROUTES.profile,
+    redirectTo: APP_ROUTES.initiatives,
     pathMatch: 'full',
+  },
+  {
+    path: APP_ROUTES.publicInitiative,
+    loadChildren: () =>
+      import('./modules/public-initiatives/public-initiatives.routes').then(
+        (routesFile) => routesFile.PUBLIC_INITIATIVES_ROUTES,
+      ),
   },
   {
     path: APP_ROUTES.auth,
@@ -29,17 +36,21 @@ export const routes: Routes = [
         loadChildren: () => import('./modules/profile/profile.routes').then((routesFile) => routesFile.PROFILE_ROUTES),
       },
       {
-        path: APP_ROUTES.matches,
-        loadChildren: () => import('./modules/matches/matches.routes').then((routesFile) => routesFile.MATCHES_ROUTES),
+        path: APP_ROUTES.initiatives,
+        loadChildren: () =>
+          import('./modules/initiatives/initiatives.routes').then((routesFile) => routesFile.INITIATIVES_ROUTES),
       },
       {
-        path: APP_ROUTES.chat,
-        loadChildren: () => import('./modules/chat/chat.routes').then((routesFile) => routesFile.CHAT_ROUTES),
+        path: APP_ROUTES.myInitiatives,
+        loadComponent: () =>
+          import('./modules/initiatives/pages/my-initiatives/my-initiatives').then(
+            (component) => component.MyInitiativesPage,
+          ),
       },
     ],
   },
   {
     path: '**',
-    redirectTo: APP_ROUTES.profile,
+    redirectTo: APP_ROUTES.initiatives,
   },
 ];

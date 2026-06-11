@@ -1,11 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, Validators, NonNullableFormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { APP_ENVIRONMENT } from '../../../../core/constants/app-environment.constants';
 import { AUTH_API_ENDPOINTS } from '../../../../core/constants/api.constants';
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
+import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { GithubButton } from '../../components/github-button/github-button';
 import { GoogleButton } from '../../components/google-button/google-button';
 import { AuthService } from '../../services/auth.service';
@@ -27,7 +27,7 @@ export class LoginComponent {
   readonly registerPath = computed(() => `/${APP_ROUTES.register}`);
   readonly googleClientId = APP_ENVIRONMENT.googleClientId;
   readonly githubLoginUrl = AUTH_API_ENDPOINTS.githubLogin;
-  readonly returnUrl = computed(() => this.route.snapshot.queryParamMap.get('returnUrl') ?? `/${APP_ROUTES.profile}`);
+  readonly returnUrl = computed(() => this.route.snapshot.queryParamMap.get('returnUrl') ?? `/${APP_ROUTES.initiatives}`);
 
   readonly form = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
@@ -48,7 +48,7 @@ export class LoginComponent {
         void this.router.navigateByUrl(this.returnUrl());
       },
       error: (error: unknown) => {
-        this.errorMessage.set(this.readErrorMessage(error, 'Unable to sign in with those credentials.'));
+        this.errorMessage.set(getApiErrorMessage(error, 'Unable to sign in with those credentials.'));
         this.isSubmitting.set(false);
       },
     });
@@ -63,7 +63,7 @@ export class LoginComponent {
         void this.router.navigateByUrl(this.returnUrl());
       },
       error: (error: unknown) => {
-        this.errorMessage.set(this.readErrorMessage(error, 'Google sign in failed.'));
+        this.errorMessage.set(getApiErrorMessage(error, 'Google sign in failed.'));
         this.isSubmitting.set(false);
       },
     });
@@ -87,13 +87,5 @@ export class LoginComponent {
   showGithubError(message: string): void {
     this.errorMessage.set(message);
     this.isSubmitting.set(false);
-  }
-
-  private readErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
-      return error.error.message;
-    }
-
-    return fallback;
   }
 }

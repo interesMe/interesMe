@@ -1,9 +1,9 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { APP_ENVIRONMENT } from '../../../../core/constants/app-environment.constants';
+import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { AuthService } from '../../../auth/services/auth.service';
 import { InterestResponse, ProfileRequest, ProfileResponse } from '../../models';
 import { ProfileApiService } from '../../services/profile-api.service';
@@ -85,7 +85,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isSavingProfile.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(this.readErrorMessage(error, 'Unable to save profile.'));
+        this.errorMessage.set(getApiErrorMessage(error, 'Unable to save profile.'));
         this.isSavingProfile.set(false);
       },
     });
@@ -125,7 +125,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isSavingInterests.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(this.readErrorMessage(error, 'Unable to save interests.'));
+        this.errorMessage.set(getApiErrorMessage(error, 'Unable to save interests.'));
         this.isSavingInterests.set(false);
       },
     });
@@ -189,7 +189,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(this.readErrorMessage(error, 'Unable to load profile page.'));
+        this.errorMessage.set(getApiErrorMessage(error, 'Unable to load profile page.'));
         this.isLoading.set(false);
       },
     });
@@ -280,13 +280,5 @@ export class ProfileComponent implements OnInit, OnDestroy {
       URL.revokeObjectURL(this.objectAvatarPreviewUrl);
       this.objectAvatarPreviewUrl = null;
     }
-  }
-
-  private readErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof HttpErrorResponse && typeof error.error?.message === 'string') {
-      return error.error.message;
-    }
-
-    return fallback;
   }
 }
