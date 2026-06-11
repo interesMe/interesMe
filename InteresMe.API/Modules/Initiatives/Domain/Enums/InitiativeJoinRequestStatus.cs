@@ -1,4 +1,4 @@
-namespace InteresMe.API.Modules.Initiatives.Models;
+namespace InteresMe.API.Modules.Initiatives.Domain.Enums;
 
 public enum InitiativeJoinRequestStatus
 {

@@ -1,4 +1,4 @@
-namespace InteresMe.API.Modules.Initiatives.DTOs;
+namespace InteresMe.API.Modules.Initiatives.Contracts.Responses;
 
 public sealed class InitiativeRoleResponse
 {

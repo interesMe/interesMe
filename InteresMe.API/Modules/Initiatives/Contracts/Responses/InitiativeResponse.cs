@@ -1,12 +1,14 @@
-using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Initiatives.Domain.Enums;
 
-namespace InteresMe.API.Modules.Initiatives.Models;
+namespace InteresMe.API.Modules.Initiatives.Contracts.Responses;
 
-public sealed class Initiative
+public sealed class InitiativeResponse
 {
     public Guid Id { get; set; }
 
     public Guid OwnerUserId { get; set; }
+
+    public string Slug { get; set; } = string.Empty;
 
     public string Title { get; set; } = string.Empty;
 
@@ -20,15 +22,13 @@ public sealed class Initiative
 
     public InitiativeStatus Status { get; set; }
 
+    public InitiativeVisibility Visibility { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
-    public User OwnerUser { get; set; } = null!;
+    public List<InitiativeInterestResponse> Interests { get; set; } = [];
 
-    public ICollection<InitiativeInterest> InitiativeInterests { get; set; } = [];
-
-    public ICollection<InitiativeRole> Roles { get; set; } = [];
-
-    public ICollection<InitiativeJoinRequest> JoinRequests { get; set; } = [];
+    public List<InitiativeRoleResponse> Roles { get; set; } = [];
 }

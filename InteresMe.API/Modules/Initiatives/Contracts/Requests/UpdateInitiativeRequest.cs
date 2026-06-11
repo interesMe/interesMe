@@ -1,6 +1,6 @@
-using InteresMe.API.Modules.Initiatives.Models;
+using InteresMe.API.Modules.Initiatives.Domain.Enums;
 
-namespace InteresMe.API.Modules.Initiatives.DTOs;
+namespace InteresMe.API.Modules.Initiatives.Contracts.Requests;
 
 public sealed class UpdateInitiativeRequest
 {
@@ -19,4 +19,6 @@ public sealed class UpdateInitiativeRequest
     public int? TeamSize { get; set; }
 
     public InitiativeStatus? Status { get; set; }
+
+    public InitiativeVisibility? Visibility { get; set; }
 }

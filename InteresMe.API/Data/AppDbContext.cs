@@ -1,6 +1,7 @@
 using InteresMe.API.Modules.Auth.Models;
 using InteresMe.API.Modules.Discovery.Models;
-using InteresMe.API.Modules.Initiatives.Models;
+using InteresMe.API.Modules.Initiatives.Domain.Entities;
+using InteresMe.API.Modules.Initiatives.Domain.Enums;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.Models;
 using InteresMe.API.Modules.Verification.Models;
@@ -185,6 +186,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasMaxLength(120)
                 .IsRequired();
 
+            entity.Property(initiative => initiative.Slug)
+                .HasMaxLength(140)
+                .IsRequired();
+
             entity.Property(initiative => initiative.ShortDescription)
                 .HasMaxLength(500)
                 .IsRequired();
@@ -198,6 +203,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(initiative => initiative.Status)
                 .IsRequired();
 
+            entity.Property(initiative => initiative.Visibility)
+                .HasDefaultValue(InitiativeVisibility.Public)
+                .HasSentinel(InitiativeVisibility.Public)
+                .IsRequired();
+
             entity.Property(initiative => initiative.CreatedAt)
                 .IsRequired();
 
@@ -206,7 +216,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(initiative => initiative.OwnerUserId);
 
+            entity.HasIndex(initiative => initiative.Slug)
+                .IsUnique();
+
             entity.HasIndex(initiative => initiative.Status);
+
+            entity.HasIndex(initiative => initiative.Visibility);
 
             entity.HasIndex(initiative => initiative.GoalType);
 

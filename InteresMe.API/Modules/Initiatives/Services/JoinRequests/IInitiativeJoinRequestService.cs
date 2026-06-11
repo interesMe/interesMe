@@ -1,33 +1,11 @@
 using InteresMe.API.BuildingBlocks.Results;
-using InteresMe.API.Modules.Initiatives.DTOs;
+using InteresMe.API.Modules.Initiatives.Contracts.Requests;
+using InteresMe.API.Modules.Initiatives.Contracts.Responses;
 
-namespace InteresMe.API.Modules.Initiatives.Services;
+namespace InteresMe.API.Modules.Initiatives.Services.JoinRequests;
 
-public interface IInitiativeService
+public interface IInitiativeJoinRequestService
 {
-    Task<List<InitiativeResponse>> GetAllAsync(
-        CancellationToken cancellationToken = default);
-
-    Task<ApplicationResult<InitiativeResponse>> GetByIdAsync(
-        Guid id,
-        CancellationToken cancellationToken = default);
-
-    Task<ApplicationResult<InitiativeResponse>> CreateAsync(
-        Guid ownerUserId,
-        CreateInitiativeRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<ApplicationResult<InitiativeResponse>> UpdateAsync(
-        Guid ownerUserId,
-        Guid id,
-        UpdateInitiativeRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<ApplicationResult<bool>> DeleteAsync(
-        Guid ownerUserId,
-        Guid id,
-        CancellationToken cancellationToken = default);
-
     Task<ApplicationResult<InitiativeJoinRequestResponse>> CreateJoinRequestAsync(
         Guid userId,
         Guid initiativeId,

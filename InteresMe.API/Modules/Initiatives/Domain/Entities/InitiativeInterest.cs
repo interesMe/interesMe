@@ -1,6 +1,6 @@
 using InteresMe.API.Modules.Interests.Models;
 
-namespace InteresMe.API.Modules.Initiatives.Models;
+namespace InteresMe.API.Modules.Initiatives.Domain.Entities;
 
 public sealed class InitiativeInterest
 {

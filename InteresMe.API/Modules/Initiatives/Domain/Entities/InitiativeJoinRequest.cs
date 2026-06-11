@@ -1,8 +1,9 @@
-using InteresMe.API.Modules.Initiatives.Models;
+using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Initiatives.Domain.Enums;
 
-namespace InteresMe.API.Modules.Initiatives.DTOs;
+namespace InteresMe.API.Modules.Initiatives.Domain.Entities;
 
-public sealed class InitiativeJoinRequestResponse
+public sealed class InitiativeJoinRequest
 {
     public Guid Id { get; set; }
 
@@ -27,4 +28,10 @@ public sealed class InitiativeJoinRequestResponse
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public Initiative Initiative { get; set; } = null!;
+
+    public User User { get; set; } = null!;
+
+    public InitiativeRole? Role { get; set; }
 }

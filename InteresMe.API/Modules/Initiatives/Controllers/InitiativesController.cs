@@ -1,7 +1,9 @@
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.BuildingBlocks.Security;
-using InteresMe.API.Modules.Initiatives.DTOs;
-using InteresMe.API.Modules.Initiatives.Services;
+using InteresMe.API.Modules.Initiatives.Contracts.Requests;
+using InteresMe.API.Modules.Initiatives.Services.InitiativeManagement;
+using InteresMe.API.Modules.Initiatives.Services.InitiativeQueries;
+using InteresMe.API.Modules.Initiatives.Services.JoinRequests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using static InteresMe.API.BuildingBlocks.Results.ApplicationResultMapper;
@@ -12,26 +14,28 @@ namespace InteresMe.API.Modules.Initiatives.Controllers;
 [Authorize]
 [Route("api/initiatives")]
 public sealed class InitiativesController(
-    IInitiativeService initiativeService,
+    IInitiativeQueryService initiativeQueryService,
+    IInitiativeManagementService initiativeManagementService,
+    IInitiativeJoinRequestService initiativeJoinRequestService,
     ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(
         CancellationToken cancellationToken) =>
-        Ok(await initiativeService.GetAllAsync(cancellationToken));
+        Ok(await initiativeQueryService.GetAllAsync(cancellationToken));
 
     [HttpPost]
     public Task<IActionResult> Create(
         [FromBody] CreateInitiativeRequest request,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => initiativeService.CreateAsync(userId, request, cancellationToken));
+            userId => initiativeManagementService.CreateAsync(userId, request, cancellationToken));
 
     [HttpGet("{id:guid}")]
     public Task<IActionResult> GetById(
         Guid id,
         CancellationToken cancellationToken) =>
-        ToActionResult(initiativeService.GetByIdAsync(id, cancellationToken));
+        ToActionResult(initiativeQueryService.GetByIdAsync(id, cancellationToken));
 
     [HttpPut("{id:guid}")]
     public Task<IActionResult> Update(
@@ -39,7 +43,7 @@ public sealed class InitiativesController(
         [FromBody] UpdateInitiativeRequest request,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => initiativeService.UpdateAsync(userId, id, request, cancellationToken));
+            userId => initiativeManagementService.UpdateAsync(userId, id, request, cancellationToken));
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(
@@ -51,7 +55,7 @@ public sealed class InitiativesController(
             return unauthorizedResult;
         }
 
-        var result = await initiativeService.DeleteAsync(userId, id, cancellationToken);
+        var result = await initiativeManagementService.DeleteAsync(userId, id, cancellationToken);
 
         return result.IsSuccess
             ? NoContent()
@@ -64,7 +68,7 @@ public sealed class InitiativesController(
         [FromBody] CreateInitiativeJoinRequestRequest request,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => initiativeService.CreateJoinRequestAsync(
+            userId => initiativeJoinRequestService.CreateJoinRequestAsync(
                 userId,
                 id,
                 request,
@@ -75,7 +79,7 @@ public sealed class InitiativesController(
         Guid id,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => initiativeService.GetJoinRequestsAsync(
+            userId => initiativeJoinRequestService.GetJoinRequestsAsync(
                 userId,
                 id,
                 cancellationToken));
@@ -86,7 +90,7 @@ public sealed class InitiativesController(
         Guid requestId,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => initiativeService.AcceptJoinRequestAsync(
+            userId => initiativeJoinRequestService.AcceptJoinRequestAsync(
                 userId,
                 id,
                 requestId,
@@ -98,7 +102,7 @@ public sealed class InitiativesController(
         Guid requestId,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => initiativeService.RejectJoinRequestAsync(
+            userId => initiativeJoinRequestService.RejectJoinRequestAsync(
                 userId,
                 id,
                 requestId,
