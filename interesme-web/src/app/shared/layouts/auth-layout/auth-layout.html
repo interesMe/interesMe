@@ -1,30 +1,77 @@
-<main class="auth-shell">
-  <section class="auth-story" aria-labelledby="auth-story-title">
-    <p class="auth-eyebrow">{{ t('auth.layout.eyebrow') }}</p>
-    <h1 id="auth-story-title">{{ t('auth.layout.title') }}</h1>
-    <p>{{ t('auth.layout.subtitle') }}</p>
+<div class="auth-page">
+  <section class="auth-left">
+    <div class="landing-brand">
+      <span class="landing-brand__mark">✦</span>
+      <span class="landing-brand__text">
+        Interes<span>Me</span>
+      </span>
+    </div>
 
-    <div class="intent-board" [attr.aria-label]="t('auth.layout.boardAria')">
-      <article class="intent-card connect">
-        <span>{{ t('auth.layout.card.connectType') }}</span>
-        <strong>{{ t('auth.layout.card.connectTitle') }}</strong>
-      </article>
-      <article class="intent-card learn">
-        <span>{{ t('auth.layout.card.learnType') }}</span>
-        <strong>{{ t('auth.layout.card.learnTitle') }}</strong>
-      </article>
-      <article class="intent-card play">
-        <span>{{ t('auth.layout.card.playType') }}</span>
-        <strong>{{ t('auth.layout.card.playTitle') }}</strong>
-      </article>
-      <article class="intent-card build">
-        <span>{{ t('auth.layout.card.buildType') }}</span>
-        <strong>{{ t('auth.layout.card.buildTitle') }}</strong>
-      </article>
+    <div class="landing-hero">
+      <div class="hero-image">
+        <div class="art-placeholder">
+          Hero illustration
+        </div>
+      </div>
+
+      <div class="hero-content">
+        <h1>
+          Find your people.
+        </h1>
+
+        <p>
+          Start with something you care about.
+          Turn it into an initiative.
+          Meet people who want to do it with you.
+        </p>
+      </div>
+
+      <div class="active-initiatives">
+        <span class="active-initiatives__label">
+          Active initiatives
+        </span>
+
+        <div class="active-initiatives__list">
+          <article class="initiative-pill">
+            <span class="initiative-pill__icon"></span>
+
+            <div>
+              <h2>Student Startup Weekend</h2>
+              <p>Build and launch a product in 48 hours.</p>
+            </div>
+
+            <strong>27</strong>
+          </article>
+
+          <article class="initiative-pill">
+            <span class="initiative-pill__icon"></span>
+
+            <div>
+              <h2>Create an Indie Band</h2>
+              <p>Find musicians for rehearsals and live shows.</p>
+            </div>
+
+            <strong>9</strong>
+          </article>
+
+          <article class="initiative-pill">
+            <span class="initiative-pill__icon"></span>
+
+            <div>
+              <h2>Community Garden Project</h2>
+              <p>Build a student-led urban garden from scratch.</p>
+            </div>
+
+            <strong>21</strong>
+          </article>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="auth-panel" [attr.aria-label]="t('auth.layout.panelAria')">
-    <router-outlet></router-outlet>
+  <section class="auth-right">
+    <div class="auth-card">
+      <router-outlet />
+    </div>
   </section>
-</main>
+</div>

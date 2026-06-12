@@ -1,65 +1,82 @@
-<section class="auth-card">
-  <header class="auth-header">
-    <p class="eyebrow">InteresMe</p>
-    <h1>{{ t('auth.login.title') }}</h1>
-    <p>{{ t('auth.login.subtitle') }}</p>
-  </header>
+<div class="auth-card__header">
+  <h1>{{ t('auth.login.title') }}</h1>
+  <p>{{ t('auth.design.subtitle') }}</p>
+</div>
 
-  <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <label class="field">
-      <span>{{ t('auth.common.email') }}</span>
-      <input type="email" autocomplete="email" formControlName="email" [placeholder]="t('auth.common.emailPlaceholder')" />
-      @if (showRequiredError('email')) {
-        <span class="hint">{{ t('auth.validation.email') }}</span>
-      }
-    </label>
+<div class="auth-tabs">
+  <button class="is-active" type="button">{{ t('auth.login.tab') }}</button>
+  <button type="button" [routerLink]="registerPath()" [queryParams]="registerQueryParams()">{{ t('auth.register.tab') }}</button>
+</div>
 
-    <label class="field">
-      <span>{{ t('auth.common.password') }}</span>
-      <input
-        type="password"
-        autocomplete="current-password"
-        formControlName="password"
-        [placeholder]="t('auth.login.passwordPlaceholder')"
-      />
-      @if (showRequiredError('password')) {
-        <span class="hint">{{ t('auth.validation.passwordRequired') }}</span>
-      }
-    </label>
+<div class="social-buttons">
+  <app-google-button
+    [clientId]="googleClientId"
+    [disabled]="isSubmitting()"
+    (idToken)="continueWithGoogle($event)"
+    (error)="showGoogleError($event)"
+    (loadingChange)="setGoogleLoading($event)"
+  />
 
-    @if (errorMessage()) {
-      <p class="error" role="alert">{{ errorMessage() }}</p>
+  <app-github-button
+    [authUrl]="githubLoginUrl"
+    [returnUrl]="returnUrl()"
+    [disabled]="isSubmitting()"
+    (error)="showGithubError($event)"
+    (loadingChange)="setGithubLoading($event)"
+  />
+</div>
+
+<div class="divider">
+  <span>{{ t('auth.common.or') }}</span>
+</div>
+
+<form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <label class="field">
+    <span>{{ t('auth.common.email') }}</span>
+    <input type="email" autocomplete="email" formControlName="email" [placeholder]="t('auth.design.emailPlaceholder')" />
+    @if (showRequiredError('email')) {
+      <span class="hint">{{ t('auth.validation.email') }}</span>
     }
+  </label>
 
-    <button class="auth-submit" type="submit" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? t('auth.common.loading') : t('auth.login.submit') }}
-    </button>
-
-    <div class="auth-divider"><span>{{ t('auth.common.or') }}</span></div>
-
-    <app-google-button
-      [clientId]="googleClientId"
-      [disabled]="isSubmitting()"
-      (idToken)="continueWithGoogle($event)"
-      (error)="showGoogleError($event)"
-      (loadingChange)="setGoogleLoading($event)"
+  <label class="field">
+    <span>{{ t('auth.common.password') }}</span>
+    <input
+      type="password"
+      autocomplete="current-password"
+      formControlName="password"
+      [placeholder]="t('auth.design.passwordPlaceholder')"
     />
+    @if (showRequiredError('password')) {
+      <span class="hint">{{ t('auth.validation.passwordRequired') }}</span>
+    }
+  </label>
 
-    <app-github-button
-      [authUrl]="githubLoginUrl"
-      [returnUrl]="returnUrl()"
-      [disabled]="isSubmitting()"
-      (error)="showGithubError($event)"
-      (loadingChange)="setGithubLoading($event)"
-    />
-  </form>
+  <div class="form-options">
+    <label class="remember">
+      <input type="checkbox" />
+      <span>{{ t('auth.login.rememberMe') }}</span>
+    </label>
 
-  @if (hasReturnUrl()) {
-    <a class="return-link" [routerLink]="returnUrl()">{{ t('auth.login.backToIntent') }}</a>
+    <a href="#" aria-disabled="true">{{ t('auth.login.forgotPassword') }}</a>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="error" role="alert">{{ errorMessage() }}</p>
   }
 
-  <p class="auth-switch">
-    {{ t('auth.login.switchPrompt') }}
-    <a [routerLink]="registerPath()" [queryParams]="registerQueryParams()">{{ t('auth.login.switchAction') }}</a>
-  </p>
-</section>
+  <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+    {{ isSubmitting() ? t('auth.common.loading') : t('auth.login.tab') }}
+  </button>
+</form>
+
+@if (hasReturnUrl()) {
+  <a class="return-link" [routerLink]="returnUrl()">{{ t('auth.login.backToIntent') }}</a>
+}
+
+<p class="auth-note">
+  {{ t('auth.legal.prefix') }}
+  <a href="#">{{ t('auth.legal.terms') }}</a>
+  {{ t('auth.legal.and') }}
+  <a href="#">{{ t('auth.legal.privacy') }}</a>.
+</p>

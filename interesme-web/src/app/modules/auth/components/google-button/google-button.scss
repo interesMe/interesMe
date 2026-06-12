@@ -1,20 +1,4 @@
-.google-button {
-  width: 100%;
-  min-height: 48px;
-  border: 1px solid var(--im-border);
-  border-radius: var(--im-radius-md);
-  background: var(--im-surface);
-  color: var(--im-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 900;
-}
-
-.google-button:hover {
-  background: var(--im-surface-soft);
-}
-
-.google-button:disabled {
+.social-button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.65;
 }

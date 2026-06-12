@@ -2,16 +2,20 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, Validators, NonNullableFormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { APP_ENVIRONMENT } from '../../../../core/constants/app-environment.constants';
+import { AUTH_API_ENDPOINTS } from '../../../../core/constants/api.constants';
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../../core/i18n/translations';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { isValidReturnUrl, normalizeReturnUrl } from '../../../../core/utils/return-url.util';
+import { GithubButton } from '../../components/github-button/github-button';
+import { GoogleButton } from '../../components/google-button/google-button';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, GoogleButton, GithubButton],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
@@ -30,6 +34,8 @@ export class RegisterComponent {
     const returnUrl = this.returnUrlParam();
     return isValidReturnUrl(returnUrl) ? { returnUrl } : null;
   });
+  readonly googleClientId = APP_ENVIRONMENT.googleClientId;
+  readonly githubLoginUrl = AUTH_API_ENDPOINTS.githubLogin;
   readonly returnUrl = computed(() => normalizeReturnUrl(this.returnUrlParam()));
   readonly hasReturnUrl = computed(() => isValidReturnUrl(this.returnUrlParam()));
 
@@ -63,6 +69,41 @@ export class RegisterComponent {
         this.isSubmitting.set(false);
       },
     });
+  }
+
+  continueWithGoogle(idToken: string): void {
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.googleLogin({ idToken }).subscribe({
+      next: () => {
+        void this.router.navigateByUrl(this.returnUrl());
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(getApiErrorMessage(error, this.t('auth.login.googleErrorFallback')));
+        this.isSubmitting.set(false);
+      },
+    });
+  }
+
+  setGoogleLoading(isLoading: boolean): void {
+    this.isSubmitting.set(isLoading);
+    this.errorMessage.set(null);
+  }
+
+  showGoogleError(message: string): void {
+    this.errorMessage.set(message);
+    this.isSubmitting.set(false);
+  }
+
+  setGithubLoading(isLoading: boolean): void {
+    this.isSubmitting.set(isLoading);
+    this.errorMessage.set(null);
+  }
+
+  showGithubError(message: string): void {
+    this.errorMessage.set(message);
+    this.isSubmitting.set(false);
   }
 
   showRequiredError(controlName: 'displayName' | 'email' | 'password' | 'confirmPassword'): boolean {

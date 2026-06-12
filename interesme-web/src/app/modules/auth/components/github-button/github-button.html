@@ -1,3 +1,4 @@
-<button class="github-button" type="button" (click)="continueWithGithub()" [disabled]="isDisabled()">
-  {{ isLoading() ? t('auth.github.loading') : t('auth.github.continue') }}
+<button class="social-button" type="button" (click)="continueWithGithub()" [disabled]="isDisabled()">
+  <img src="assets/icons/github.svg" alt="" />
+  <span>{{ isLoading() ? t('auth.github.loading') : t('auth.github.continue') }}</span>
 </button>

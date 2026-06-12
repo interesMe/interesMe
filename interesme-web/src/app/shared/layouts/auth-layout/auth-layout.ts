@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ViewEncapsulation, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -9,6 +9,7 @@ import { TranslationKey } from '../../../core/i18n/translations';
   imports: [RouterOutlet],
   templateUrl: './auth-layout.html',
   styleUrl: './auth-layout.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class AuthLayout {
   private readonly i18n = inject(I18nService);
