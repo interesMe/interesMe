@@ -32,6 +32,10 @@ export const routes: Routes = [
     canActivateChild: [authGuard],
     children: [
       {
+        path: APP_ROUTES.home,
+        loadChildren: () => import('./modules/home/home.routes').then((routesFile) => routesFile.HOME_ROUTES),
+      },
+      {
         path: APP_ROUTES.profile,
         loadChildren: () => import('./modules/profile/profile.routes').then((routesFile) => routesFile.PROFILE_ROUTES),
       },

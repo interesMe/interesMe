@@ -1,0 +1,131 @@
+<section class="home-page">
+  <div class="hero">
+    <div>
+      <p class="eyebrow">Welcome back</p>
+      <h1><span>Create</span> / Explore</h1>
+      <p class="hero-text">
+        Start an initiative, discover people with shared interests, and turn ideas into something real.
+      </p>
+    </div>
+
+    <div class="search-card">
+      <input type="text" placeholder="Search initiatives, people, skills..." />
+      <button type="button">⌘K</button>
+    </div>
+  </div>
+
+  <div class="action-grid">
+    <article class="action-card create-card">
+      <div class="action-copy">
+        <div class="icon-bubble">🚀</div>
+        <h2>Create Initiative</h2>
+        <p>Have an idea? Start with a title, describe what you need, and find your people.</p>
+        <button type="button">Create</button>
+      </div>
+      <div class="action-visual rocket-visual">✦</div>
+    </article>
+
+    <article class="action-card explore-card">
+      <div class="action-copy">
+        <div class="icon-bubble">🔭</div>
+        <h2>Explore Initiatives</h2>
+        <p>Find active initiatives around music, startups, games, volunteering and student projects.</p>
+        <button type="button">Explore</button>
+      </div>
+      <div class="action-visual explore-visual">●</div>
+    </article>
+  </div>
+
+  <div class="dashboard-grid">
+    <main class="feed">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Live opportunities</p>
+          <h2>Featured Initiatives</h2>
+        </div>
+        <button type="button">View all</button>
+      </div>
+
+      <div class="initiative-list">
+        @for (initiative of initiatives; track initiative.title) {
+          <article class="initiative-card">
+            <div class="initiative-art" [class]="initiative.tone">
+              <span>{{ initiative.title[0] }}</span>
+            </div>
+
+            <div class="initiative-body">
+              <h3>{{ initiative.title }}</h3>
+              <p>{{ initiative.description }}</p>
+
+              <div class="tags">
+                @for (tag of initiative.tags; track tag) {
+                  <span>{{ tag }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="meta">
+              <strong>{{ initiative.members }}</strong>
+              <span>Members</span>
+            </div>
+
+            <div class="meta">
+              <strong>{{ initiative.roles }}</strong>
+              <span>Open roles</span>
+            </div>
+
+            <button class="join-button" type="button">Join</button>
+          </article>
+        }
+      </div>
+
+      <article class="mission-card">
+        <div class="mission-icon">👥</div>
+        <div>
+          <h2>Find your people. Build your ideas.</h2>
+          <p>
+            InteresMe is about initiatives first. Profiles come later, after people start creating together.
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <aside class="side-panel">
+      <section class="panel-card">
+        <div class="panel-head">
+          <h3>Messages</h3>
+          <button type="button">View all</button>
+        </div>
+
+        <div class="message-list">
+          @for (message of messages; track message.name) {
+            <article class="message">
+              <div class="avatar">{{ message.initials }}</div>
+              <div>
+                <strong>{{ message.name }}</strong>
+                <p>{{ message.text }}</p>
+              </div>
+              <span>{{ message.time }}</span>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="panel-card">
+        <div class="panel-head">
+          <h3>Trending</h3>
+          <button type="button">View all</button>
+        </div>
+
+        <div class="trend-list">
+          @for (item of trending; track item) {
+            <div class="trend-item">
+              <span>🔥 {{ item }}</span>
+              <small>Active</small>
+            </div>
+          }
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>

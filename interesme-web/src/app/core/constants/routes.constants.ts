@@ -3,6 +3,7 @@ export const APP_ROUTES = {
   login: 'auth/login',
   register: 'auth/register',
   callback: 'auth/callback',
+  home: 'home',
   profile: 'profile',
   publicInitiative: 'i/:slug',
   initiatives: 'initiatives',

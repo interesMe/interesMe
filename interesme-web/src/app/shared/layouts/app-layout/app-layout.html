@@ -1,3 +1,11 @@
 <main class="app-shell">
-  <router-outlet></router-outlet>
+  <app-sidebar />
+
+  <section class="app-content">
+    <app-header />
+
+    <div class="app-page">
+      <router-outlet></router-outlet>
+    </div>
+  </section>
 </main>
