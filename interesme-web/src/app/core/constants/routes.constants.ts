@@ -19,4 +19,5 @@ export const APP_ROUTES = {
   myInitiatives: 'me/initiatives',
   matches: 'matches',
   chat: 'chat',
+  settings: 'settings',
 } as const;

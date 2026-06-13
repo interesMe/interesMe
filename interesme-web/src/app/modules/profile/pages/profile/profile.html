@@ -1,9 +1,9 @@
 <section class="profile-shell">
   <header class="profile-header">
-    <p class="eyebrow">InteresMe</p>
+    <p class="eyebrow">{{ text().eyebrow }}</p>
     <div>
-      <h1>Profile</h1>
-      <p class="subtitle">Set up your profile and choose interests for matching.</p>
+      <h1>{{ text().title }}</h1>
+      <p class="subtitle">{{ text().subtitle }}</p>
     </div>
   </header>
 
@@ -17,16 +17,16 @@
     </div>
 
     <div class="profile-info">
-      <h2>{{ user()?.displayName || 'InteresMe user' }}</h2>
+      <h2>{{ user()?.displayName || text().defaultUser }}</h2>
       <p>{{ user()?.email }}</p>
     </div>
 
-    <button type="button" (click)="logout()">Sign out</button>
+    <button type="button" (click)="logout()">{{ text().signOut }}</button>
   </section>
 
   @if (isLoading()) {
     <section class="profile-card">
-      <p class="status">Loading profile...</p>
+      <p class="status">{{ text().loading }}</p>
     </section>
   } @else {
     @if (errorMessage()) {
@@ -40,8 +40,8 @@
     <section class="profile-card form-card">
       <header class="section-header">
         <div>
-          <h2>{{ profileExists() ? 'Update profile' : 'Create profile' }}</h2>
-          <p>{{ profileExists() ? 'Your profile is ready. You can update it anytime.' : 'No profile found yet. Fill the form to create one.' }}</p>
+          <h2>{{ profileExists() ? text().updateProfile : text().createProfile }}</h2>
+          <p>{{ profileExists() ? text().updateDescription : text().createDescription }}</p>
         </div>
       </header>
 
@@ -49,7 +49,7 @@
         <section class="avatar-upload">
           <div class="avatar-preview">
             @if (avatarPreviewUrl()) {
-              <img [src]="avatarPreviewUrl()!" alt="Profile avatar preview" />
+              <img [src]="avatarPreviewUrl()!" [alt]="text().avatarAlt" />
             } @else {
               <span aria-hidden="true">{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
             }
@@ -57,36 +57,36 @@
 
           <div class="avatar-actions">
             <label>
-              Avatar image
+              {{ text().avatarImage }}
               <input type="file" accept="image/jpeg,image/png,image/webp" (change)="selectAvatar($event)" />
-              <span class="hint neutral">JPG, PNG, or WEBP. Max 2 MB. Saved with the profile form.</span>
+              <span class="hint neutral">{{ text().avatarHint }}</span>
             </label>
           </div>
         </section>
 
         <label>
-          Display name
-          <input type="text" formControlName="displayName" autocomplete="name" placeholder="Your display name" />
+          {{ text().displayName }}
+          <input type="text" formControlName="displayName" autocomplete="name" [placeholder]="text().displayNamePlaceholder" />
           @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
-            <span class="hint">Display name is required and must be at most 80 characters.</span>
+            <span class="hint">{{ text().displayNameHint }}</span>
           }
         </label>
 
         <label>
-          City
-          <input type="text" formControlName="city" autocomplete="address-level2" placeholder="Kyiv" />
+          {{ text().city }}
+          <input type="text" formControlName="city" autocomplete="address-level2" [placeholder]="text().cityPlaceholder" />
           @if (form.controls.city.touched && form.controls.city.invalid) {
-            <span class="hint">City must be at most 120 characters.</span>
+            <span class="hint">{{ text().cityHint }}</span>
           }
         </label>
 
         <label>
-          Birth date
+          {{ text().birthDate }}
           <input type="date" formControlName="birthDate" />
         </label>
 
         <button type="submit" [disabled]="isSavingProfile()">
-          {{ isSavingProfile() ? 'Saving profile...' : 'Save profile' }}
+          {{ isSavingProfile() ? text().savingProfile : text().saveProfile }}
         </button>
       </form>
     </section>
@@ -94,15 +94,15 @@
     <section class="profile-card interests-card">
       <header class="section-header">
         <div>
-          <h2>Interests</h2>
-          <p>Select the tags that describe what you want to connect around.</p>
+          <h2>{{ text().interestsTitle }}</h2>
+          <p>{{ text().interestsDescription }}</p>
         </div>
       </header>
 
       @if (interests().length === 0) {
-        <p class="status">No interests are available yet.</p>
+        <p class="status">{{ text().interestsEmpty }}</p>
       } @else {
-        <div class="chips" aria-label="Available interests">
+        <div class="chips" [attr.aria-label]="text().interestsAria">
           @for (interest of interests(); track interest.id) {
             <button
               type="button"
@@ -117,7 +117,7 @@
         </div>
 
         <button type="button" class="save-interests" [disabled]="isSavingInterests()" (click)="saveInterests()">
-          {{ isSavingInterests() ? 'Saving interests...' : 'Save interests' }}
+          {{ isSavingInterests() ? text().savingInterests : text().saveInterests }}
         </button>
       }
     </section>

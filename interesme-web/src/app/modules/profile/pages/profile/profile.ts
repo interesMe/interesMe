@@ -1,8 +1,9 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 import { APP_ENVIRONMENT } from '../../../../core/constants/app-environment.constants';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { AuthService } from '../../../auth/services/auth.service';
 import { InterestResponse, ProfileRequest, ProfileResponse } from '../../models';
@@ -22,6 +23,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly profileApi = inject(ProfileApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly i18n = inject(I18nService);
   private objectAvatarPreviewUrl: string | null = null;
 
   readonly user = this.authService.user;
@@ -37,6 +39,40 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly avatarPreviewUrl = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+  readonly text = computed(() => {
+    this.i18n.currentLocale();
+
+    return {
+      eyebrow: this.i18n.t('profile.header.eyebrow'),
+      title: this.i18n.t('profile.header.title'),
+      subtitle: this.i18n.t('profile.header.subtitle'),
+      defaultUser: this.i18n.t('profile.account.defaultUser'),
+      signOut: this.i18n.t('profile.account.signOut'),
+      loading: this.i18n.t('profile.loading'),
+      updateProfile: this.i18n.t('profile.form.updateTitle'),
+      createProfile: this.i18n.t('profile.form.createTitle'),
+      updateDescription: this.i18n.t('profile.form.updateDescription'),
+      createDescription: this.i18n.t('profile.form.createDescription'),
+      avatarAlt: this.i18n.t('profile.form.avatarAlt'),
+      avatarImage: this.i18n.t('profile.form.avatarImage'),
+      avatarHint: this.i18n.t('profile.form.avatarHint'),
+      displayName: this.i18n.t('profile.form.displayName'),
+      displayNamePlaceholder: this.i18n.t('profile.form.displayNamePlaceholder'),
+      displayNameHint: this.i18n.t('profile.form.displayNameHint'),
+      city: this.i18n.t('profile.form.city'),
+      cityPlaceholder: this.i18n.t('profile.form.cityPlaceholder'),
+      cityHint: this.i18n.t('profile.form.cityHint'),
+      birthDate: this.i18n.t('profile.form.birthDate'),
+      savingProfile: this.i18n.t('profile.form.saving'),
+      saveProfile: this.i18n.t('profile.form.save'),
+      interestsTitle: this.i18n.t('profile.interests.title'),
+      interestsDescription: this.i18n.t('profile.interests.description'),
+      interestsEmpty: this.i18n.t('profile.interests.empty'),
+      interestsAria: this.i18n.t('profile.interests.aria'),
+      savingInterests: this.i18n.t('profile.interests.saving'),
+      saveInterests: this.i18n.t('profile.interests.save'),
+    };
+  });
 
   readonly form = this.formBuilder.group({
     displayName: ['', [Validators.required, Validators.maxLength(80)]],
@@ -81,11 +117,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.applyProfile(profile);
         this.profileExists.set(true);
         this.selectedAvatarFile.set(null);
-        this.successMessage.set('Profile saved.');
+        this.successMessage.set(this.i18n.t('profile.messages.profileSaved'));
         this.isSavingProfile.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(getApiErrorMessage(error, 'Unable to save profile.'));
+        this.errorMessage.set(getApiErrorMessage(error, this.i18n.t('profile.messages.profileSaveError')));
         this.isSavingProfile.set(false);
       },
     });
@@ -121,11 +157,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.profileApi.saveMyInterests({ interestIds: [...this.selectedInterestIds()] }).subscribe({
       next: (savedInterests) => {
         this.selectedInterestIds.set(new Set(savedInterests.map((interest) => interest.id)));
-        this.successMessage.set('Interests saved.');
+        this.successMessage.set(this.i18n.t('profile.messages.interestsSaved'));
         this.isSavingInterests.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(getApiErrorMessage(error, 'Unable to save interests.'));
+        this.errorMessage.set(getApiErrorMessage(error, this.i18n.t('profile.messages.interestsSaveError')));
         this.isSavingInterests.set(false);
       },
     });
@@ -189,7 +225,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(getApiErrorMessage(error, 'Unable to load profile page.'));
+        this.errorMessage.set(getApiErrorMessage(error, this.i18n.t('profile.messages.loadError')));
         this.isLoading.set(false);
       },
     });
@@ -225,11 +261,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   private validateAvatarFile(file: File): string | null {
     if (!ProfileComponent.allowedAvatarTypes.has(file.type)) {
-      return 'Avatar must be a JPG, PNG, or WEBP image.';
+      return this.i18n.t('profile.messages.avatarTypeError');
     }
 
     if (file.size > ProfileComponent.maxAvatarSizeBytes) {
-      return 'Avatar must be 2 MB or smaller.';
+      return this.i18n.t('profile.messages.avatarSizeError');
     }
 
     return null;

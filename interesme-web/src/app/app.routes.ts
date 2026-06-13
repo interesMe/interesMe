@@ -57,6 +57,10 @@ export const routes: Routes = [
             (component) => component.MyInitiativesPage,
           ),
       },
+      {
+        path: APP_ROUTES.settings,
+        loadChildren: () => import('./modules/settings/settings.routes').then((routesFile) => routesFile.SETTINGS_ROUTES),
+      },
     ],
   },
   {

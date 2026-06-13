@@ -1,0 +1,51 @@
+<main class="settings-page">
+  <section class="settings-card">
+    <div class="settings-header">
+      <p class="eyebrow">{{ settingsText().headerEyebrow }}</p>
+      <h1>{{ settingsText().headerTitle }}</h1>
+      <p>{{ settingsText().headerDescription }}</p>
+    </div>
+
+    <section class="settings-section" aria-labelledby="appearance-title">
+      <div>
+        <h2 id="appearance-title">{{ settingsText().appearanceTitle }}</h2>
+        <p>{{ settingsText().appearanceDescription }}</p>
+      </div>
+
+      <div class="option-group" role="group" [attr.aria-label]="settingsText().appearanceAria">
+        @for (option of themeOptions(); track option.value) {
+          <button
+            class="option-button"
+            type="button"
+            [ngClass]="{ 'is-active': theme() === option.value }"
+            [attr.aria-pressed]="theme() === option.value"
+            (click)="setTheme(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="settings-section" aria-labelledby="language-title">
+      <div>
+        <h2 id="language-title">{{ settingsText().languageTitle }}</h2>
+        <p>{{ settingsText().languageDescription }}</p>
+      </div>
+
+      <div class="option-group" role="group" [attr.aria-label]="settingsText().languageAria">
+        @for (option of languageOptions(); track option.value) {
+          <button
+            class="option-button"
+            type="button"
+            [ngClass]="{ 'is-active': language() === option.value }"
+            [attr.aria-pressed]="language() === option.value"
+            (click)="setLanguage(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </section>
+  </section>
+</main>

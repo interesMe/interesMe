@@ -5,7 +5,8 @@ import { TRANSLATIONS, TranslationKey } from './translations';
 
 type TranslationParams = Record<string, string | number | boolean | null | undefined>;
 
-const LOCALE_STORAGE_KEY = 'interesme.locale';
+const LOCALE_STORAGE_KEY = 'interesme_language';
+const LEGACY_LOCALE_STORAGE_KEY = 'interesme.locale';
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
@@ -46,7 +47,12 @@ export class I18nService {
   private getStoredLocale(): AppLocale | null {
     try {
       const storedLocale = globalThis.localStorage?.getItem(LOCALE_STORAGE_KEY);
-      return this.isSupportedLocale(storedLocale) ? storedLocale : null;
+      if (this.isSupportedLocale(storedLocale)) {
+        return storedLocale;
+      }
+
+      const legacyStoredLocale = globalThis.localStorage?.getItem(LEGACY_LOCALE_STORAGE_KEY);
+      return this.isSupportedLocale(legacyStoredLocale) ? legacyStoredLocale : null;
     } catch {
       return null;
     }

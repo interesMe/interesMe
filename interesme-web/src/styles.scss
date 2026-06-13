@@ -27,6 +27,18 @@
   --im-shadow-card: 0 8px 24px rgba(17, 17, 17, 0.08);
 }
 
+:root[data-theme='dark'] {
+  --im-bg: #0f172a;
+  --im-surface: #111827;
+  --im-surface-soft: #1f2937;
+  --im-border: #334155;
+
+  --im-text: #f8fafc;
+  --im-muted: #cbd5e1;
+
+  --im-shadow-card: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
 html,
 body {
   min-height: 100%;

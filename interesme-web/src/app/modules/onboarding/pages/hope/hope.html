@@ -3,12 +3,12 @@
     <div class="hope-accent" aria-hidden="true"></div>
 
     <div class="onboarding-copy">
-      <p class="eyebrow">Ready</p>
-      <h1>You're not alone.</h1>
-      <p>People are already creating initiatives, sharing ideas and looking for teammates.</p>
-      <p>InteresMe helps you find where to start.</p>
+      <p class="eyebrow">{{ text().eyebrow }}</p>
+      <h1>{{ text().title }}</h1>
+      <p>{{ text().description }}</p>
+      <p>{{ text().start }}</p>
     </div>
 
-    <button class="enter-button" type="button" (click)="enterInteresMe()">Enter InteresMe</button>
+    <button class="enter-button" type="button" (click)="enterInteresMe()">{{ text().enter }}</button>
   </section>
 </main>

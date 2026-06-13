@@ -4,5 +4,5 @@ public sealed class AuthFrontendOptions
 {
     public const string SectionName = "Auth:Frontend";
 
-    public string OAuthCallbackUrl { get; init; } = "http://localhost:4201/auth/callback";
+    public string OAuthCallbackUrl { get; init; } = "http://localhost:4200/auth/callback";
 }

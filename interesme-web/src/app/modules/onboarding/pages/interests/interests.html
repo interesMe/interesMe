@@ -1,29 +1,29 @@
 <main class="onboarding-page">
   <section class="onboarding-card">
     <div class="onboarding-copy">
-      <p class="eyebrow">Onboarding</p>
-      <h1>What are you interested in?</h1>
-      <p>Choose a few interests so InteresMe can help you find your people.</p>
+      <p class="eyebrow">{{ text().eyebrow }}</p>
+      <h1>{{ text().title }}</h1>
+      <p>{{ text().description }}</p>
     </div>
 
-    <p class="helper-text">{{ helperText }}</p>
+    <p class="helper-text">{{ text().helper }}</p>
 
-    <div class="interest-list" aria-label="Interests">
-      @for (interest of interests; track interest) {
+    <div class="interest-list" [attr.aria-label]="text().aria">
+      @for (interest of interests(); track interest.value) {
         <button
           class="interest-chip"
           type="button"
-          [ngClass]="{ 'is-selected': isSelected(interest) }"
-          [attr.aria-pressed]="isSelected(interest)"
-          (click)="toggleInterest(interest)"
+          [ngClass]="{ 'is-selected': isSelected(interest.value) }"
+          [attr.aria-pressed]="isSelected(interest.value)"
+          (click)="toggleInterest(interest.value)"
         >
-          {{ interest }}
+          {{ interest.label }}
         </button>
       }
     </div>
 
     <button class="continue-button" type="button" [disabled]="selectedInterests().length === 0" (click)="continue()">
-      Continue
+      {{ text().continue }}
     </button>
   </section>
 </main>

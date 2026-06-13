@@ -1,5 +1,5 @@
-<aside class="app-sidebar" aria-label="Product navigation">
-  <a class="brand" [routerLink]="['/', 'home']" aria-label="InteresMe home">
+<aside class="app-sidebar" [attr.aria-label]="text().productNavigationAria">
+  <a class="brand" [routerLink]="['/', 'home']" [attr.aria-label]="text().homeAria">
     <span class="brand-mark" aria-hidden="true">
       <span></span>
       <span></span>
@@ -7,8 +7,8 @@
     <span class="brand-text">InteresMe</span>
   </a>
 
-  <nav class="sidebar-nav" aria-label="Protected pages">
-    @for (item of navItems; track item.label) {
+  <nav class="sidebar-nav" [attr.aria-label]="text().protectedPagesAria">
+    @for (item of navItems; track item.labelKey) {
       @if (isRouteItem(item)) {
         <a
           class="nav-item"
@@ -19,36 +19,36 @@
           <span class="nav-icon" aria-hidden="true">
             <img [src]="item.icon" alt="" />
           </span>
-          <span>{{ item.label }}</span>
+          <span>{{ label(item) }}</span>
         </a>
       } @else {
         <span class="nav-item is-disabled" aria-disabled="true">
           <span class="nav-icon" aria-hidden="true">
             <img [src]="item.icon" alt="" />
           </span>
-          <span>{{ item.label }}</span>
+          <span>{{ label(item) }}</span>
         </span>
       }
     }
   </nav>
 
-  <section class="sidebar-promo" aria-label="Create initiative promotion">
+  <section class="sidebar-promo" [attr.aria-label]="text().promoAria">
     <div class="promo-art" aria-hidden="true">
       <span class="promo-orbit one"></span>
       <span class="promo-orbit two"></span>
       <span class="promo-core">✦</span>
     </div>
 
-    <h3>Create something amazing today</h3>
-    <p>Start an initiative and find people who share your passion.</p>
+    <h3>{{ text().promoTitle }}</h3>
+    <p>{{ text().promoDescription }}</p>
 
     <button type="button">
       <span aria-hidden="true">+</span>
-      Create Initiative
+      {{ text().createInitiative }}
     </button>
   </section>
 
-  <section class="user-card" aria-label="Current user">
+  <section class="user-card" [attr.aria-label]="text().currentUserAria">
     <div class="user-avatar" aria-hidden="true">M</div>
 
     <div class="user-info">
@@ -64,7 +64,7 @@
       <span class="nav-icon" aria-hidden="true">
         <img src="/assets/icons/settings.svg" alt="" />
       </span>
-      <span>Log out</span>
+      <span>{{ text().logout }}</span>
     </button>
   </div>
 </aside>
