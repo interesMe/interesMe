@@ -7,6 +7,7 @@ import { AUTH_API_ENDPOINTS } from '../../../../core/constants/api.constants';
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../../core/i18n/translations';
+import { OnboardingRedirectService } from '../../../../core/services/onboarding-redirect.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { isValidReturnUrl, normalizeReturnUrl } from '../../../../core/utils/return-url.util';
 import { GithubButton } from '../../components/github-button/github-button';
@@ -25,6 +26,7 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(I18nService);
+  private readonly onboardingRedirect = inject(OnboardingRedirectService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -63,7 +65,7 @@ export class RegisterComponent {
     this.errorMessage.set(null);
 
     this.authService.register(request).subscribe({
-      next: () => void this.router.navigateByUrl(this.returnUrl()),
+      next: () => void this.router.navigateByUrl(this.onboardingRedirect.getPostAuthRedirectUrl(this.returnUrlParam())),
       error: (error: unknown) => {
         this.errorMessage.set(getApiErrorMessage(error, this.t('auth.register.errorFallback')));
         this.isSubmitting.set(false);
@@ -77,7 +79,7 @@ export class RegisterComponent {
 
     this.authService.googleLogin({ idToken }).subscribe({
       next: () => {
-        void this.router.navigateByUrl(this.returnUrl());
+        void this.router.navigateByUrl(this.onboardingRedirect.getPostAuthRedirectUrl(this.returnUrlParam()));
       },
       error: (error: unknown) => {
         this.errorMessage.set(getApiErrorMessage(error, this.t('auth.login.googleErrorFallback')));

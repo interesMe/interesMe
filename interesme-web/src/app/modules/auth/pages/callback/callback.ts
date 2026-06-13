@@ -4,8 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../../core/i18n/translations';
+import { OnboardingRedirectService } from '../../../../core/services/onboarding-redirect.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
-import { normalizeReturnUrl } from '../../../../core/utils/return-url.util';
 import { GITHUB_RETURN_URL_KEY } from '../../components/github-button/github-button';
 import { AuthService } from '../../services/auth.service';
 
@@ -20,6 +20,7 @@ export class CallbackComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
+  private readonly onboardingRedirect = inject(OnboardingRedirectService);
 
   readonly message = signal(this.t('auth.callback.loading'));
   readonly loginPath = `/${APP_ROUTES.login}`;
@@ -42,7 +43,7 @@ export class CallbackComponent implements OnInit {
     this.authService.completeGithubSession({ sessionCode }).subscribe({
       next: () => {
         const returnUrl = this.readAndClearReturnUrl();
-        void this.router.navigateByUrl(returnUrl);
+        void this.router.navigateByUrl(this.onboardingRedirect.getPostAuthRedirectUrl(returnUrl));
       },
       error: (authError: unknown) => {
         this.message.set(getApiErrorMessage(authError, this.t('auth.callback.errorFallback')));
@@ -54,12 +55,12 @@ export class CallbackComponent implements OnInit {
     return this.i18n.t(key, params);
   }
 
-  private readAndClearReturnUrl(): string {
+  private readAndClearReturnUrl(): string | null {
     if (typeof sessionStorage === 'undefined') {
-      return `/${APP_ROUTES.initiatives}`;
+      return null;
     }
 
-    const returnUrl = normalizeReturnUrl(sessionStorage.getItem(GITHUB_RETURN_URL_KEY));
+    const returnUrl = sessionStorage.getItem(GITHUB_RETURN_URL_KEY);
     sessionStorage.removeItem(GITHUB_RETURN_URL_KEY);
 
     return returnUrl;

@@ -4,6 +4,7 @@ export const APP_ROUTES = {
   register: 'auth/register',
   callback: 'auth/callback',
   home: 'home',
+  onboardingInterests: 'onboarding/interests',
   profile: 'profile',
   publicInitiative: 'i/:slug',
   initiatives: 'initiatives',

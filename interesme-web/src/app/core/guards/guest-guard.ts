@@ -2,8 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { map } from 'rxjs';
 
-import { APP_ROUTES } from '../constants/routes.constants';
-import { normalizeReturnUrl } from '../utils/return-url.util';
+import { OnboardingRedirectService } from '../services/onboarding-redirect.service';
 import { TokenService } from '../services/token.service';
 import { AuthService } from '../../modules/auth/services/auth.service';
 import { AuthStore } from '../../modules/auth/state/auth.store';
@@ -13,6 +12,7 @@ export const guestGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const tokenService = inject(TokenService);
   const router = inject(Router);
+  const onboardingRedirect = inject(OnboardingRedirectService);
   const hasCompleteSession = authStore.hasCompleteSession();
   const tokenServiceHasCompleteSession = tokenService.hasCompleteSession();
 
@@ -25,9 +25,7 @@ export const guestGuard: CanActivateFn = (route) => {
   });
 
   const returnUrl = route.queryParamMap.get('returnUrl');
-  const authenticatedRedirect = returnUrl
-    ? router.parseUrl(normalizeReturnUrl(returnUrl))
-    : router.createUrlTree([APP_ROUTES.initiatives]);
+  const authenticatedRedirect = router.parseUrl(onboardingRedirect.getPostAuthRedirectUrl(returnUrl));
 
   return authService.validateSession().pipe(map((isValidSession) => (isValidSession ? authenticatedRedirect : true)));
 };

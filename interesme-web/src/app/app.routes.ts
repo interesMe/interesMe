@@ -26,6 +26,12 @@ export const routes: Routes = [
     loadChildren: () => import('./modules/auth/auth.routes').then((routesFile) => routesFile.AUTH_ROUTES),
   },
   {
+    path: APP_ROUTES.onboardingInterests,
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./modules/onboarding/onboarding.routes').then((routesFile) => routesFile.ONBOARDING_ROUTES),
+  },
+  {
     path: '',
     component: AppLayout,
     canActivate: [authGuard],

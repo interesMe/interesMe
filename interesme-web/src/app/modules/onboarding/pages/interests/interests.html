@@ -1,0 +1,25 @@
+<main class="onboarding-page">
+  <section class="onboarding-card">
+    <div class="onboarding-copy">
+      <p class="eyebrow">Onboarding</p>
+      <h1>What are you interested in?</h1>
+      <p>Choose a few interests so InteresMe can help you find your people.</p>
+    </div>
+
+    <div class="interest-list" aria-label="Interests">
+      @for (interest of interests; track interest) {
+        <button
+          class="interest-chip"
+          type="button"
+          [ngClass]="{ 'is-selected': isSelected(interest) }"
+          [attr.aria-pressed]="isSelected(interest)"
+          (click)="toggleInterest(interest)"
+        >
+          {{ interest }}
+        </button>
+      }
+    </div>
+
+    <button class="continue-button" type="button" (click)="continue()">Continue</button>
+  </section>
+</main>
