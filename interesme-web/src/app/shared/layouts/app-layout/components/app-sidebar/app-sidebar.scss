@@ -6,9 +6,7 @@
   min-height: 100vh;
   padding: 26px 18px;
   border-right: 1px solid var(--im-border);
-  background:
-    radial-gradient(circle at 15% 8%, rgba(20, 184, 166, 0.08), transparent 28%),
-    var(--im-surface);
+  background: var(--im-sidebar-bg);
 }
 
 .brand {
@@ -34,7 +32,7 @@
   width: 11px;
   height: 11px;
   border-radius: 999px;
-  background: white;
+  background: #ffffff;
 }
 
 .brand-mark span:first-child {
@@ -66,7 +64,7 @@
   min-height: 48px;
   border-radius: 16px;
   padding: 0 12px;
-  color: #334155;
+  color: var(--im-text);
   font: inherit;
   font-weight: 800;
   text-decoration: none;
@@ -88,13 +86,13 @@
 }
 
 .nav-item.is-disabled {
-  color: #94a3b8;
+  color: var(--im-muted);
   cursor: not-allowed;
 }
 
 .nav-item.is-disabled:hover {
   background: transparent;
-  color: #94a3b8;
+  color: var(--im-muted);
   transform: none;
 }
 
@@ -105,7 +103,7 @@
   place-items: center;
   flex: 0 0 28px;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.04);
+  background: color-mix(in srgb, var(--im-text) 6%, transparent);
   color: currentColor;
 }
 
@@ -123,11 +121,9 @@
 .sidebar-promo {
   margin-top: auto;
   padding: 18px;
-  border: 1px solid rgba(20, 184, 166, 0.18);
+  border: 1px solid var(--im-border-active, rgba(20, 184, 166, 0.18));
   border-radius: 24px;
-  background:
-    radial-gradient(circle at 80% 10%, rgba(251, 111, 97, 0.16), transparent 30%),
-    linear-gradient(135deg, #ecfeff, #ffffff 72%);
+  background: var(--im-sidebar-promo-bg);
   box-shadow: var(--im-shadow-card);
 }
 
@@ -136,10 +132,7 @@
   height: 82px;
   overflow: hidden;
   border-radius: 20px;
-  background:
-    radial-gradient(circle at 35% 50%, rgba(20, 184, 166, 0.24), transparent 24%),
-    radial-gradient(circle at 67% 44%, rgba(251, 111, 97, 0.18), transparent 22%),
-    rgba(255, 255, 255, 0.62);
+  background: var(--im-promo-art-bg);
 }
 
 .promo-core {
@@ -151,7 +144,7 @@
   width: 44px;
   height: 44px;
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--im-promo-core-bg);
   color: #0f998f;
   font-size: 22px;
   font-weight: 900;
@@ -162,7 +155,7 @@
 .promo-orbit {
   position: absolute;
   border-radius: 999px;
-  background: #14b8a6;
+  background: var(--im-primary);
   opacity: 0.28;
 }
 
@@ -178,7 +171,7 @@
   height: 38px;
   right: 26px;
   bottom: 18px;
-  background: #fb6f61;
+  background: var(--im-coral);
 }
 
 .sidebar-promo h3 {
@@ -205,7 +198,7 @@
   height: 42px;
   border: 0;
   border-radius: 14px;
-  background: #0f998f;
+  background: var(--im-primary-hover);
   color: #ffffff;
   cursor: pointer;
   font: inherit;
@@ -233,8 +226,8 @@
   place-items: center;
   flex: 0 0 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
-  color: white;
+  background: linear-gradient(135deg, #0f766e, var(--im-primary));
+  color: #ffffff;
   font-weight: 900;
 }
 
@@ -275,7 +268,7 @@
 
 .logout-button:hover {
   background: rgba(251, 111, 97, 0.12);
-  color: #fb6f61;
+  color: var(--im-coral);
   transform: translateX(2px);
 }
 

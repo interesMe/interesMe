@@ -69,7 +69,7 @@ h1 {
   padding: 22px;
   border: 1px solid var(--im-border);
   border-radius: var(--im-radius-lg);
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--im-surface);
   box-shadow: var(--im-shadow-card);
 }
 
@@ -94,10 +94,10 @@ h1 {
 }
 
 .goal-connect { background: rgba(255, 64, 64, 0.12); color: var(--im-connect); }
-.goal-learn { background: rgba(34, 197, 94, 0.13); color: #15803d; }
+.goal-learn { background: rgba(34, 197, 94, 0.13); color: var(--im-learn); }
 .goal-build { background: rgba(20, 184, 166, 0.13); color: var(--im-primary-hover); }
-.goal-play { background: rgba(245, 158, 11, 0.16); color: #b45309; }
-.goal-explore { background: rgba(56, 189, 248, 0.15); color: #0284c7; }
+.goal-play { background: rgba(245, 158, 11, 0.16); color: var(--im-play); }
+.goal-explore { background: rgba(56, 189, 248, 0.15); color: var(--im-explore); }
 
 .card-copy {
   display: grid;
@@ -111,7 +111,7 @@ h1 {
 }
 
 .card-copy p {
-  color: #26312f;
+  color: var(--im-muted);
   line-height: 1.5;
 }
 
@@ -158,7 +158,7 @@ dd {
 }
 
 .interest-chip { border: 1px solid rgba(20, 184, 166, 0.2); background: rgba(20, 184, 166, 0.09); color: var(--im-primary-hover); }
-.role-chip { border: 1px solid #dbeafe; background: #eff6ff; color: #1d4ed8; }
+.role-chip { border: 1px solid rgba(56, 189, 248, 0.22); background: rgba(56, 189, 248, 0.12); color: var(--im-explore); }
 
 .card-link {
   align-self: end;

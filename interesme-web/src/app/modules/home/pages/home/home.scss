@@ -28,7 +28,7 @@
 }
 
 .hero h1 span {
-  color: #fb6f61;
+  color: var(--im-coral);
 }
 
 .hero-text {
@@ -99,7 +99,7 @@
   display: grid;
   place-items: center;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--im-icon-bubble-bg);
   font-size: 24px;
 }
 
@@ -112,7 +112,7 @@
 
 .action-card p {
   margin: 0;
-  color: #475569;
+  color: var(--im-action-copy-muted);
   line-height: 1.6;
 }
 
@@ -135,25 +135,21 @@
 }
 
 .create-card {
-  border-color: rgba(251, 111, 97, 0.32);
-  background:
-    radial-gradient(circle at 85% 20%, rgba(251, 111, 97, 0.28), transparent 32%),
-    linear-gradient(135deg, #fff7ed, #ffffff 70%);
+  border-color: rgba(251, 111, 97, 0.28);
+  background: var(--im-create-card-bg);
 }
 
 .create-card button {
-  background: #fb6f61;
+  background: var(--im-coral);
 }
 
 .explore-card {
   border-color: rgba(20, 184, 166, 0.28);
-  background:
-    radial-gradient(circle at 85% 20%, rgba(20, 184, 166, 0.24), transparent 34%),
-    linear-gradient(135deg, #ecfeff, #ffffff 70%);
+  background: var(--im-explore-card-bg);
 }
 
 .explore-card button {
-  background: #0f998f;
+  background: var(--im-primary-hover);
 }
 
 .action-visual {
@@ -167,11 +163,11 @@
 }
 
 .rocket-visual {
-  color: #fb6f61;
+  color: var(--im-coral);
 }
 
 .explore-visual {
-  color: #0f998f;
+  color: var(--im-primary-hover);
 }
 
 .dashboard-grid {
@@ -277,7 +273,7 @@
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(20, 184, 166, 0.1);
-  color: #0f766e;
+  color: var(--im-primary-hover);
   font-size: 12px;
   font-weight: 900;
 }
@@ -302,8 +298,8 @@
   height: 42px;
   padding: 0 20px;
   border-radius: 13px;
-  background: #0f998f;
-  color: white;
+  background: var(--im-primary-hover);
+  color: #ffffff;
 }
 
 .mission-card,
@@ -320,8 +316,7 @@
   align-items: center;
   padding: 26px;
   background:
-    radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.12), transparent 28%),
-    linear-gradient(135deg, #ffffff, #ecfeff);
+    var(--im-mission-card-bg);
 }
 
 .mission-icon {
@@ -336,7 +331,7 @@
 
 .mission-card h2 {
   margin: 0 0 6px;
-  color: #0f766e;
+  color: var(--im-teal-readable);
   letter-spacing: -0.025em;
 }
 
@@ -371,7 +366,7 @@
   place-items: center;
   border-radius: 50%;
   background: rgba(20, 184, 166, 0.14);
-  color: #0f766e;
+  color: var(--im-teal-readable);
   font-size: 12px;
   font-weight: 900;
 }
@@ -388,7 +383,7 @@
 }
 
 .message > span {
-  color: #94a3b8;
+  color: var(--im-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -403,7 +398,7 @@
 }
 
 .trend-item small {
-  color: #0f766e;
+  color: var(--im-teal-readable);
   font-size: 12px;
   font-weight: 900;
 }
