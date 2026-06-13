@@ -9,32 +9,43 @@
 .onboarding-card {
   display: grid;
   gap: 24px;
-  width: min(680px, 100%);
-  padding: 34px;
+  width: min(650px, 100%);
+  padding: 38px;
   border: 1px solid var(--im-border);
   border-radius: var(--im-radius-lg);
   background: var(--im-surface);
   box-shadow: var(--im-shadow-card);
 }
 
+.hope-accent {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.22), rgba(255, 64, 64, 0.14)),
+    var(--im-surface-soft);
+}
+
 .onboarding-copy {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .onboarding-copy h1,
-.onboarding-copy p {
+.onboarding-copy p,
+.eyebrow {
   margin: 0;
 }
 
 .onboarding-copy h1 {
   color: var(--im-text);
-  font-size: clamp(32px, 6vw, 46px);
-  line-height: 1.05;
+  font-size: clamp(36px, 7vw, 54px);
+  line-height: 1.02;
 }
 
 .onboarding-copy p {
   color: var(--im-muted);
+  font-size: 17px;
   line-height: 1.55;
 }
 
@@ -46,42 +57,12 @@
   text-transform: uppercase;
 }
 
-.interest-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.helper-text {
-  margin: -6px 0 0;
-  color: var(--im-muted);
-  font-size: 14px;
-  font-weight: 750;
-}
-
-.interest-chip {
-  min-height: 42px;
-  border: 1px solid var(--im-border);
-  border-radius: 999px;
-  padding: 0 16px;
-  background: var(--im-surface);
-  color: var(--im-text);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
-}
-
-.interest-chip:hover,
-.interest-chip.is-selected {
-  border-color: var(--im-primary);
-  background: rgba(20, 184, 166, 0.12);
-  color: var(--im-primary-hover);
-}
-
-.continue-button {
-  min-height: 48px;
+.enter-button {
+  justify-self: start;
+  min-height: 50px;
   border: 0;
   border-radius: var(--im-radius-md);
+  padding: 0 22px;
   background: var(--im-primary);
   color: #ffffff;
   cursor: pointer;
@@ -89,11 +70,6 @@
   font-weight: 900;
 }
 
-.continue-button:hover {
+.enter-button:hover {
   background: var(--im-primary-hover);
-}
-
-.continue-button:disabled {
-  background: #cbd5e1;
-  cursor: not-allowed;
 }

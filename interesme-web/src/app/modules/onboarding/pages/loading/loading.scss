@@ -1,0 +1,105 @@
+.onboarding-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 32px 16px;
+  background: var(--im-bg);
+}
+
+.onboarding-card {
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  width: min(620px, 100%);
+  padding: 34px;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-lg);
+  background: var(--im-surface);
+  box-shadow: var(--im-shadow-card);
+  text-align: center;
+}
+
+.loading-mark {
+  width: 54px;
+  height: 54px;
+  border: 4px solid rgba(20, 184, 166, 0.14);
+  border-top-color: var(--im-primary);
+  border-radius: 50%;
+  animation: im-onboarding-spin 900ms linear infinite;
+}
+
+.onboarding-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.onboarding-copy h1,
+.onboarding-copy p,
+.eyebrow {
+  margin: 0;
+}
+
+.onboarding-copy h1 {
+  color: var(--im-text);
+  font-size: clamp(32px, 6vw, 44px);
+  line-height: 1.05;
+}
+
+.onboarding-copy p {
+  color: var(--im-muted);
+  line-height: 1.55;
+}
+
+.eyebrow {
+  color: var(--im-primary-hover);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.progress-list {
+  display: grid;
+  gap: 12px;
+  width: min(420px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.progress-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--im-muted);
+  font-weight: 800;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.progress-list li.is-active {
+  color: var(--im-text);
+  transform: translateX(2px);
+}
+
+.step-dot {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--im-border);
+  border-radius: 50%;
+  background: var(--im-surface);
+}
+
+.progress-list li.is-active .step-dot {
+  border-color: var(--im-primary);
+  background: var(--im-primary);
+  box-shadow: 0 0 0 5px rgba(20, 184, 166, 0.12);
+}
+
+@keyframes im-onboarding-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

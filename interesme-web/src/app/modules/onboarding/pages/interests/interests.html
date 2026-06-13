@@ -6,6 +6,8 @@
       <p>Choose a few interests so InteresMe can help you find your people.</p>
     </div>
 
+    <p class="helper-text">{{ helperText }}</p>
+
     <div class="interest-list" aria-label="Interests">
       @for (interest of interests; track interest) {
         <button
@@ -20,6 +22,8 @@
       }
     </div>
 
-    <button class="continue-button" type="button" (click)="continue()">Continue</button>
+    <button class="continue-button" type="button" [disabled]="selectedInterests().length === 0" (click)="continue()">
+      Continue
+    </button>
   </section>
 </main>

@@ -1,0 +1,20 @@
+<main class="onboarding-page">
+  <section class="onboarding-card">
+    <div class="loading-mark" aria-hidden="true"></div>
+
+    <div class="onboarding-copy">
+      <p class="eyebrow">Matching</p>
+      <h1>Finding your people...</h1>
+      <p>Looking for initiatives that match your interests.</p>
+    </div>
+
+    <ol class="progress-list" aria-label="Onboarding progress">
+      @for (step of steps; track step; let index = $index) {
+        <li [ngClass]="{ 'is-active': index <= activeStep() }">
+          <span class="step-dot" aria-hidden="true"></span>
+          <span>{{ step }}</span>
+        </li>
+      }
+    </ol>
+  </section>
+</main>
