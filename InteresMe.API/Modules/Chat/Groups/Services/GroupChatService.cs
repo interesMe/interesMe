@@ -2,6 +2,7 @@ using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Chat.Groups.DTOs;
 using InteresMe.API.Modules.Chat.Groups.Models;
+using InteresMe.API.Modules.Chat.Shared;
 using InteresMe.API.Modules.Chat.Shared.DTOs;
 using InteresMe.API.Modules.Chat.Shared.Enums;
 using InteresMe.API.Modules.Chat.Shared.Models;
@@ -39,6 +40,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<GroupChatDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.GroupNotFound,
                 "Initiative was not found.");
         }
 
@@ -118,6 +120,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<GroupChatDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.GroupNotFound,
                 "Group chat was not found.");
         }
 
@@ -125,6 +128,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<GroupChatDto>.Failure(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.GroupAccessDenied,
                 "You do not have access to this group chat.");
         }
 
@@ -143,6 +147,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<List<ChatMessageDto>>.Failure(
                 accessError.Value.Kind,
+                accessError.Value.Code,
                 accessError.Value.Message);
         }
 
@@ -171,6 +176,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.MessageEmpty,
                 "Message text is required.");
         }
 
@@ -178,6 +184,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.MessageTooLong,
                 $"Message text must be at most {ChatMessageRules.MessageMaxLength} characters.");
         }
 
@@ -191,6 +198,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.GroupNotFound,
                 "Group chat was not found.");
         }
 
@@ -198,6 +206,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.GroupAccessDenied,
                 "You do not have access to this group chat.");
         }
 
@@ -242,6 +251,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<GroupChatDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.GroupNotFound,
                 "Group chat was not found.");
         }
 
@@ -249,6 +259,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<GroupChatDto>.Failure(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.GroupAccessDenied,
                 "You do not have access to this group chat.");
         }
 
@@ -260,6 +271,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return ApplicationResult<GroupChatDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.GroupParticipantNotFound,
                 "User was not found.");
         }
 
@@ -301,6 +313,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
         {
             return new AccessError(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.GroupNotFound,
                 "Group chat was not found.");
         }
 
@@ -316,6 +329,7 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
             ? null
             : new AccessError(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.GroupAccessDenied,
                 "You do not have access to this group chat.");
     }
 
@@ -353,5 +367,6 @@ public sealed class GroupChatService(AppDbContext dbContext) : IGroupChatService
 
     private readonly record struct AccessError(
         ApplicationErrorKind Kind,
+        string Code,
         string Message);
 }

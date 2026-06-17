@@ -1,3 +1,4 @@
+using InteresMe.API.BuildingBlocks.Errors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InteresMe.API.BuildingBlocks.Results;
@@ -16,40 +17,58 @@ public static class ApplicationResultMapper
             return new OkObjectResult(result.Response);
         }
 
-        return result.ErrorKind switch
+        var status = ToStatusCode(result.ErrorKind);
+
+        return new ApiErrorObjectResult(
+            result.ErrorCode ?? ToErrorCode(result.ErrorKind),
+            result.ErrorMessage ?? "Request failed.",
+            status);
+    }
+
+    private static int ToStatusCode(ApplicationErrorKind? kind) =>
+        kind switch
         {
-            ApplicationErrorKind.Validation =>
-                new BadRequestObjectResult(new { message = result.ErrorMessage }),
-
-            ApplicationErrorKind.Conflict =>
-                new ConflictObjectResult(new { message = result.ErrorMessage }),
-
-            ApplicationErrorKind.Unauthorized =>
-                new UnauthorizedObjectResult(new { message = result.ErrorMessage }),
-
-            ApplicationErrorKind.NotFound =>
-                new NotFoundObjectResult(new { message = result.ErrorMessage }),
-
-            ApplicationErrorKind.Forbidden =>
-                new ObjectResult(new { message = result.ErrorMessage })
-                {
-                    StatusCode = StatusCodes.Status403Forbidden
-                },
-
-            ApplicationErrorKind.InternalServerError =>
-                new ObjectResult(new { message = result.ErrorMessage })
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError
-                },
-
-            ApplicationErrorKind.NotImplemented =>
-                new ObjectResult(new { message = result.ErrorMessage })
-                {
-                    StatusCode = StatusCodes.Status501NotImplemented
-                },
-
-            _ =>
-                new BadRequestObjectResult(new { message = result.ErrorMessage })
+            ApplicationErrorKind.Validation => StatusCodes.Status400BadRequest,
+            ApplicationErrorKind.Conflict => StatusCodes.Status409Conflict,
+            ApplicationErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+            ApplicationErrorKind.NotFound => StatusCodes.Status404NotFound,
+            ApplicationErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+            ApplicationErrorKind.InternalServerError => StatusCodes.Status500InternalServerError,
+            ApplicationErrorKind.NotImplemented => StatusCodes.Status501NotImplemented,
+            _ => StatusCodes.Status400BadRequest
         };
+
+    private static string ToErrorCode(ApplicationErrorKind? kind) =>
+        kind switch
+        {
+            ApplicationErrorKind.Validation => ApiErrorCodes.ValidationFailed,
+            ApplicationErrorKind.Conflict => ApiErrorCodes.ConflictDetected,
+            ApplicationErrorKind.Unauthorized => ApiErrorCodes.Unauthorized,
+            ApplicationErrorKind.NotFound => ApiErrorCodes.ResourceNotFound,
+            ApplicationErrorKind.Forbidden => ApiErrorCodes.Forbidden,
+            ApplicationErrorKind.InternalServerError => ApiErrorCodes.InternalError,
+            ApplicationErrorKind.NotImplemented => ApiErrorCodes.FeatureNotImplemented,
+            _ => ApiErrorCodes.ValidationFailed
+        };
+
+    private sealed class ApiErrorObjectResult(
+        string code,
+        string message,
+        int status) : ObjectResult(null)
+    {
+        public override void OnFormatting(ActionContext context)
+        {
+            Value = new ApiErrorResponse
+            {
+                Code = code,
+                Message = message,
+                Status = status,
+                TraceId = context.HttpContext.TraceIdentifier
+            };
+
+            StatusCode = status;
+
+            base.OnFormatting(context);
+        }
     }
 }

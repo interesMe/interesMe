@@ -8,6 +8,8 @@ public sealed class ApplicationResult<T>
 
     public ApplicationErrorKind? ErrorKind { get; init; }
 
+    public string? ErrorCode { get; init; }
+
     public string? ErrorMessage { get; init; }
 
     public static ApplicationResult<T> Success(T response) => new()
@@ -20,6 +22,14 @@ public sealed class ApplicationResult<T>
     {
         IsSuccess = false,
         ErrorKind = kind,
+        ErrorMessage = message
+    };
+
+    public static ApplicationResult<T> Failure(ApplicationErrorKind kind, string code, string message) => new()
+    {
+        IsSuccess = false,
+        ErrorKind = kind,
+        ErrorCode = code,
         ErrorMessage = message
     };
 }

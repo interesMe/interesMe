@@ -2,6 +2,7 @@ using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Chat.DirectMessages.DTOs;
 using InteresMe.API.Modules.Chat.DirectMessages.Models;
+using InteresMe.API.Modules.Chat.Shared;
 using InteresMe.API.Modules.Chat.Shared.DTOs;
 using InteresMe.API.Modules.Chat.Shared.Enums;
 using InteresMe.API.Modules.Chat.Shared.Models;
@@ -35,6 +36,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<DirectConversationDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.DirectSelfNotAllowed,
                 "Direct conversation with yourself is not allowed.");
         }
 
@@ -46,6 +48,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<DirectConversationDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.DirectUserNotFound,
                 "User was not found.");
         }
 
@@ -115,6 +118,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<List<ChatMessageDto>>.Failure(
                 accessError.Value.Kind,
+                accessError.Value.Code,
                 accessError.Value.Message);
         }
 
@@ -143,6 +147,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.MessageEmpty,
                 "Message text is required.");
         }
 
@@ -150,6 +155,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.MessageTooLong,
                 $"Message text must be at most {ChatMessageRules.MessageMaxLength} characters.");
         }
 
@@ -163,6 +169,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.DirectConversationNotFound,
                 "Direct conversation was not found.");
         }
 
@@ -170,6 +177,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.DirectAccessDenied,
                 "You do not have access to this direct conversation.");
         }
 
@@ -218,6 +226,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         {
             return new AccessError(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.DirectConversationNotFound,
                 "Direct conversation was not found.");
         }
 
@@ -233,6 +242,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
             ? null
             : new AccessError(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.DirectAccessDenied,
                 "You do not have access to this direct conversation.");
     }
 
@@ -272,5 +282,6 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
 
     private readonly record struct AccessError(
         ApplicationErrorKind Kind,
+        string Code,
         string Message);
 }

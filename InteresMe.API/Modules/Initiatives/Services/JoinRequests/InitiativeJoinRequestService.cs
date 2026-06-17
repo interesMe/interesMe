@@ -1,5 +1,6 @@
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
+using InteresMe.API.Modules.Initiatives;
 using InteresMe.API.Modules.Initiatives.Contracts.Requests;
 using InteresMe.API.Modules.Initiatives.Contracts.Responses;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
@@ -30,6 +31,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.NotFound,
                 "Initiative was not found.");
         }
 
@@ -37,6 +39,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.Conflict,
+                InitiativeErrorCodes.ApplyOwnerForbidden,
                 "Initiative owner cannot request to join their own initiative.");
         }
 
@@ -46,6 +49,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.Validation,
+                InitiativeErrorCodes.ApplyMessageTooLong,
                 $"Message must be at most {JoinRequestMessageMaxLength} characters.");
         }
 
@@ -62,6 +66,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
             {
                 return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                     ApplicationErrorKind.Validation,
+                    InitiativeErrorCodes.ApplyRoleInvalid,
                     "Role must belong to the initiative.");
             }
         }
@@ -78,6 +83,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.Conflict,
+                InitiativeErrorCodes.ApplyAlreadyExists,
                 "You already have a pending join request for this initiative.");
         }
 
@@ -119,6 +125,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<List<InitiativeJoinRequestResponse>>.Failure(
                 accessError.Value.Kind,
+                accessError.Value.Code,
                 accessError.Value.Message);
         }
 
@@ -172,6 +179,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 accessError.Value.Kind,
+                accessError.Value.Code,
                 accessError.Value.Message);
         }
 
@@ -186,6 +194,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.ApplicationNotFound,
                 "Join request was not found.");
         }
 
@@ -193,6 +202,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return ApplicationResult<InitiativeJoinRequestResponse>.Failure(
                 ApplicationErrorKind.Conflict,
+                InitiativeErrorCodes.ApplicationConflict,
                 "Only pending join requests can be updated.");
         }
 
@@ -220,6 +230,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return new OwnerAccessError(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.NotFound,
                 "Initiative was not found.");
         }
 
@@ -227,6 +238,7 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
         {
             return new OwnerAccessError(
                 ApplicationErrorKind.Forbidden,
+                InitiativeErrorCodes.OwnerRequired,
                 "Only the initiative owner can manage join requests.");
         }
 
@@ -252,5 +264,6 @@ public sealed class InitiativeJoinRequestService(AppDbContext dbContext) : IInit
 
     private readonly record struct OwnerAccessError(
         ApplicationErrorKind Kind,
+        string Code,
         string Message);
 }

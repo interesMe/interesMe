@@ -2,6 +2,7 @@ using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Chat.Channels.DTOs;
 using InteresMe.API.Modules.Chat.Channels.Models;
+using InteresMe.API.Modules.Chat.Shared;
 using InteresMe.API.Modules.Chat.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +35,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.ChannelTitleRequired,
                 "Channel title is required.");
         }
 
@@ -41,6 +43,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.Validation,
+                ChatErrorCodes.ChannelTitleTooLong,
                 $"Channel title must be at most {ChannelTitleMaxLength} characters.");
         }
 
@@ -56,6 +59,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
             {
                 return ApplicationResult<ChannelDto>.Failure(
                     ApplicationErrorKind.NotFound,
+                    ChatErrorCodes.ChannelInitiativeNotFound,
                     "Initiative was not found.");
             }
         }
@@ -103,6 +107,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.ChannelNotFound,
                 "Channel was not found.");
         }
 
@@ -110,6 +115,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.ChannelAccessDenied,
                 "You do not have access to this channel.");
         }
 
@@ -133,6 +139,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.ChannelNotFound,
                 "Channel was not found.");
         }
 
@@ -140,6 +147,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.Forbidden,
+                ChatErrorCodes.ChannelAccessDenied,
                 "You do not have access to this channel.");
         }
 
@@ -151,6 +159,7 @@ public sealed class ChannelService(AppDbContext dbContext) : IChannelService
         {
             return ApplicationResult<ChannelDto>.Failure(
                 ApplicationErrorKind.NotFound,
+                ChatErrorCodes.ChannelMemberNotFound,
                 "User was not found.");
         }
 

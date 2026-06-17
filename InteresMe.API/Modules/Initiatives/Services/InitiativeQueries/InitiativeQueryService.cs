@@ -1,5 +1,6 @@
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
+using InteresMe.API.Modules.Initiatives;
 using InteresMe.API.Modules.Initiatives.Contracts.Responses;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
@@ -38,6 +39,7 @@ public sealed class InitiativeQueryService(AppDbContext dbContext) : IInitiative
         {
             return ApplicationResult<InitiativeResponse>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.NotFound,
                 "Initiative was not found.");
         }
 
@@ -65,6 +67,7 @@ public sealed class InitiativeQueryService(AppDbContext dbContext) : IInitiative
         {
             return ApplicationResult<PublicInitiativeResponse>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.NotFound,
                 "Initiative was not found.");
         }
 

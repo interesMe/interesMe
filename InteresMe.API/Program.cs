@@ -1,5 +1,6 @@
 using System.Text;
 using InteresMe.API.BuildingBlocks.Email;
+using InteresMe.API.BuildingBlocks.Errors;
 using InteresMe.API.BuildingBlocks.Security;
 using InteresMe.API.Configuration;
 using InteresMe.API.Data;
@@ -109,6 +110,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors("Frontend");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 var webRootPath = app.Environment.WebRootPath;
 if (string.IsNullOrWhiteSpace(webRootPath))

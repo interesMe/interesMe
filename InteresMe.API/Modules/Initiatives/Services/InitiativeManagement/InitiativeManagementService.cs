@@ -1,5 +1,6 @@
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
+using InteresMe.API.Modules.Initiatives;
 using InteresMe.API.Modules.Initiatives.Contracts.Requests;
 using InteresMe.API.Modules.Initiatives.Contracts.Responses;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
@@ -30,6 +31,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<InitiativeResponse>.Failure(
                 ApplicationErrorKind.Validation,
+                InitiativeErrorCodes.CreateValidationFailed,
                 validation);
         }
 
@@ -40,6 +42,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<InitiativeResponse>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.UserNotFound,
                 "User was not found.");
         }
 
@@ -94,6 +97,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<InitiativeResponse>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.NotFound,
                 "Initiative was not found.");
         }
 
@@ -101,6 +105,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<InitiativeResponse>.Failure(
                 ApplicationErrorKind.Forbidden,
+                InitiativeErrorCodes.UpdateForbidden,
                 "Only the initiative owner can update this initiative.");
         }
 
@@ -113,6 +118,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<InitiativeResponse>.Failure(
                 ApplicationErrorKind.Validation,
+                InitiativeErrorCodes.UpdateValidationFailed,
                 validation);
         }
 
@@ -158,6 +164,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<bool>.Failure(
                 ApplicationErrorKind.NotFound,
+                InitiativeErrorCodes.NotFound,
                 "Initiative was not found.");
         }
 
@@ -165,6 +172,7 @@ public sealed class InitiativeManagementService(
         {
             return ApplicationResult<bool>.Failure(
                 ApplicationErrorKind.Forbidden,
+                InitiativeErrorCodes.DeleteForbidden,
                 "Only the initiative owner can delete this initiative.");
         }
 
