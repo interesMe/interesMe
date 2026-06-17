@@ -1,39 +1,40 @@
 using InteresMe.API.BuildingBlocks.Results;
-using InteresMe.API.Modules.Chat.DTOs;
+using InteresMe.API.Modules.Chat.Groups.DTOs;
+using InteresMe.API.Modules.Chat.Shared.DTOs;
 
-namespace InteresMe.API.Modules.Chat.Services;
+namespace InteresMe.API.Modules.Chat.Groups.Services;
 
-public interface IChatService
+public interface IGroupChatService
 {
-    Task<List<ChatDto>> GetChatsAsync(
+    Task<List<GroupChatDto>> GetGroupChatsAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationResult<ChatDto>> GetChatAsync(
+    Task<ApplicationResult<GroupChatDto>> GetOrCreateInitiativeGroupChatAsync(
         Guid userId,
-        Guid chatId,
+        Guid initiativeId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApplicationResult<GroupChatDto>> GetGroupChatAsync(
+        Guid userId,
+        Guid groupChatId,
         CancellationToken cancellationToken = default);
 
     Task<ApplicationResult<List<ChatMessageDto>>> GetMessagesAsync(
         Guid userId,
-        Guid chatId,
+        Guid groupChatId,
         int take,
         CancellationToken cancellationToken = default);
 
     Task<ApplicationResult<ChatMessageDto>> SendMessageAsync(
         Guid userId,
-        Guid chatId,
+        Guid groupChatId,
         SendMessageRequest? request,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationResult<ChatDto>> GetOrCreateInitiativeChatAsync(
+    Task<ApplicationResult<GroupChatDto>> AddParticipantAsync(
         Guid userId,
-        Guid initiativeId,
-        CancellationToken cancellationToken = default);
-
-    Task<ApplicationResult<ChatDto>> AddParticipantAsync(
-        Guid userId,
-        Guid chatId,
+        Guid groupChatId,
         Guid participantUserId,
         CancellationToken cancellationToken = default);
 }

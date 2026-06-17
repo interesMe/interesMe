@@ -1,12 +1,13 @@
 using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Chat.Shared.Enums;
 
-namespace InteresMe.API.Modules.Chat.Models;
+namespace InteresMe.API.Modules.Chat.Groups.Models;
 
-public sealed class ChatParticipant
+public sealed class GroupChatParticipant
 {
     public Guid Id { get; set; }
 
-    public Guid ChatRoomId { get; set; }
+    public Guid GroupChatId { get; set; }
 
     public Guid UserId { get; set; }
 
@@ -14,7 +15,7 @@ public sealed class ChatParticipant
 
     public ChatParticipantRole Role { get; set; }
 
-    public ChatRoom ChatRoom { get; set; } = null!;
+    public GroupChat GroupChat { get; set; } = null!;
 
     public User User { get; set; } = null!;
 }

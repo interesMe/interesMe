@@ -97,48 +97,40 @@ namespace InteresMe.API.Data.Migrations
                     b.ToTable("users", "auth");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatMessage", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Channels.Models.Channel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ChatRoomId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("EditedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("SenderUserId")
+                    b.Property<Guid?>("InitiativeId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Text")
+                    b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SenderUserId");
+                    b.HasIndex("InitiativeId");
 
-                    b.HasIndex("ChatRoomId", "CreatedAt");
-
-                    b.ToTable("chat_messages", "chat");
+                    b.ToTable("channels", "chat");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatParticipant", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Channels.Models.ChannelMember", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ChatRoomId")
+                    b.Property<Guid>("ChannelId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("JoinedAt")
@@ -154,13 +146,66 @@ namespace InteresMe.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("ChatRoomId", "UserId")
+                    b.HasIndex("ChannelId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("chat_participants", "chat");
+                    b.ToTable("channel_members", "chat");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatRoom", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserOneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserTwoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserTwoId");
+
+                    b.HasIndex("UserOneId", "UserTwoId")
+                        .IsUnique();
+
+                    b.ToTable("direct_conversations", "chat");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversationParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DirectConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("DirectConversationId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("direct_conversation_participants", "chat");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Groups.Models.GroupChat", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -185,7 +230,86 @@ namespace InteresMe.API.Data.Migrations
                     b.HasIndex("InitiativeId")
                         .IsUnique();
 
-                    b.ToTable("chat_rooms", "chat");
+                    b.ToTable("group_chats", "chat");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Groups.Models.GroupChatParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GroupChatId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("GroupChatId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("group_chat_participants", "chat");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Shared.Models.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ChannelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DirectConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("GroupChatId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.HasIndex("ChannelId", "CreatedAt");
+
+                    b.HasIndex("DirectConversationId", "CreatedAt");
+
+                    b.HasIndex("GroupChatId", "CreatedAt");
+
+                    b.ToTable("chat_messages", "chat", t =>
+                        {
+                            t.HasCheckConstraint("CK_chat_messages_single_conversation", "(\"ConversationType\" = 1 AND \"DirectConversationId\" IS NOT NULL AND \"GroupChatId\" IS NULL AND \"ChannelId\" IS NULL)\nOR (\"ConversationType\" = 2 AND \"DirectConversationId\" IS NULL AND \"GroupChatId\" IS NOT NULL AND \"ChannelId\" IS NULL)\nOR (\"ConversationType\" = 3 AND \"DirectConversationId\" IS NULL AND \"GroupChatId\" IS NULL AND \"ChannelId\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("InteresMe.API.Modules.Discovery.Models.UserDiscoveryPreference", b =>
@@ -534,30 +658,21 @@ namespace InteresMe.API.Data.Migrations
                     b.Navigation("user");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatMessage", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Channels.Models.Channel", b =>
                 {
-                    b.HasOne("InteresMe.API.Modules.Chat.Models.ChatRoom", "ChatRoom")
-                        .WithMany("Messages")
-                        .HasForeignKey("ChatRoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "SenderUser")
+                    b.HasOne("InteresMe.API.Modules.Initiatives.Domain.Entities.Initiative", "Initiative")
                         .WithMany()
-                        .HasForeignKey("SenderUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("InitiativeId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("ChatRoom");
-
-                    b.Navigation("SenderUser");
+                    b.Navigation("Initiative");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatParticipant", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Channels.Models.ChannelMember", b =>
                 {
-                    b.HasOne("InteresMe.API.Modules.Chat.Models.ChatRoom", "ChatRoom")
-                        .WithMany("Participants")
-                        .HasForeignKey("ChatRoomId")
+                    b.HasOne("InteresMe.API.Modules.Chat.Channels.Models.Channel", "Channel")
+                        .WithMany("Members")
+                        .HasForeignKey("ChannelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -567,12 +682,50 @@ namespace InteresMe.API.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ChatRoom");
+                    b.Navigation("Channel");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatRoom", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversation", b =>
+                {
+                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "UserOne")
+                        .WithMany()
+                        .HasForeignKey("UserOneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "UserTwo")
+                        .WithMany()
+                        .HasForeignKey("UserTwoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UserOne");
+
+                    b.Navigation("UserTwo");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversationParticipant", b =>
+                {
+                    b.HasOne("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversation", "DirectConversation")
+                        .WithMany("Participants")
+                        .HasForeignKey("DirectConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DirectConversation");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Groups.Models.GroupChat", b =>
                 {
                     b.HasOne("InteresMe.API.Modules.Initiatives.Domain.Entities.Initiative", "Initiative")
                         .WithMany()
@@ -580,6 +733,57 @@ namespace InteresMe.API.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Initiative");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Groups.Models.GroupChatParticipant", b =>
+                {
+                    b.HasOne("InteresMe.API.Modules.Chat.Groups.Models.GroupChat", "GroupChat")
+                        .WithMany("Participants")
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GroupChat");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Shared.Models.ChatMessage", b =>
+                {
+                    b.HasOne("InteresMe.API.Modules.Chat.Channels.Models.Channel", "Channel")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversation", "DirectConversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("DirectConversationId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("InteresMe.API.Modules.Chat.Groups.Models.GroupChat", "GroupChat")
+                        .WithMany("Messages")
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "SenderUser")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+
+                    b.Navigation("DirectConversation");
+
+                    b.Navigation("GroupChat");
+
+                    b.Navigation("SenderUser");
                 });
 
             modelBuilder.Entity("InteresMe.API.Modules.Discovery.Models.UserDiscoveryPreference", b =>
@@ -721,7 +925,21 @@ namespace InteresMe.API.Data.Migrations
                     b.Navigation("UserInterests");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Chat.Models.ChatRoom", b =>
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Channels.Models.Channel", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.DirectMessages.Models.DirectConversation", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Chat.Groups.Models.GroupChat", b =>
                 {
                     b.Navigation("Messages");
 

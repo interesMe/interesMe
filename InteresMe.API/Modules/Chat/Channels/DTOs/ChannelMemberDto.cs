@@ -1,8 +1,8 @@
-using InteresMe.API.Modules.Chat.Models;
+using InteresMe.API.Modules.Chat.Shared.Enums;
 
-namespace InteresMe.API.Modules.Chat.DTOs;
+namespace InteresMe.API.Modules.Chat.Channels.DTOs;
 
-public sealed class ChatParticipantDto
+public sealed class ChannelMemberDto
 {
     public Guid UserId { get; set; }
 

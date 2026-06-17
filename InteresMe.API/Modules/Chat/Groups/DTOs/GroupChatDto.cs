@@ -1,6 +1,6 @@
-namespace InteresMe.API.Modules.Chat.DTOs;
+namespace InteresMe.API.Modules.Chat.Groups.DTOs;
 
-public sealed class ChatDto
+public sealed class GroupChatDto
 {
     public Guid Id { get; set; }
 
@@ -14,5 +14,5 @@ public sealed class ChatDto
 
     public string? LastMessagePreview { get; set; }
 
-    public List<ChatParticipantDto> Participants { get; set; } = [];
+    public List<GroupChatParticipantDto> Participants { get; set; } = [];
 }

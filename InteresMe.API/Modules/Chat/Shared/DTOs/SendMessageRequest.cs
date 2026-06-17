@@ -1,4 +1,4 @@
-namespace InteresMe.API.Modules.Chat.DTOs;
+namespace InteresMe.API.Modules.Chat.Shared.DTOs;
 
 public sealed class SendMessageRequest
 {

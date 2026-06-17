@@ -1,5 +1,9 @@
 using InteresMe.API.Modules.Auth.Models;
-using InteresMe.API.Modules.Chat.Models;
+using InteresMe.API.Modules.Chat.Channels.Models;
+using InteresMe.API.Modules.Chat.DirectMessages.Models;
+using InteresMe.API.Modules.Chat.Groups.Models;
+using InteresMe.API.Modules.Chat.Shared.Enums;
+using InteresMe.API.Modules.Chat.Shared.Models;
 using InteresMe.API.Modules.Discovery.Models;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
@@ -22,9 +26,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<UserDiscoveryPreference> UserDiscoveryPreferences => Set<UserDiscoveryPreference>();
 
-    public DbSet<ChatRoom> ChatRooms => Set<ChatRoom>();
+    public DbSet<DirectConversation> DirectConversations => Set<DirectConversation>();
 
-    public DbSet<ChatParticipant> ChatParticipants => Set<ChatParticipant>();
+    public DbSet<DirectConversationParticipant> DirectConversationParticipants => Set<DirectConversationParticipant>();
+
+    public DbSet<GroupChat> GroupChats => Set<GroupChat>();
+
+    public DbSet<GroupChatParticipant> GroupChatParticipants => Set<GroupChatParticipant>();
+
+    public DbSet<Channel> Channels => Set<Channel>();
+
+    public DbSet<ChannelMember> ChannelMembers => Set<ChannelMember>();
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
@@ -183,34 +195,93 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<ChatRoom>(entity =>
+        modelBuilder.Entity<DirectConversation>(entity =>
         {
-            entity.ToTable("chat_rooms", "chat");
+            entity.ToTable("direct_conversations", "chat");
 
-            entity.HasKey(chatRoom => chatRoom.Id);
+            entity.HasKey(conversation => conversation.Id);
 
-            entity.Property(chatRoom => chatRoom.Title)
+            entity.Property(conversation => conversation.CreatedAt)
+                .IsRequired();
+
+            entity.Property(conversation => conversation.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(conversation => new
+                {
+                    conversation.UserOneId,
+                    conversation.UserTwoId
+                })
+                .IsUnique();
+
+            entity.HasOne(conversation => conversation.UserOne)
+                .WithMany()
+                .HasForeignKey(conversation => conversation.UserOneId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(conversation => conversation.UserTwo)
+                .WithMany()
+                .HasForeignKey(conversation => conversation.UserTwoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DirectConversationParticipant>(entity =>
+        {
+            entity.ToTable("direct_conversation_participants", "chat");
+
+            entity.HasKey(participant => participant.Id);
+
+            entity.Property(participant => participant.JoinedAt)
+                .IsRequired();
+
+            entity.HasIndex(participant => new
+                {
+                    participant.DirectConversationId,
+                    participant.UserId
+                })
+                .IsUnique();
+
+            entity.HasIndex(participant => participant.UserId);
+
+            entity.HasOne(participant => participant.DirectConversation)
+                .WithMany(conversation => conversation.Participants)
+                .HasForeignKey(participant => participant.DirectConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(participant => participant.User)
+                .WithMany()
+                .HasForeignKey(participant => participant.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GroupChat>(entity =>
+        {
+            entity.ToTable("group_chats", "chat");
+
+            entity.HasKey(groupChat => groupChat.Id);
+
+            entity.Property(groupChat => groupChat.Title)
                 .HasMaxLength(160)
                 .IsRequired();
 
-            entity.Property(chatRoom => chatRoom.CreatedAt)
+            entity.Property(groupChat => groupChat.CreatedAt)
                 .IsRequired();
 
-            entity.Property(chatRoom => chatRoom.UpdatedAt)
+            entity.Property(groupChat => groupChat.UpdatedAt)
                 .IsRequired();
 
-            entity.HasIndex(chatRoom => chatRoom.InitiativeId)
+            entity.HasIndex(groupChat => groupChat.InitiativeId)
                 .IsUnique();
 
-            entity.HasOne(chatRoom => chatRoom.Initiative)
+            entity.HasOne(groupChat => groupChat.Initiative)
                 .WithMany()
-                .HasForeignKey(chatRoom => chatRoom.InitiativeId)
+                .HasForeignKey(groupChat => groupChat.InitiativeId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<ChatParticipant>(entity =>
+        modelBuilder.Entity<GroupChatParticipant>(entity =>
         {
-            entity.ToTable("chat_participants", "chat");
+            entity.ToTable("group_chat_participants", "chat");
 
             entity.HasKey(participant => participant.Id);
 
@@ -222,16 +293,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(participant => new
                 {
-                    participant.ChatRoomId,
+                    participant.GroupChatId,
                     participant.UserId
                 })
                 .IsUnique();
 
             entity.HasIndex(participant => participant.UserId);
 
-            entity.HasOne(participant => participant.ChatRoom)
-                .WithMany(chatRoom => chatRoom.Participants)
-                .HasForeignKey(participant => participant.ChatRoomId)
+            entity.HasOne(participant => participant.GroupChat)
+                .WithMany(groupChat => groupChat.Participants)
+                .HasForeignKey(participant => participant.GroupChatId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(participant => participant.User)
@@ -240,11 +311,70 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Channel>(entity =>
+        {
+            entity.ToTable("channels", "chat");
+
+            entity.HasKey(channel => channel.Id);
+
+            entity.Property(channel => channel.Title)
+                .HasMaxLength(160)
+                .IsRequired();
+
+            entity.Property(channel => channel.CreatedAt)
+                .IsRequired();
+
+            entity.Property(channel => channel.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(channel => channel.InitiativeId);
+
+            entity.HasOne(channel => channel.Initiative)
+                .WithMany()
+                .HasForeignKey(channel => channel.InitiativeId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ChannelMember>(entity =>
+        {
+            entity.ToTable("channel_members", "chat");
+
+            entity.HasKey(member => member.Id);
+
+            entity.Property(member => member.JoinedAt)
+                .IsRequired();
+
+            entity.Property(member => member.Role)
+                .IsRequired();
+
+            entity.HasIndex(member => new
+                {
+                    member.ChannelId,
+                    member.UserId
+                })
+                .IsUnique();
+
+            entity.HasIndex(member => member.UserId);
+
+            entity.HasOne(member => member.Channel)
+                .WithMany(channel => channel.Members)
+                .HasForeignKey(member => member.ChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(member => member.User)
+                .WithMany()
+                .HasForeignKey(member => member.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<ChatMessage>(entity =>
         {
             entity.ToTable("chat_messages", "chat");
 
             entity.HasKey(message => message.Id);
+
+            entity.Property(message => message.ConversationType)
+                .IsRequired();
 
             entity.Property(message => message.Text)
                 .HasMaxLength(2000)
@@ -258,15 +388,45 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(message => new
             {
-                message.ChatRoomId,
+                message.DirectConversationId,
+                message.CreatedAt
+            });
+
+            entity.HasIndex(message => new
+            {
+                message.GroupChatId,
+                message.CreatedAt
+            });
+
+            entity.HasIndex(message => new
+            {
+                message.ChannelId,
                 message.CreatedAt
             });
 
             entity.HasIndex(message => message.SenderUserId);
 
-            entity.HasOne(message => message.ChatRoom)
-                .WithMany(chatRoom => chatRoom.Messages)
-                .HasForeignKey(message => message.ChatRoomId)
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_chat_messages_single_conversation",
+                $"""
+                ("ConversationType" = {(int)ChatConversationType.Direct} AND "DirectConversationId" IS NOT NULL AND "GroupChatId" IS NULL AND "ChannelId" IS NULL)
+                OR ("ConversationType" = {(int)ChatConversationType.Group} AND "DirectConversationId" IS NULL AND "GroupChatId" IS NOT NULL AND "ChannelId" IS NULL)
+                OR ("ConversationType" = {(int)ChatConversationType.Channel} AND "DirectConversationId" IS NULL AND "GroupChatId" IS NULL AND "ChannelId" IS NOT NULL)
+                """));
+
+            entity.HasOne(message => message.DirectConversation)
+                .WithMany(conversation => conversation.Messages)
+                .HasForeignKey(message => message.DirectConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(message => message.GroupChat)
+                .WithMany(groupChat => groupChat.Messages)
+                .HasForeignKey(message => message.GroupChatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(message => message.Channel)
+                .WithMany(channel => channel.Messages)
+                .HasForeignKey(message => message.ChannelId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(message => message.SenderUser)

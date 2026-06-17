@@ -1,10 +1,18 @@
-namespace InteresMe.API.Modules.Chat.DTOs;
+using InteresMe.API.Modules.Chat.Shared.Enums;
+
+namespace InteresMe.API.Modules.Chat.Shared.DTOs;
 
 public sealed class ChatMessageDto
 {
     public Guid Id { get; set; }
 
-    public Guid ChatRoomId { get; set; }
+    public ChatConversationType ConversationType { get; set; }
+
+    public Guid? DirectConversationId { get; set; }
+
+    public Guid? GroupChatId { get; set; }
+
+    public Guid? ChannelId { get; set; }
 
     public Guid SenderUserId { get; set; }
 
