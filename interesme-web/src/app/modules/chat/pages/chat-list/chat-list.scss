@@ -1,0 +1,142 @@
+.chat-page {
+  display: grid;
+  gap: 24px;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+}
+
+.chat-header h1,
+.chat-header p,
+.chat-section h2,
+.chat-card h3,
+.chat-card p {
+  margin: 0;
+}
+
+.chat-header h1 {
+  margin-top: 6px;
+  color: var(--im-text);
+  font-size: 42px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.chat-header p:last-child,
+.empty-copy {
+  color: var(--im-muted);
+  line-height: 1.5;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--im-primary-hover);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chat-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.chat-section {
+  display: grid;
+  gap: 12px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-title h2 {
+  color: var(--im-text);
+  font-size: 22px;
+}
+
+.section-title span {
+  color: var(--im-muted);
+  font-weight: 800;
+}
+
+.chat-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.section-error {
+  padding: 14px 16px;
+  border: 1px solid rgba(251, 111, 97, 0.24);
+  border-radius: var(--im-radius-md);
+  background: rgba(251, 111, 97, 0.08);
+  color: var(--im-coral);
+  font-weight: 800;
+}
+
+.section-error p {
+  margin: 0;
+}
+
+.chat-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 82px;
+  padding: 16px;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-lg);
+  background: var(--im-surface);
+  color: var(--im-text);
+  text-decoration: none;
+  box-shadow: var(--im-shadow-card);
+}
+
+.chat-card:hover {
+  border-color: var(--im-border-active, rgba(20, 184, 166, 0.24));
+}
+
+.chat-card div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.chat-card h3 {
+  font-size: 17px;
+}
+
+.chat-card p {
+  overflow: hidden;
+  color: var(--im-muted);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-card > span {
+  flex: 0 0 auto;
+  color: var(--im-muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .chat-header,
+  .chat-card {
+    display: grid;
+  }
+
+  .chat-header .button {
+    width: 100%;
+  }
+}

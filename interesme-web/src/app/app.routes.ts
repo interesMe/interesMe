@@ -58,6 +58,10 @@ export const routes: Routes = [
           ),
       },
       {
+        path: APP_ROUTES.chat,
+        loadChildren: () => import('./modules/chat/chat.routes').then((routesFile) => routesFile.CHAT_ROUTES),
+      },
+      {
         path: APP_ROUTES.settings,
         loadChildren: () => import('./modules/settings/settings.routes').then((routesFile) => routesFile.SETTINGS_ROUTES),
       },

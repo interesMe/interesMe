@@ -34,3 +34,18 @@ export const INITIATIVES_API_ENDPOINTS = {
 export const PUBLIC_INITIATIVES_API_ENDPOINTS = {
   bySlug: (slug: string) => `${API_BASE_URL}/public/initiatives/${slug}`,
 } as const;
+
+export const CHAT_API_ENDPOINTS = {
+  direct: `${API_BASE_URL}/chats/direct`,
+  directConversation: (userId: string) => `${API_BASE_URL}/chats/direct/${userId}`,
+  directMessagesBase: (conversationId: string) => `${API_BASE_URL}/chats/direct/${conversationId}/messages`,
+  directMessages: (conversationId: string, take = 50) =>
+    `${API_BASE_URL}/chats/direct/${conversationId}/messages?take=${take}`,
+  groupChats: `${API_BASE_URL}/chats/groups`,
+  groupChat: (groupChatId: string) => `${API_BASE_URL}/chats/groups/${groupChatId}`,
+  groupMessagesBase: (groupChatId: string) => `${API_BASE_URL}/chats/groups/${groupChatId}/messages`,
+  groupMessages: (groupChatId: string, take = 50) =>
+    `${API_BASE_URL}/chats/groups/${groupChatId}/messages?take=${take}`,
+  channels: `${API_BASE_URL}/chats/channels`,
+  channel: (channelId: string) => `${API_BASE_URL}/chats/channels/${channelId}`,
+} as const;

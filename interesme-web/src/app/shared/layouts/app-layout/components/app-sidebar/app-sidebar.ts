@@ -9,7 +9,7 @@ import { AuthService } from '../../../../../modules/auth/services/auth.service';
 type SidebarRouteItem = {
   labelKey: TranslationKey;
   icon: string;
-  path: string;
+  path: readonly string[];
   exact?: boolean;
 };
 
@@ -36,13 +36,13 @@ export class AppSidebar {
     {
       labelKey: 'appSidebar.nav.home',
       icon: '/assets/icons/home.svg',
-      path: `/${APP_ROUTES.home}`,
+      path: ['/', APP_ROUTES.home],
       exact: true,
     },
     {
       labelKey: 'appSidebar.nav.initiatives',
       icon: '/assets/icons/home.svg',
-      path: `/${APP_ROUTES.initiatives}`,
+      path: ['/', APP_ROUTES.initiatives],
       exact: false,
     },
     {
@@ -53,7 +53,8 @@ export class AppSidebar {
     {
       labelKey: 'appSidebar.nav.messages',
       icon: '/assets/icons/message.svg',
-      disabled: true,
+      path: ['/', APP_ROUTES.chat],
+      exact: false,
     },
     {
       labelKey: 'appSidebar.nav.portfolio',
@@ -63,13 +64,13 @@ export class AppSidebar {
     {
       labelKey: 'appSidebar.nav.profile',
       icon: '/assets/icons/profile.svg',
-      path: `/${APP_ROUTES.profile}`,
+      path: ['/', APP_ROUTES.profile],
       exact: true,
     },
     {
       labelKey: 'appSidebar.nav.settings',
       icon: '/assets/icons/settings.svg',
-      path: `/${APP_ROUTES.settings}`,
+      path: ['/', APP_ROUTES.settings],
       exact: true,
     },
   ];

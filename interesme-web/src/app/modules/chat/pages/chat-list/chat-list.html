@@ -1,0 +1,100 @@
+<main class="chat-page">
+  <section class="chat-header">
+    <div>
+      <p class="eyebrow">Messages</p>
+      <h1>Chats</h1>
+      <p>Direct conversations, initiative group chats, and channels.</p>
+    </div>
+
+    <button class="button button-secondary" type="button" (click)="loadChats()">Refresh</button>
+  </section>
+
+  <section class="chat-sections">
+    <section class="chat-section">
+      <div class="section-title">
+        <h2>Direct messages</h2>
+        <span>{{ directConversations().length }}</span>
+      </div>
+
+      @if (isDirectLoading()) {
+        <p class="empty-copy">Loading direct messages...</p>
+      } @else if (directErrorMessage()) {
+        <div class="section-error">
+          <p>{{ directErrorMessage() }}</p>
+        </div>
+      } @else if (directConversations().length === 0) {
+        <p class="empty-copy">No direct conversations yet.</p>
+      } @else {
+        <div class="chat-card-list">
+          @for (conversation of directConversations(); track conversation.id) {
+            <a class="chat-card" [routerLink]="directPath(conversation)">
+              <div>
+                <h3>{{ directTitle(conversation) }}</h3>
+                <p>{{ conversation.lastMessagePreview || 'No messages yet.' }}</p>
+              </div>
+              <span>{{ formatDate(conversation.updatedAt) }}</span>
+            </a>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="chat-section">
+      <div class="section-title">
+        <h2>Group chats</h2>
+        <span>{{ groupChats().length }}</span>
+      </div>
+
+      @if (isGroupsLoading()) {
+        <p class="empty-copy">Loading group chats...</p>
+      } @else if (groupsErrorMessage()) {
+        <div class="section-error">
+          <p>{{ groupsErrorMessage() }}</p>
+        </div>
+      } @else if (groupChats().length === 0) {
+        <p class="empty-copy">No group chats yet.</p>
+      } @else {
+        <div class="chat-card-list">
+          @for (groupChat of groupChats(); track groupChat.id) {
+            <a class="chat-card" [routerLink]="groupPath(groupChat)">
+              <div>
+                <h3>{{ groupChat.title }}</h3>
+                <p>{{ groupChat.lastMessagePreview || 'No messages yet.' }}</p>
+              </div>
+              <span>{{ groupChat.participantsCount }} members · {{ formatDate(groupChat.updatedAt) }}</span>
+            </a>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="chat-section">
+      <div class="section-title">
+        <h2>Channels</h2>
+        <span>{{ channels().length }}</span>
+      </div>
+
+      @if (isChannelsLoading()) {
+        <p class="empty-copy">Loading channels...</p>
+      } @else if (channelsErrorMessage()) {
+        <div class="section-error">
+          <p>{{ channelsErrorMessage() }}</p>
+        </div>
+      } @else if (channels().length === 0) {
+        <p class="empty-copy">No channels yet.</p>
+      } @else {
+        <div class="chat-card-list">
+          @for (channel of channels(); track channel.id) {
+            <a class="chat-card" [routerLink]="channelPath(channel)">
+              <div>
+                <h3>{{ channel.title }}</h3>
+                <p>Announcement channel</p>
+              </div>
+              <span>{{ channel.membersCount }} members · {{ formatDate(channel.updatedAt) }}</span>
+            </a>
+          }
+        </div>
+      }
+    </section>
+  </section>
+</main>

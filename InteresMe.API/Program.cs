@@ -106,6 +106,11 @@ var app = builder.Build();
 
 await app.ApplyMigrationsAsync();
 
+if (app.Environment.IsDevelopment())
+{
+    await app.SeedDevelopmentDemoDataAsync();
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
 

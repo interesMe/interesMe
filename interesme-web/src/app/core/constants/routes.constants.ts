@@ -18,6 +18,6 @@ export const APP_ROUTES = {
   initiativeEdit: 'initiatives/:id/edit',
   myInitiatives: 'me/initiatives',
   matches: 'matches',
-  chat: 'chat',
+  chat: 'chats',
   settings: 'settings',
 } as const;

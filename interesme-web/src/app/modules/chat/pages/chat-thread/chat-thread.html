@@ -1,0 +1,67 @@
+<main class="thread-page">
+  <header class="thread-header">
+    <div>
+      <a [routerLink]="backPath">Chats</a>
+      <h1>{{ title() }}</h1>
+    </div>
+    <span class="type-badge">{{ typeLabel() }}</span>
+  </header>
+
+  @if (isLoading()) {
+    <section class="state-card" aria-live="polite">
+      <span class="loader" aria-hidden="true"></span>
+      <h1>Loading chat</h1>
+      <p>Fetching the latest messages.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="state-card">
+      <span class="state-icon error" aria-hidden="true">!</span>
+      <h1>Chat unavailable</h1>
+      <p>{{ errorMessage() }}</p>
+      <button class="button button-primary" type="button" (click)="loadThread()">Try again</button>
+    </section>
+  } @else {
+    <section class="thread-shell">
+      <div class="message-list">
+        @if (threadType() === 'channel') {
+          <div class="empty-thread">
+            <h2>Channel messages are not enabled yet.</h2>
+            <p>This channel is available for membership and future announcements.</p>
+          </div>
+        } @else if (messages().length === 0) {
+          <div class="empty-thread">
+            <h2>No messages yet.</h2>
+            <p>Start the conversation with a short note.</p>
+          </div>
+        } @else {
+          @for (message of messages(); track message.id) {
+            <article class="message-row" [class.is-own]="isOwnMessage(message)">
+              <div class="message-bubble">
+                <div class="message-meta">
+                  <strong>{{ isOwnMessage(message) ? 'You' : senderName(message) }}</strong>
+                  <span>{{ formatDate(message.createdAt) }}</span>
+                </div>
+                <p>{{ message.text }}</p>
+              </div>
+            </article>
+          }
+        }
+      </div>
+
+      @if (canSend()) {
+        <form class="composer" (ngSubmit)="sendMessage()">
+          <textarea
+            name="message"
+            rows="2"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+            placeholder="Write a message"
+          ></textarea>
+          <button class="button button-primary" type="submit" [disabled]="isSending() || !draft().trim()">
+            {{ isSending() ? 'Sending' : 'Send' }}
+          </button>
+        </form>
+      }
+    </section>
+  }
+</main>
