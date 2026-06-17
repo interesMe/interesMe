@@ -272,6 +272,88 @@
   transform: translateX(2px);
 }
 
+:host-context([data-theme='dark']) .nav-item {
+  color: rgba(226, 232, 240, 0.62);
+}
+
+:host-context([data-theme='dark']) .nav-icon {
+  background: rgba(148, 163, 184, 0.055);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.045);
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+:host-context([data-theme='dark']) .nav-icon img {
+  opacity: 0.56;
+  filter: invert(72%) sepia(12%) saturate(438%) hue-rotate(176deg) brightness(84%) contrast(84%);
+  transition:
+    opacity 160ms ease,
+    filter 160ms ease;
+}
+
+:host-context([data-theme='dark']) .nav-item:hover {
+  background: rgba(20, 184, 166, 0.065);
+  color: rgba(226, 232, 240, 0.84);
+}
+
+:host-context([data-theme='dark']) .nav-item:hover .nav-icon {
+  background: rgba(20, 184, 166, 0.105);
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 184, 166, 0.08),
+    0 0 10px rgba(20, 184, 166, 0.12);
+}
+
+:host-context([data-theme='dark']) .nav-item:hover .nav-icon img {
+  opacity: 0.78;
+  filter: invert(77%) sepia(67%) saturate(662%) hue-rotate(123deg) brightness(96%) contrast(91%);
+}
+
+:host-context([data-theme='dark']) .nav-item.is-active {
+  background: rgba(20, 184, 166, 0.13);
+  color: #2dd4bf;
+  box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.16);
+}
+
+:host-context([data-theme='dark']) .nav-item.is-active .nav-icon {
+  background: rgba(20, 184, 166, 0.16);
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 184, 166, 0.18),
+    0 0 14px rgba(20, 184, 166, 0.22);
+}
+
+:host-context([data-theme='dark']) .nav-item.is-active .nav-icon img {
+  opacity: 0.95;
+  filter: invert(77%) sepia(67%) saturate(662%) hue-rotate(123deg) brightness(96%) contrast(91%);
+}
+
+:host-context([data-theme='dark']) .nav-item.is-disabled,
+:host-context([data-theme='dark']) .nav-item.is-disabled:hover {
+  color: rgba(148, 163, 184, 0.38);
+}
+
+:host-context([data-theme='dark']) .nav-item.is-disabled .nav-icon,
+:host-context([data-theme='dark']) .nav-item.is-disabled:hover .nav-icon {
+  background: rgba(148, 163, 184, 0.035);
+  box-shadow: none;
+}
+
+:host-context([data-theme='dark']) .nav-item.is-disabled .nav-icon img,
+:host-context([data-theme='dark']) .nav-item.is-disabled:hover .nav-icon img {
+  opacity: 0.34;
+  filter: invert(62%) sepia(13%) saturate(646%) hue-rotate(176deg) brightness(83%) contrast(84%);
+}
+
+:host-context([data-theme='dark']) .logout-button:hover .nav-icon {
+  background: rgba(251, 111, 97, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(251, 111, 97, 0.14);
+}
+
+:host-context([data-theme='dark']) .logout-button:hover .nav-icon img {
+  opacity: 0.78;
+  filter: invert(67%) sepia(70%) saturate(1173%) hue-rotate(319deg) brightness(101%) contrast(97%);
+}
+
 @media (max-width: 860px) {
   .app-sidebar {
     position: static;

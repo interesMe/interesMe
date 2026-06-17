@@ -403,6 +403,23 @@
   font-weight: 900;
 }
 
+:host-context([data-theme='dark']) .create-card {
+  border-color: rgba(251, 111, 97, 0.18);
+}
+
+:host-context([data-theme='dark']) .explore-card {
+  border-color: rgba(20, 184, 166, 0.2);
+}
+
+:host-context([data-theme='dark']) :is(.initiative-card, .mission-card, .panel-card) {
+  background-color: var(--im-surface-elevated);
+}
+
+:host-context([data-theme='dark']) .tags span {
+  background: rgba(20, 184, 166, 0.1);
+  color: #2dd4bf;
+}
+
 @media (max-width: 1180px) {
   .hero,
   .dashboard-grid {

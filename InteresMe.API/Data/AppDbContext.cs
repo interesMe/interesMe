@@ -1,4 +1,5 @@
 using InteresMe.API.Modules.Auth.Models;
+using InteresMe.API.Modules.Chat.Models;
 using InteresMe.API.Modules.Discovery.Models;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
@@ -20,6 +21,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
 
     public DbSet<UserDiscoveryPreference> UserDiscoveryPreferences => Set<UserDiscoveryPreference>();
+
+    public DbSet<ChatRoom> ChatRooms => Set<ChatRoom>();
+
+    public DbSet<ChatParticipant> ChatParticipants => Set<ChatParticipant>();
+
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
     public DbSet<Initiative> Initiatives => Set<Initiative>();
 
@@ -173,6 +180,98 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(preference => preference.User)
                 .WithOne()
                 .HasForeignKey<UserDiscoveryPreference>(preference => preference.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ChatRoom>(entity =>
+        {
+            entity.ToTable("chat_rooms", "chat");
+
+            entity.HasKey(chatRoom => chatRoom.Id);
+
+            entity.Property(chatRoom => chatRoom.Title)
+                .HasMaxLength(160)
+                .IsRequired();
+
+            entity.Property(chatRoom => chatRoom.CreatedAt)
+                .IsRequired();
+
+            entity.Property(chatRoom => chatRoom.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(chatRoom => chatRoom.InitiativeId)
+                .IsUnique();
+
+            entity.HasOne(chatRoom => chatRoom.Initiative)
+                .WithMany()
+                .HasForeignKey(chatRoom => chatRoom.InitiativeId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ChatParticipant>(entity =>
+        {
+            entity.ToTable("chat_participants", "chat");
+
+            entity.HasKey(participant => participant.Id);
+
+            entity.Property(participant => participant.JoinedAt)
+                .IsRequired();
+
+            entity.Property(participant => participant.Role)
+                .IsRequired();
+
+            entity.HasIndex(participant => new
+                {
+                    participant.ChatRoomId,
+                    participant.UserId
+                })
+                .IsUnique();
+
+            entity.HasIndex(participant => participant.UserId);
+
+            entity.HasOne(participant => participant.ChatRoom)
+                .WithMany(chatRoom => chatRoom.Participants)
+                .HasForeignKey(participant => participant.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(participant => participant.User)
+                .WithMany()
+                .HasForeignKey(participant => participant.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.ToTable("chat_messages", "chat");
+
+            entity.HasKey(message => message.Id);
+
+            entity.Property(message => message.Text)
+                .HasMaxLength(2000)
+                .IsRequired();
+
+            entity.Property(message => message.CreatedAt)
+                .IsRequired();
+
+            entity.Property(message => message.IsDeleted)
+                .IsRequired();
+
+            entity.HasIndex(message => new
+            {
+                message.ChatRoomId,
+                message.CreatedAt
+            });
+
+            entity.HasIndex(message => message.SenderUserId);
+
+            entity.HasOne(message => message.ChatRoom)
+                .WithMany(chatRoom => chatRoom.Messages)
+                .HasForeignKey(message => message.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(message => message.SenderUser)
+                .WithMany()
+                .HasForeignKey(message => message.SenderUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
