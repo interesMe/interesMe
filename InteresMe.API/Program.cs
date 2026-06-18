@@ -61,6 +61,7 @@ builder.Services.AddScoped<IOAuthRedirectService, OAuthRedirectService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IProfileRequestReader, ProfileRequestReader>();
 builder.Services.AddScoped<IInterestService, InterestService>();
+builder.Services.AddScoped<IInterestCatalogService, InterestCatalogService>();
 builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
 builder.Services.AddScoped<IDirectMessageService, DirectMessageService>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();

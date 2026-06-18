@@ -2,6 +2,7 @@ using System.Text;
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Interests.DTOs;
+using InteresMe.API.Modules.Interests.Infrastructure.Seed;
 using InteresMe.API.Modules.Interests.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,8 +21,15 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
             .Select(interest => new InterestResponse
             {
                 Id = interest.Id,
+                CategoryId = interest.CategoryId,
                 Name = interest.Name,
                 Slug = interest.Slug,
+                Description = interest.Description,
+                Icon = interest.Icon,
+                Color = interest.Color,
+                PeopleCount = 0,
+                InitiativesCount = 0,
+                PortfolioCount = 0,
                 CreatedAt = interest.CreatedAt
             })
             .ToListAsync(cancellationToken);
@@ -77,8 +85,14 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
         var interest = new Interest
         {
             Id = Guid.NewGuid(),
+            CategoryId = InterestCatalogSeed.BuildCategoryId,
             Name = name,
             Slug = slug,
+            Description = name,
+            Icon = "IN",
+            Color = "#14b8a6",
+            SortOrder = 1000,
+            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -91,8 +105,15 @@ public sealed class InterestService(AppDbContext dbContext) : IInterestService
     private static InterestResponse ToResponse(Interest interest) => new()
     {
         Id = interest.Id,
+        CategoryId = interest.CategoryId,
         Name = interest.Name,
         Slug = interest.Slug,
+        Description = interest.Description,
+        Icon = interest.Icon,
+        Color = interest.Color,
+        PeopleCount = 0,
+        InitiativesCount = 0,
+        PortfolioCount = 0,
         CreatedAt = interest.CreatedAt
     };
 

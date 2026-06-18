@@ -9,8 +9,16 @@ namespace InteresMe.API.Modules.Interests.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/interests")]
-public class InterestsController(IInterestService interestService) : ControllerBase
+public class InterestsController(
+    IInterestService interestService,
+    IInterestCatalogService interestCatalogService) : ControllerBase
 {
+    [AllowAnonymous]
+    [HttpGet("catalog")]
+    public async Task<IActionResult> GetCatalog(
+        CancellationToken cancellationToken) =>
+        Ok(await interestCatalogService.GetCatalogAsync(cancellationToken));
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         CancellationToken cancellationToken) =>

@@ -96,19 +96,20 @@ public static class DemoDataSeeder
         var requested = new[]
         {
             ("Design", "design"),
-            ("UI/UX", "ui-ux"),
             ("Startups", "startups"),
-            ("Frontend", "frontend"),
-            ("Backend", "backend"),
+            ("Programming", "programming"),
             ("Music", "music"),
             ("Photography", "photography"),
             ("Product", "product"),
             ("Volunteering", "volunteering"),
-            ("AI", "ai"),
-            ("Study Groups", "study-groups"),
-            ("Game Development", "game-development"),
+            ("Education", "education"),
+            ("Science", "science"),
+            ("Engineering", "engineering"),
+            ("Business", "business"),
+            ("Ecology", "ecology"),
             ("Community", "community"),
-            ("Events", "events")
+            ("Cinema", "cinema"),
+            ("Art", "art")
         };
 
         var slugs = requested.Select(interest => interest.Item2).ToList();
@@ -126,8 +127,14 @@ public static class DemoDataSeeder
             var interest = new Interest
             {
                 Id = Guid.NewGuid(),
+                CategoryId = InteresMe.API.Modules.Interests.Infrastructure.Seed.InterestCatalogSeed.BuildCategoryId,
                 Name = name,
                 Slug = slug,
+                Description = name,
+                Icon = "IN",
+                Color = "#14b8a6",
+                SortOrder = 1000,
+                IsActive = true,
                 CreatedAt = now
             };
 
@@ -211,16 +218,16 @@ public static class DemoDataSeeder
     {
         var byUser = new Dictionary<string, string[]>
         {
-            ["Anna Designer"] = ["design", "ui-ux", "product", "community"],
-            ["Mark Startup Founder"] = ["startups", "product", "events", "ai"],
-            ["Sarah Musician"] = ["music", "events", "community", "design"],
-            ["Alex Developer"] = ["frontend", "backend", "ai", "game-development"],
-            ["Diana Photographer"] = ["photography", "events", "design", "community"],
-            ["Mike Product Manager"] = ["product", "startups", "community", "study-groups"],
-            ["Emma Volunteer"] = ["volunteering", "community", "events", "study-groups"],
-            ["Daniel UI Designer"] = ["ui-ux", "design", "frontend", "product"],
-            ["Olivia AI Researcher"] = ["ai", "study-groups", "backend", "product"],
-            ["Nazar Game Developer"] = ["game-development", "frontend", "design", "music"]
+            ["Anna Designer"] = ["design", "product", "community", "art"],
+            ["Mark Startup Founder"] = ["startups", "product", "programming", "business"],
+            ["Sarah Musician"] = ["music", "cinema", "community", "design"],
+            ["Alex Developer"] = ["programming", "product", "startups", "engineering"],
+            ["Diana Photographer"] = ["photography", "cinema", "design", "community"],
+            ["Mike Product Manager"] = ["product", "startups", "community", "education"],
+            ["Emma Volunteer"] = ["volunteering", "community", "education", "ecology"],
+            ["Daniel UI Designer"] = ["design", "programming", "product", "photography"],
+            ["Olivia AI Researcher"] = ["programming", "education", "science", "product"],
+            ["Nazar Game Developer"] = ["programming", "art", "design", "music"]
         };
 
         return users
@@ -267,13 +274,13 @@ public static class DemoDataSeeder
     {
         var definitions = new[]
         {
-            new InitiativeSeed("Student Startup Weekend", "student-startup-weekend-demo", "A weekend sprint for students to validate ideas, form teams, and present a small working prototype.", "Mark Startup Founder", InitiativeGoalType.Build, 24, new[] { "startups", "product", "frontend" }, new[] { "Frontend Developer", "Pitch Coach", "Designer" }),
-            new InitiativeSeed("Indie Band Project", "indie-band-project-demo", "A small group for writing original songs, rehearsing weekly, and playing at local student events.", "Sarah Musician", InitiativeGoalType.Play, 6, new[] { "music", "events", "community" }, new[] { "Guitarist", "Producer", "Visual Designer" }),
-            new InitiativeSeed("AI Study Group", "ai-study-group-demo", "Beginner-friendly study sessions for machine learning basics, paper reading, and practical Python notebooks.", "Olivia AI Researcher", InitiativeGoalType.Learn, 12, new[] { "ai", "study-groups", "backend" }, new[] { "Study Buddy", "Python Mentor", "Note Taker" }),
-            new InitiativeSeed("Photography Club", "photography-club-demo", "Photo walks, editing sessions, and a shared student gallery for portraits and campus stories.", "Diana Photographer", InitiativeGoalType.Explore, 16, new[] { "photography", "events", "design" }, new[] { "Event Photographer", "Editor", "Gallery Curator" }),
-            new InitiativeSeed("Volunteer Community", "volunteer-community-demo", "A lightweight community for organizing practical volunteer actions around campus and nearby neighborhoods.", "Emma Volunteer", InitiativeGoalType.Connect, 30, new[] { "volunteering", "community", "events" }, new[] { "Coordinator", "Partnerships", "Content Helper" }),
-            new InitiativeSeed("Game Development Team", "game-development-team-demo", "A tiny team building a playable student game prototype with simple mechanics and a clear art direction.", "Nazar Game Developer", InitiativeGoalType.Build, 8, new[] { "game-development", "frontend", "design" }, new[] { "Unity Developer", "Pixel Artist", "Sound Designer" }),
-            new InitiativeSeed("Campus UX Lab", "campus-ux-lab-demo", "A design critique and usability testing group for student-made apps and initiative pages.", "Daniel UI Designer", InitiativeGoalType.Learn, 10, new[] { "ui-ux", "design", "product" }, new[] { "Researcher", "Prototype Designer", "Tester" })
+            new InitiativeSeed("Student Startup Weekend", "student-startup-weekend-demo", "A weekend sprint for students to validate ideas, form teams, and present a small working prototype.", "Mark Startup Founder", InitiativeGoalType.Build, 24, new[] { "startups", "product", "programming" }, new[] { "Frontend Developer", "Pitch Coach", "Designer" }),
+            new InitiativeSeed("Indie Band Project", "indie-band-project-demo", "A small group for writing original songs, rehearsing weekly, and playing at local student events.", "Sarah Musician", InitiativeGoalType.Play, 6, new[] { "music", "cinema", "community" }, new[] { "Guitarist", "Producer", "Visual Designer" }),
+            new InitiativeSeed("AI Study Group", "ai-study-group-demo", "Beginner-friendly study sessions for machine learning basics, paper reading, and practical Python notebooks.", "Olivia AI Researcher", InitiativeGoalType.Learn, 12, new[] { "programming", "education", "science" }, new[] { "Study Buddy", "Python Mentor", "Note Taker" }),
+            new InitiativeSeed("Photography Club", "photography-club-demo", "Photo walks, editing sessions, and a shared student gallery for portraits and campus stories.", "Diana Photographer", InitiativeGoalType.Explore, 16, new[] { "photography", "cinema", "design" }, new[] { "Event Photographer", "Editor", "Gallery Curator" }),
+            new InitiativeSeed("Volunteer Community", "volunteer-community-demo", "A lightweight community for organizing practical volunteer actions around campus and nearby neighborhoods.", "Emma Volunteer", InitiativeGoalType.Connect, 30, new[] { "volunteering", "community", "ecology" }, new[] { "Coordinator", "Partnerships", "Content Helper" }),
+            new InitiativeSeed("Game Development Team", "game-development-team-demo", "A tiny team building a playable student game prototype with simple mechanics and a clear art direction.", "Nazar Game Developer", InitiativeGoalType.Build, 8, new[] { "programming", "art", "design" }, new[] { "Unity Developer", "Pixel Artist", "Sound Designer" }),
+            new InitiativeSeed("Campus UX Lab", "campus-ux-lab-demo", "A design critique and usability testing group for student-made apps and initiative pages.", "Daniel UI Designer", InitiativeGoalType.Learn, 10, new[] { "design", "product", "education" }, new[] { "Researcher", "Prototype Designer", "Tester" })
         };
 
         return definitions.Select(definition =>

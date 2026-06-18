@@ -1,10 +1,8 @@
 namespace InteresMe.API.Modules.Interests.DTOs;
 
-public class InterestResponse
+public sealed class InterestCategoryResponse
 {
     public Guid Id { get; set; }
-
-    public Guid CategoryId { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
@@ -22,7 +20,5 @@ public class InterestResponse
 
     public int PortfolioCount { get; set; }
 
-    public IReadOnlyList<SubinterestResponse> Subinterests { get; set; } = [];
-
-    public DateTime CreatedAt { get; set; }
+    public IReadOnlyList<InterestResponse> Interests { get; set; } = [];
 }

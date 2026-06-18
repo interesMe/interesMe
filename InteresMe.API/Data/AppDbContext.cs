@@ -20,7 +20,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
+    public DbSet<InterestCategory> InterestCategories => Set<InterestCategory>();
+
     public DbSet<Interest> Interests => Set<Interest>();
+
+    public DbSet<Subinterest> Subinterests => Set<Subinterest>();
 
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
 
@@ -54,6 +58,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users", "auth");
@@ -125,27 +131,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(profile => profile.UserId)
                 .IsUnique();
-        });
-
-        modelBuilder.Entity<Interest>(entity =>
-        {
-            entity.ToTable("interests", "interests");
-
-            entity.HasKey(interest => interest.Id);
-
-            entity.Property(interest => interest.Name)
-                .HasMaxLength(80)
-                .IsRequired();
-
-            entity.Property(interest => interest.Slug)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            entity.HasIndex(interest => interest.Slug)
-                .IsUnique();
-
-            entity.Property(interest => interest.CreatedAt)
-                .IsRequired();
         });
 
         modelBuilder.Entity<UserInterest>(entity =>

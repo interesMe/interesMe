@@ -1,10 +1,8 @@
 namespace InteresMe.API.Modules.Interests.Models;
 
-public sealed class Interest
+public sealed class InterestCategory
 {
     public Guid Id { get; set; }
-
-    public Guid CategoryId { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
@@ -20,11 +18,5 @@ public sealed class Interest
 
     public bool IsActive { get; set; } = true;
 
-    public DateTime CreatedAt { get; set; }
-
-    public InterestCategory Category { get; set; } = null!;
-
-    public ICollection<Subinterest> Subinterests { get; set; } = [];
-
-    public ICollection<UserInterest> UserInterests { get; set; } = [];
+    public ICollection<Interest> Interests { get; set; } = [];
 }
