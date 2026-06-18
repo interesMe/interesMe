@@ -10,6 +10,7 @@ export const APP_ROUTES = {
   onboardingHope: 'onboarding/hope',
   profile: 'profile',
   publicInitiative: 'i/:slug',
+  interests: 'interests',
   initiatives: 'initiatives',
   initiativeCreate: 'initiatives/new',
   initiativeDetails: 'initiatives/:id',

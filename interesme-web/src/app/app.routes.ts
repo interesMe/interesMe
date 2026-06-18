@@ -51,6 +51,10 @@ export const routes: Routes = [
           import('./modules/initiatives/initiatives.routes').then((routesFile) => routesFile.INITIATIVES_ROUTES),
       },
       {
+        path: APP_ROUTES.interests,
+        loadChildren: () => import('./modules/interests/interests.routes').then((routesFile) => routesFile.INTERESTS_ROUTES),
+      },
+      {
         path: APP_ROUTES.myInitiatives,
         loadComponent: () =>
           import('./modules/initiatives/pages/my-initiatives/my-initiatives').then(

@@ -1,0 +1,147 @@
+<main class="interests-page">
+  <section class="interests-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">{{ t('interestsPage.hero.eyebrow') }}</p>
+      <h1>{{ t('interestsPage.hero.title') }}</h1>
+      <p>{{ t('interestsPage.hero.subtitle') }}</p>
+    </div>
+
+    <label class="search-field">
+      <span class="search-icon" aria-hidden="true">/</span>
+      <input
+        type="search"
+        [value]="searchTerm()"
+        [placeholder]="t('interestsPage.search.placeholder')"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </label>
+  </section>
+
+  <section class="catalog-layout">
+    <div class="category-grid" [attr.aria-label]="t('interestsPage.catalog.aria')">
+      @for (category of filteredCategories(); track category.id) {
+        <button
+          class="category-card"
+          type="button"
+          [class.is-selected]="isCategorySelected(category)"
+          [style.--interest-color]="category.color"
+          (click)="selectCategory(category)"
+        >
+          <span class="card-accent" aria-hidden="true"></span>
+
+          <span class="card-heading">
+            <span class="card-icon" aria-hidden="true">{{ category.icon }}</span>
+            <span class="card-name">{{ category.name }}</span>
+          </span>
+
+          <span class="card-description">{{ categoryDescription(category) }}</span>
+
+          <span class="card-stats">
+            <span>
+              <strong>{{ category.peopleCount }}</strong>
+              {{ t('interestsPage.stats.people') }}
+            </span>
+            <span>
+              <strong>{{ category.initiativesCount }}</strong>
+              {{ t('interestsPage.stats.initiatives') }}
+            </span>
+            <span>
+              <strong>{{ category.portfolioCount }}</strong>
+              {{ t('interestsPage.stats.portfolio') }}
+            </span>
+          </span>
+        </button>
+      } @empty {
+        <article class="empty-card">
+          <h2>{{ t('interestsPage.empty.title') }}</h2>
+          <p>{{ t('interestsPage.empty.description') }}</p>
+        </article>
+      }
+    </div>
+
+    @if (panelCategory(); as category) {
+      <aside class="interest-panel" [style.--interest-color]="selectedInterest()?.color ?? category.color">
+        <div class="panel-top">
+          <span class="panel-icon" aria-hidden="true">{{ selectedInterest()?.icon ?? category.icon }}</span>
+          <div>
+            <p class="eyebrow">
+              {{ selectedInterest() ? t('interestsPage.panel.interestEyebrow') : t('interestsPage.panel.categoryEyebrow') }}
+            </p>
+            <h2>{{ selectedInterest()?.name ?? category.name }}</h2>
+          </div>
+        </div>
+
+        <p class="panel-description">
+          {{ selectedInterest()?.description ?? categoryDescription(category) }}
+        </p>
+
+        <dl class="panel-stats">
+          <div>
+            <dt>{{ t('interestsPage.stats.people') }}</dt>
+            <dd>{{ selectedInterest()?.peopleCount ?? category.peopleCount }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('interestsPage.stats.initiatives') }}</dt>
+            <dd>{{ selectedInterest()?.initiativesCount ?? category.initiativesCount }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('interestsPage.stats.portfolioPosts') }}</dt>
+            <dd>{{ selectedInterest()?.portfolioCount ?? category.portfolioCount }}</dd>
+          </div>
+        </dl>
+
+        @if (selectedInterest(); as interest) {
+          <section class="map-section">
+            <button class="back-button" type="button" (click)="selectCategory(category)">
+              {{ t('interestsPage.actions.backToCategory') }}
+            </button>
+
+            <h3>{{ t('interestsPage.panel.subinterests') }}</h3>
+
+            <div class="subinterest-list">
+              @for (subinterest of interest.subinterests; track subinterest.id) {
+                <span class="subinterest-chip">{{ subinterest.name }}</span>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="map-section">
+            <h3>{{ t('interestsPage.panel.interests') }}</h3>
+
+            <div class="interest-list">
+              @for (interest of category.interests; track interest.id) {
+                <button
+                  class="interest-row"
+                  type="button"
+                  [class.is-selected]="isInterestSelected(interest)"
+                  [style.--interest-color]="interest.color"
+                  (click)="selectInterest(interest)"
+                >
+                  <span class="row-icon" aria-hidden="true">{{ interest.icon }}</span>
+                  <span>
+                    <strong>{{ interest.name }}</strong>
+                    <small>{{ interest.subinterests.length }} {{ t('interestsPage.panel.subinterestCount') }}</small>
+                  </span>
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        <div class="panel-actions">
+          @if (selectedInterest(); as interest) {
+            <button class="button button-primary" type="button" (click)="toggleFollow(interest)">
+              {{ isFollowed(interest) ? t('interestsPage.actions.following') : t('interestsPage.actions.follow') }}
+            </button>
+          }
+          <a class="button button-secondary" [routerLink]="initiativesPath">
+            {{ t('interestsPage.actions.exploreInitiatives') }}
+          </a>
+          <a class="button button-secondary" [routerLink]="createInitiativePath">
+            {{ t('interestsPage.actions.createInitiative') }}
+          </a>
+        </div>
+      </aside>
+    }
+  </section>
+</main>

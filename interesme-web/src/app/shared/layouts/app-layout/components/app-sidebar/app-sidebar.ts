@@ -48,7 +48,8 @@ export class AppSidebar {
     {
       labelKey: 'appSidebar.nav.interests',
       icon: '/assets/icons/profile.svg',
-      disabled: true,
+      path: ['/', APP_ROUTES.interests],
+      exact: true,
     },
     {
       labelKey: 'appSidebar.nav.messages',
