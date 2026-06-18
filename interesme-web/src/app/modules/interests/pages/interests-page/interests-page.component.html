@@ -17,6 +17,16 @@
     </label>
   </section>
 
+  @if (isLoading()) {
+    <section class="placeholder-page" aria-live="polite">
+      <p>{{ t('interestsPage.loading') }}</p>
+    </section>
+  } @else if (isUsingFallback()) {
+    <section class="placeholder-page" aria-live="polite">
+      <p>{{ t('interestsPage.fallbackNotice') }}</p>
+    </section>
+  }
+
   <section class="catalog-layout">
     <div class="category-grid" [attr.aria-label]="t('interestsPage.catalog.aria')">
       @for (category of filteredCategories(); track category.id) {

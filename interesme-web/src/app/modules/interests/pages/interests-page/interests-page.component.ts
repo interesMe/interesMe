@@ -1,11 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../../core/i18n/translations';
 import { Interest, InterestCategory } from '../../models/interest.model';
-import { InterestsMockService } from '../../services/interests.mock';
+import { InterestsService } from '../../services/interests.service';
 
 @Component({
   selector: 'app-interests-page',
@@ -14,8 +14,8 @@ import { InterestsMockService } from '../../services/interests.mock';
   templateUrl: './interests-page.component.html',
   styleUrl: './interests-page.component.scss',
 })
-export class InterestsPageComponent {
-  private readonly interestsService = inject(InterestsMockService);
+export class InterestsPageComponent implements OnInit {
+  private readonly interestsService = inject(InterestsService);
   private readonly i18n = inject(I18nService);
 
   readonly searchTerm = signal('');
@@ -24,6 +24,8 @@ export class InterestsPageComponent {
   readonly followedInterestIds = signal<ReadonlySet<string>>(new Set<string>());
 
   readonly allCategories = this.interestsService.allCategories;
+  readonly isLoading = this.interestsService.isLoading;
+  readonly isUsingFallback = this.interestsService.isUsingFallback;
   readonly initiativesPath = `/${APP_ROUTES.initiatives}`;
   readonly createInitiativePath = `/${APP_ROUTES.initiativeCreate}`;
 
@@ -63,6 +65,10 @@ export class InterestsPageComponent {
       ? this.selectedCategory()
       : this.selectedCategory();
   });
+
+  ngOnInit(): void {
+    this.interestsService.loadCatalog();
+  }
 
   onSearch(value: string): void {
     this.searchTerm.set(value);
@@ -117,7 +123,10 @@ export class InterestsPageComponent {
   }
 
   categoryDescription(category: InterestCategory): string {
-    return this.t(`interestsPage.categories.${category.id}.description` as TranslationKey);
+    const translationKey = `interestsPage.categories.${category.slug}.description` as TranslationKey;
+    const translated = this.t(translationKey);
+
+    return translated === translationKey ? category.description : translated;
   }
 
   private matchesCategoryQuery(category: InterestCategory, query: string): boolean {

@@ -1,5 +1,3 @@
-import { Injectable, signal } from '@angular/core';
-
 import { Interest, InterestCategory, Subinterest } from '../models/interest.model';
 
 type InterestSeed = Pick<
@@ -25,7 +23,7 @@ const createInterest = (seed: InterestSeed): Interest => ({
   subinterests: createSubinterests(seed.id, seed.subinterestNames),
 });
 
-const MOCK_CATEGORIES: InterestCategory[] = [
+export const MOCK_INTEREST_CATEGORIES: InterestCategory[] = [
   {
     id: 'create',
     name: 'Create',
@@ -417,10 +415,3 @@ const MOCK_CATEGORIES: InterestCategory[] = [
     ],
   },
 ];
-
-@Injectable({ providedIn: 'root' })
-export class InterestsMockService {
-  private readonly categories = signal<InterestCategory[]>(MOCK_CATEGORIES);
-
-  readonly allCategories = this.categories.asReadonly();
-}

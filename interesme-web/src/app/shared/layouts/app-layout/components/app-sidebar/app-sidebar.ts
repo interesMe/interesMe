@@ -58,9 +58,10 @@ export class AppSidebar {
       exact: false,
     },
     {
-      labelKey: 'appSidebar.nav.portfolio',
+      labelKey: 'appSidebar.nav.history',
       icon: '/assets/icons/portfolio.svg',
-      disabled: true,
+      path: ['/', APP_ROUTES.history],
+      exact: true,
     },
     {
       labelKey: 'appSidebar.nav.profile',

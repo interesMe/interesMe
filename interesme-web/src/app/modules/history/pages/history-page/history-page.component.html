@@ -1,0 +1,87 @@
+<main class="history-page">
+  <section class="history-hero">
+    <p class="eyebrow">{{ t('historyPage.hero.eyebrow') }}</p>
+    <h1>{{ t('historyPage.hero.title') }}</h1>
+    <p>{{ t('historyPage.hero.subtitle') }}</p>
+  </section>
+
+  <section class="summary-grid" [attr.aria-label]="t('historyPage.summary.aria')">
+    @for (card of summaryCards(); track card.label) {
+      <article class="summary-card">
+        <strong>{{ card.value }}</strong>
+        <span>{{ card.label }}</span>
+      </article>
+    }
+  </section>
+
+  <section class="filter-bar" [attr.aria-label]="t('historyPage.filters.aria')">
+    @for (filter of filters; track filter) {
+      <button
+        type="button"
+        [class.is-active]="selectedFilter() === filter"
+        (click)="selectFilter(filter)"
+      >
+        {{ filterLabel(filter) }}
+      </button>
+    }
+  </section>
+
+  @if (isLoading()) {
+    <section class="placeholder-page" aria-live="polite">
+      <p>{{ t('historyPage.loading') }}</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="placeholder-page" aria-live="polite">
+      <p>{{ errorMessage() }}</p>
+    </section>
+  } @else if (filteredEvents().length === 0) {
+    <section class="placeholder-page">
+      <p>{{ t('historyPage.empty') }}</p>
+    </section>
+  } @else {
+    <section class="timeline" [attr.aria-label]="t('historyPage.timeline.aria')">
+      @for (group of groupedEvents(); track group.key) {
+        <section class="timeline-month">
+          <h2>{{ group.label }}</h2>
+
+          <div class="timeline-list">
+            @for (event of group.events; track event.id) {
+              <article class="timeline-card" [style.--event-accent]="event.accent">
+                <div class="event-icon" aria-hidden="true">{{ event.icon }}</div>
+
+                <div class="event-body">
+                  <div class="event-topline">
+                    <h3>{{ event.title }}</h3>
+                    <time [attr.datetime]="event.date">{{ eventDate(event.date) }}</time>
+                  </div>
+
+                  @if (event.description) {
+                    <p>{{ event.description }}</p>
+                  }
+
+                  <div class="event-meta">
+                    @if (event.metadata?.interestPath) {
+                      <span>{{ event.metadata?.interestPath }}</span>
+                    }
+                    @if (event.metadata?.participantsCount) {
+                      <span>{{ event.metadata?.participantsCount }} {{ t('historyPage.meta.participants') }}</span>
+                    }
+                    @if (event.metadata?.result) {
+                      <span>{{ event.metadata?.result }}</span>
+                    }
+                    @if (event.metadata?.location) {
+                      <span>{{ event.metadata?.location }}</span>
+                    }
+                    @if (event.targetName) {
+                      <span>{{ event.targetName }}</span>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
+    </section>
+  }
+</main>

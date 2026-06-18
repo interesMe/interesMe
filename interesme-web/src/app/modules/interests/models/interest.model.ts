@@ -13,6 +13,10 @@ export interface InterestCategory {
   interests: Interest[];
 }
 
+export interface InterestCatalogResponse {
+  categories: InterestCategory[];
+}
+
 export interface Interest {
   id: string;
   categoryId: string;

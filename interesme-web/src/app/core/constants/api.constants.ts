@@ -18,6 +18,7 @@ export const PROFILE_API_ENDPOINTS = {
 
 export const INTERESTS_API_ENDPOINTS = {
   list: `${API_BASE_URL}/interests`,
+  catalog: `${API_BASE_URL}/interests/catalog`,
 } as const;
 
 export const INITIATIVES_API_ENDPOINTS = {
