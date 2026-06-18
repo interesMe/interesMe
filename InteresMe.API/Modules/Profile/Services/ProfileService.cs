@@ -1,5 +1,8 @@
+using System.Text.Json;
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
+using InteresMe.API.Modules.History.DTOs;
+using InteresMe.API.Modules.History.Services;
 using InteresMe.API.Modules.Interests.DTOs;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.DTOs;
@@ -10,6 +13,7 @@ namespace InteresMe.API.Modules.Profile.Services;
 
 public sealed class ProfileService(
     AppDbContext dbContext,
+    IUserHistoryService userHistoryService,
     IWebHostEnvironment webHostEnvironment) : IProfileService
 {
     private const int DisplayNameMaxLength = 80;
@@ -278,7 +282,16 @@ public sealed class ProfileService(
             return ApplicationResult<List<InterestResponse>>.Success([]);
         }
 
+        var existingInterestIds = await dbContext.UserInterests
+            .AsNoTracking()
+            .Where(userInterest => userInterest.UserId == userId)
+            .Select(userInterest => userInterest.InterestId)
+            .ToListAsync(cancellationToken);
+
+        var existingInterestIdSet = existingInterestIds.ToHashSet();
+
         var interests = await dbContext.Interests
+            .Include(interest => interest.Category)
             .Where(interest => interestIds.Contains(interest.Id))
             .OrderBy(interest => interest.Name)
             .ToListAsync(cancellationToken);
@@ -304,6 +317,31 @@ public sealed class ProfileService(
 
         dbContext.UserInterests.AddRange(userInterests);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var addedInterests = interests
+            .Where(interest => !existingInterestIdSet.Contains(interest.Id))
+            .ToList();
+
+        foreach (var interest in addedInterests)
+        {
+            var interestPath = $"{interest.Category.Name} → {interest.Name}";
+
+            await userHistoryService.AddEventAsync(
+                new AddUserHistoryEventRequest(
+                    UserId: userId,
+                    Type: HistoryEventTypes.AddedInterest,
+                    Title: $"Added {interest.Name}",
+                    Description: interestPath,
+                    TargetType: "interest",
+                    TargetId: interest.Id,
+                    TargetName: interest.Name,
+                    MetadataJson: JsonSerializer.Serialize(new
+                    {
+                        category = interest.Category.Name,
+                        interestPath
+                    })),
+                cancellationToken);
+        }
 
         return ApplicationResult<List<InterestResponse>>.Success(
             interests.Select(ToInterestResponse).ToList());

@@ -7,6 +7,7 @@ using InteresMe.API.Modules.Chat.Shared.Models;
 using InteresMe.API.Modules.Discovery.Models;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
+using InteresMe.API.Modules.History.Models;
 using InteresMe.API.Modules.Interests.Models;
 using InteresMe.API.Modules.Profile.Models;
 using InteresMe.API.Modules.Verification.Models;
@@ -29,6 +30,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
 
     public DbSet<UserDiscoveryPreference> UserDiscoveryPreferences => Set<UserDiscoveryPreference>();
+
+    public DbSet<UserHistoryEvent> UserHistoryEvents => Set<UserHistoryEvent>();
 
     public DbSet<DirectConversation> DirectConversations => Set<DirectConversation>();
 
