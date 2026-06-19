@@ -60,6 +60,7 @@ builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOAuthRedirectService, OAuthRedirectService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IProfileViewService, ProfileViewService>();
 builder.Services.AddScoped<IProfileRequestReader, ProfileRequestReader>();
 builder.Services.AddScoped<IInterestService, InterestService>();
 builder.Services.AddScoped<IInterestCatalogService, InterestCatalogService>();

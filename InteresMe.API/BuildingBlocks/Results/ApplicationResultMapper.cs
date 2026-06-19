@@ -54,9 +54,14 @@ public static class ApplicationResultMapper
     private sealed class ApiErrorObjectResult(
         string code,
         string message,
-        int status) : ObjectResult(null)
+        int status) : ObjectResult(new ApiErrorResponse
+        {
+            Code = code,
+            Message = message,
+            Status = status
+        })
     {
-        public override void OnFormatting(ActionContext context)
+        public override Task ExecuteResultAsync(ActionContext context)
         {
             Value = new ApiErrorResponse
             {
@@ -68,7 +73,7 @@ public static class ApplicationResultMapper
 
             StatusCode = status;
 
-            base.OnFormatting(context);
+            return base.ExecuteResultAsync(context);
         }
     }
 }

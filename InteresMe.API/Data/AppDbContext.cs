@@ -33,6 +33,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<UserHistoryEvent> UserHistoryEvents => Set<UserHistoryEvent>();
 
+    public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+
     public DbSet<DirectConversation> DirectConversations => Set<DirectConversation>();
 
     public DbSet<DirectConversationParticipant> DirectConversationParticipants => Set<DirectConversationParticipant>();
