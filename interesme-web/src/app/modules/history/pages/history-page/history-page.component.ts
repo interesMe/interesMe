@@ -26,7 +26,7 @@ export class HistoryPageComponent implements OnInit {
   readonly selectedFilter = signal<HistoryFilter>('all');
   readonly events = this.historyService.allEvents;
   readonly isLoading = this.historyService.isLoading;
-  readonly errorMessage = this.historyService.errorMessage;
+  readonly hasError = this.historyService.hasError;
 
   readonly filters: HistoryFilter[] = ['all', 'initiatives', 'interests', 'events', 'communities', 'achievements', 'posts'];
 

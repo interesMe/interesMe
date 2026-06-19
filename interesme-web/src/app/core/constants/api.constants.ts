@@ -16,6 +16,10 @@ export const PROFILE_API_ENDPOINTS = {
   myInterests: `${API_BASE_URL}/profile/me/interests`,
 } as const;
 
+export const HISTORY_API_ENDPOINTS = {
+  myHistory: `${API_BASE_URL}/users/me/history`,
+} as const;
+
 export const INTERESTS_API_ENDPOINTS = {
   list: `${API_BASE_URL}/interests`,
   catalog: `${API_BASE_URL}/interests/catalog`,

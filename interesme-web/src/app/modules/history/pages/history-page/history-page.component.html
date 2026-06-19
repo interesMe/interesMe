@@ -30,9 +30,9 @@
     <section class="placeholder-page" aria-live="polite">
       <p>{{ t('historyPage.loading') }}</p>
     </section>
-  } @else if (errorMessage()) {
+  } @else if (hasError()) {
     <section class="placeholder-page" aria-live="polite">
-      <p>{{ errorMessage() }}</p>
+      <p>{{ t('historyPage.error') }}</p>
     </section>
   } @else if (filteredEvents().length === 0) {
     <section class="placeholder-page">

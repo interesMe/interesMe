@@ -40,3 +40,24 @@ export interface HistorySummary {
   communitiesJoined: number;
   achievements: number;
 }
+
+export interface HistoryEventResponse {
+  id: string;
+  userId: string;
+  type: HistoryEventType;
+  title: string;
+  description?: string | null;
+  date?: string | null;
+  icon?: string | null;
+  accent?: string | null;
+  targetType?: string | null;
+  targetId?: string | null;
+  targetName?: string | null;
+  metadataJson?: string | null;
+  occurredAt?: string | null;
+  createdAt?: string | null;
+}
+
+export interface HistoryResponse {
+  events: HistoryEventResponse[];
+}
