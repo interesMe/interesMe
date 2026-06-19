@@ -29,11 +29,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<UserInterest> UserInterests => Set<UserInterest>();
 
+    public DbSet<UserSubinterest> UserSubinterests => Set<UserSubinterest>();
+
     public DbSet<UserDiscoveryPreference> UserDiscoveryPreferences => Set<UserDiscoveryPreference>();
 
     public DbSet<UserHistoryEvent> UserHistoryEvents => Set<UserHistoryEvent>();
 
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+
+    public DbSet<ProfilePost> ProfilePosts => Set<ProfilePost>();
 
     public DbSet<DirectConversation> DirectConversations => Set<DirectConversation>();
 
@@ -119,6 +123,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(profile => profile.Bio)
                 .HasMaxLength(500);
+
+            entity.Property(profile => profile.SocialLinksJson)
+                .HasColumnType("jsonb");
+
+            entity.Property(profile => profile.ProfileStatus)
+                .HasMaxLength(32);
 
             entity.Property(profile => profile.City)
                 .HasMaxLength(120);

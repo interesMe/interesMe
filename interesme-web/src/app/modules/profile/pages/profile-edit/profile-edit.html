@@ -1,0 +1,125 @@
+<section class="profile-shell">
+  <header class="profile-header">
+    <p class="eyebrow">{{ text().eyebrow }}</p>
+    <div>
+      <h1>{{ text().title }}</h1>
+      <p class="subtitle">{{ text().subtitle }}</p>
+    </div>
+  </header>
+
+  <section class="profile-card account-card">
+    <div class="avatar" aria-hidden="true">
+      @if (resolvedAvatarUrl()) {
+        <img [src]="resolvedAvatarUrl()!" alt="" />
+      } @else {
+        <span>{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
+      }
+    </div>
+
+    <div class="profile-info">
+      <h2>{{ user()?.displayName || text().defaultUser }}</h2>
+      <p>{{ user()?.email }}</p>
+    </div>
+
+    <button type="button" (click)="logout()">{{ text().signOut }}</button>
+  </section>
+
+  @if (isLoading()) {
+    <section class="profile-card">
+      <p class="status">{{ text().loading }}</p>
+    </section>
+  } @else {
+    @if (errorMessage()) {
+      <p class="message error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    @if (successMessage()) {
+      <p class="message success" role="status">{{ successMessage() }}</p>
+    }
+
+    <section class="profile-card form-card">
+      <header class="section-header">
+        <div>
+          <h2>{{ profileExists() ? text().updateProfile : text().createProfile }}</h2>
+          <p>{{ profileExists() ? text().updateDescription : text().createDescription }}</p>
+        </div>
+      </header>
+
+      <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()" novalidate>
+        <section class="avatar-upload">
+          <div class="avatar-preview">
+            @if (avatarPreviewUrl()) {
+              <img [src]="avatarPreviewUrl()!" [alt]="text().avatarAlt" />
+            } @else {
+              <span aria-hidden="true">{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
+            }
+          </div>
+
+          <div class="avatar-actions">
+            <label>
+              {{ text().avatarImage }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="selectAvatar($event)" />
+              <span class="hint neutral">{{ text().avatarHint }}</span>
+            </label>
+          </div>
+        </section>
+
+        <label>
+          {{ text().displayName }}
+          <input type="text" formControlName="displayName" autocomplete="name" [placeholder]="text().displayNamePlaceholder" />
+          @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+            <span class="hint">{{ text().displayNameHint }}</span>
+          }
+        </label>
+
+        <label>
+          {{ text().city }}
+          <input type="text" formControlName="city" autocomplete="address-level2" [placeholder]="text().cityPlaceholder" />
+          @if (form.controls.city.touched && form.controls.city.invalid) {
+            <span class="hint">{{ text().cityHint }}</span>
+          }
+        </label>
+
+        <label>
+          {{ text().birthDate }}
+          <input type="date" formControlName="birthDate" />
+        </label>
+
+        <button type="submit" [disabled]="isSavingProfile()">
+          {{ isSavingProfile() ? text().savingProfile : text().saveProfile }}
+        </button>
+      </form>
+    </section>
+
+    <section class="profile-card interests-card">
+      <header class="section-header">
+        <div>
+          <h2>{{ text().interestsTitle }}</h2>
+          <p>{{ text().interestsDescription }}</p>
+        </div>
+      </header>
+
+      @if (interests().length === 0) {
+        <p class="status">{{ text().interestsEmpty }}</p>
+      } @else {
+        <div class="chips" [attr.aria-label]="text().interestsAria">
+          @for (interest of interests(); track interest.id) {
+            <button
+              type="button"
+              class="chip"
+              [class.selected]="isInterestSelected(interest.id)"
+              [attr.aria-pressed]="isInterestSelected(interest.id)"
+              (click)="toggleInterest(interest.id)"
+            >
+              {{ interest.name }}
+            </button>
+          }
+        </div>
+
+        <button type="button" class="save-interests" [disabled]="isSavingInterests()" (click)="saveInterests()">
+          {{ isSavingInterests() ? text().savingInterests : text().saveInterests }}
+        </button>
+      }
+    </section>
+  }
+</section>

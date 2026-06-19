@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.about-card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-lg);
+  padding: 20px;
+  background: var(--im-surface);
+  box-shadow: var(--im-shadow-card);
+}
+
+h2,
+h3,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+h3 {
+  font-size: 14px;
+}
+
+.presence-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--im-muted);
+  font-size: 13px;
+}
+
+.presence-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--im-muted);
+}
+
+.is-online {
+  background: var(--im-learn);
+}
+
+.is-recently_active {
+  background: var(--im-play);
+}
+
+.bio {
+  color: var(--im-text);
+  line-height: 1.6;
+}
+
+dl {
+  display: grid;
+  gap: 10px;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+dt,
+.social-section > p {
+  color: var(--im-muted);
+  font-size: 13px;
+}
+
+dd {
+  font-size: 13px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.social-section {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--im-border);
+  padding-top: 15px;
+}
+
+.social-links {
+  display: grid;
+  gap: 8px;
+}
+
+.social-links a {
+  display: grid;
+  grid-template-columns: 30px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--im-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--im-text);
+  text-decoration: none;
+}
+
+.social-links a > span:first-child {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--im-surface-soft);
+  color: var(--im-primary-hover);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.social-links a > span:last-child {
+  color: var(--im-muted);
+}

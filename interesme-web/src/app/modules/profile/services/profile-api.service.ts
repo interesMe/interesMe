@@ -3,7 +3,13 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 import { INTERESTS_API_ENDPOINTS, PROFILE_API_ENDPOINTS } from '../../../core/constants/api.constants';
-import { InterestResponse, ProfileRequest, ProfileResponse, UpdateUserInterestsRequest } from '../models';
+import {
+  InterestResponse,
+  ProfileRequest,
+  ProfileResponse,
+  ProfileViewResponse,
+  UpdateUserInterestsRequest,
+} from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -22,6 +28,22 @@ export class ProfileApiService {
         return throwError(() => error);
       }),
     );
+  }
+
+  getMyProfileView(): Observable<ProfileViewResponse> {
+    return this.http.get<ProfileViewResponse>(PROFILE_API_ENDPOINTS.myView);
+  }
+
+  getUserProfileView(userId: string): Observable<ProfileViewResponse> {
+    return this.http.get<ProfileViewResponse>(PROFILE_API_ENDPOINTS.userView(userId));
+  }
+
+  followUser(userId: string): Observable<void> {
+    return this.http.post<void>(PROFILE_API_ENDPOINTS.follow(userId), {});
+  }
+
+  unfollowUser(userId: string): Observable<void> {
+    return this.http.delete<void>(PROFILE_API_ENDPOINTS.follow(userId));
   }
 
   createMyProfile(request: ProfileRequest): Observable<ProfileResponse> {

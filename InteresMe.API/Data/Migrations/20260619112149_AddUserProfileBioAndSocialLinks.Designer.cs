@@ -3,6 +3,7 @@ using System;
 using InteresMe.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InteresMe.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260619112149_AddUserProfileBioAndSocialLinks")]
+    partial class AddUserProfileBioAndSocialLinks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -694,66 +697,6 @@ namespace InteresMe.API.Data.Migrations
                     b.ToTable("user_interests", "interests");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Interests.Models.UserSubinterest", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SubinterestId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("UserId", "SubinterestId");
-
-                    b.HasIndex("SubinterestId");
-
-                    b.ToTable("user_subinterests", "interests");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Profile.Models.ProfilePost", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(1200)
-                        .HasColumnType("character varying(1200)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InterestPath")
-                        .HasMaxLength(240)
-                        .HasColumnType("character varying(240)");
-
-                    b.Property<string>("MediaUrlsJson")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "CreatedAt")
-                        .IsDescending(false, true);
-
-                    b.ToTable("profile_posts", "profile");
-                });
-
             modelBuilder.Entity("InteresMe.API.Modules.Profile.Models.UserFollow", b =>
                 {
                     b.Property<Guid>("FollowerId")
@@ -804,10 +747,6 @@ namespace InteresMe.API.Data.Migrations
                     b.Property<string>("Headline")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
-
-                    b.Property<string>("ProfileStatus")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("SocialLinksJson")
                         .HasColumnType("jsonb");
@@ -1162,36 +1101,6 @@ namespace InteresMe.API.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Interest");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Interests.Models.UserSubinterest", b =>
-                {
-                    b.HasOne("InteresMe.API.Modules.Interests.Models.Subinterest", "Subinterest")
-                        .WithMany()
-                        .HasForeignKey("SubinterestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Subinterest");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Profile.Models.ProfilePost", b =>
-                {
-                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });

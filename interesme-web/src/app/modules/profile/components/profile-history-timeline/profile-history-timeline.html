@@ -1,0 +1,34 @@
+@if (events().length === 0) {
+  <div class="timeline-empty">{{ emptyText() }}</div>
+} @else {
+  <div class="timeline">
+    @for (event of events(); track event.id) {
+      <article class="timeline-event" [style.--profile-event-accent]="eventAccent(event.type)">
+        <span class="timeline-marker" aria-hidden="true">{{ eventIcon(event.type) }}</span>
+
+        <div class="timeline-content">
+          <div class="timeline-topline">
+            <div>
+              <span class="event-type">{{ event.type }}</span>
+              <h3>{{ event.title }}</h3>
+            </div>
+            <time [attr.datetime]="event.occurredAt">{{ eventDate(event.occurredAt) }}</time>
+          </div>
+
+          @if (event.description) {
+            <p>{{ event.description }}</p>
+          }
+
+          <div class="timeline-meta">
+            @if (event.targetName) {
+              <span>{{ event.targetName }}</span>
+            }
+            @if (metadataSummary(event.metadataJson); as metadata) {
+              <span>{{ metadata }}</span>
+            }
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+}

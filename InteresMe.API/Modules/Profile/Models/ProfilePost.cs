@@ -1,8 +1,12 @@
-namespace InteresMe.API.Modules.Profile.DTOs.ProfileView;
+using InteresMe.API.Modules.Auth.Models;
 
-public sealed class ProfilePostPreviewResponse
+namespace InteresMe.API.Modules.Profile.Models;
+
+public sealed class ProfilePost
 {
     public Guid Id { get; set; }
+
+    public Guid UserId { get; set; }
 
     public string Title { get; set; } = string.Empty;
 
@@ -12,7 +16,9 @@ public sealed class ProfilePostPreviewResponse
 
     public string? InterestPath { get; set; }
 
-    public List<string> ImageUrls { get; set; } = [];
+    public string? MediaUrlsJson { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public User User { get; set; } = null!;
 }

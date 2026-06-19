@@ -14,6 +14,10 @@ public sealed class UserProfile
 
     public string? Bio { get; set; }
 
+    public string? SocialLinksJson { get; set; }
+
+    public string? ProfileStatus { get; set; }
+
     public string? City { get; set; }
 
     public string? AvatarUrl { get; set; }

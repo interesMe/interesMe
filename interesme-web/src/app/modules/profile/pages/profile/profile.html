@@ -1,125 +1,291 @@
-<section class="profile-shell">
-  <header class="profile-header">
-    <p class="eyebrow">{{ text().eyebrow }}</p>
-    <div>
-      <h1>{{ text().title }}</h1>
-      <p class="subtitle">{{ text().subtitle }}</p>
-    </div>
-  </header>
-
-  <section class="profile-card account-card">
-    <div class="avatar" aria-hidden="true">
-      @if (resolvedAvatarUrl()) {
-        <img [src]="resolvedAvatarUrl()!" alt="" />
-      } @else {
-        <span>{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
-      }
-    </div>
-
-    <div class="profile-info">
-      <h2>{{ user()?.displayName || text().defaultUser }}</h2>
-      <p>{{ user()?.email }}</p>
-    </div>
-
-    <button type="button" (click)="logout()">{{ text().signOut }}</button>
-  </section>
-
-  @if (isLoading()) {
-    <section class="profile-card">
-      <p class="status">{{ text().loading }}</p>
+<main class="profile-page">
+  @if (loading()) {
+    <section class="profile-skeleton" aria-live="polite" [attr.aria-label]="text().loading">
+      <div class="skeleton banner-skeleton"></div>
+      <div class="skeleton-grid">
+        <div class="skeleton card-skeleton"></div>
+        <div class="skeleton card-skeleton"></div>
+      </div>
     </section>
-  } @else {
-    @if (errorMessage()) {
-      <p class="message error" role="alert">{{ errorMessage() }}</p>
+  } @else if (error() && !profile()) {
+    <section class="state-card" role="alert">
+      <span class="state-icon error" aria-hidden="true">!</span>
+      <h1>{{ text().errorTitle }}</h1>
+      <p>{{ error() }}</p>
+      <button class="button button-primary" type="button" (click)="loadProfile()">{{ text().retry }}</button>
+    </section>
+  } @else if (profile(); as profile) {
+    @if (error()) {
+      <div class="inline-error" role="alert">{{ error() }}</div>
     }
 
-    @if (successMessage()) {
-      <p class="message success" role="status">{{ successMessage() }}</p>
-    }
+    <header class="profile-hero">
+      <div class="profile-cover" aria-hidden="true"></div>
 
-    <section class="profile-card form-card">
-      <header class="section-header">
-        <div>
-          <h2>{{ profileExists() ? text().updateProfile : text().createProfile }}</h2>
-          <p>{{ profileExists() ? text().updateDescription : text().createDescription }}</p>
-        </div>
-      </header>
-
-      <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()" novalidate>
-        <section class="avatar-upload">
-          <div class="avatar-preview">
-            @if (avatarPreviewUrl()) {
-              <img [src]="avatarPreviewUrl()!" [alt]="text().avatarAlt" />
+      <div class="profile-identity">
+        <div class="avatar-wrap">
+          <div class="profile-avatar">
+            @if (avatarUrl(profile.basicProfile.avatarUrl); as avatar) {
+              <img [src]="avatar" [alt]="profile.basicProfile.displayName" />
             } @else {
-              <span aria-hidden="true">{{ form.controls.displayName.value.charAt(0) || user()?.displayName?.charAt(0) || 'I' }}</span>
+              <span>{{ initials(profile.basicProfile.displayName) }}</span>
             }
           </div>
+          @if (profile.basicProfile.activityStatus !== 'unknown') {
+            <span
+              class="presence-dot"
+              [class]="'presence-dot is-' + profile.basicProfile.activityStatus"
+              [title]="activityStatusLabel(profile.basicProfile.activityStatus)"
+            ></span>
+          }
+        </div>
 
-          <div class="avatar-actions">
-            <label>
-              {{ text().avatarImage }}
-              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="selectAvatar($event)" />
-              <span class="hint neutral">{{ text().avatarHint }}</span>
-            </label>
+        <div class="identity-copy">
+          <div class="name-row">
+            <h1>{{ profile.basicProfile.displayName }}</h1>
+            <span class="member-status">{{ profileStatusLabel(profile.basicProfile.profileStatus) }}</span>
           </div>
+          <div class="identity-meta">
+            @if (profile.basicProfile.city) {
+              <span><span aria-hidden="true">⌖</span> {{ profile.basicProfile.city }}</span>
+            }
+            <span><span aria-hidden="true">◷</span> {{ text().joined }} {{ formatDate(profile.basicProfile.joinedAt) }}</span>
+          </div>
+          <div class="relationship-stats">
+            @if (isOwnProfile()) {
+              <span><strong>{{ profile.stats.interestsCount }}</strong> {{ text().interestsCount }}</span>
+            }
+            <span><strong>{{ profile.stats.followersCount }}</strong> {{ text().followersCount }}</span>
+            <span><strong>{{ profile.stats.followingCount }}</strong> {{ text().followingCount }}</span>
+            @if (!isOwnProfile()) {
+              <span><strong>{{ profile.stats.sharedInterestsCount }}</strong> {{ text().sharedInterests }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          @if (isOwnProfile()) {
+            <a class="button button-primary" [routerLink]="editProfileRoute">{{ text().editProfile }}</a>
+          } @else {
+            @if (profile.viewerRelation.canMessage) {
+              <button class="button button-secondary" type="button" [disabled]="messageLoading()" (click)="messageUser()">
+                {{ messageLoading() ? text().messaging : text().message }}
+              </button>
+            }
+            <button
+              class="button"
+              [class.button-primary]="!profile.viewerRelation.isFollowing"
+              [class.button-secondary]="profile.viewerRelation.isFollowing"
+              type="button"
+              [disabled]="followLoading()"
+              (click)="toggleFollow()"
+            >
+              {{
+                followLoading()
+                  ? text().followLoading
+                  : profile.viewerRelation.isFollowing
+                    ? text().following
+                    : text().follow
+              }}
+            </button>
+            <button class="more-button" type="button" [attr.aria-label]="text().more" [title]="text().more">•••</button>
+          }
+        </div>
+      </div>
+    </header>
+
+    <nav class="profile-tabs" [attr.aria-label]="text().interestsCard">
+      <button type="button" [class.is-active]="activeTab() === 'posts'" (click)="selectTab('posts')">
+        {{ text().posts }}
+      </button>
+      <button type="button" [class.is-active]="activeTab() === 'history'" (click)="selectTab('history')">
+        {{ text().history }}
+      </button>
+      <button type="button" [class.is-active]="activeTab() === 'initiatives'" (click)="selectTab('initiatives')">
+        {{ text().initiatives }}
+      </button>
+      <button type="button" [class.is-active]="activeTab() === 'interests'" (click)="selectTab('interests')">
+        {{ text().interests }}
+      </button>
+    </nav>
+
+    <div class="profile-layout">
+      <section class="profile-main-card">
+        @switch (activeTab()) {
+          @case ('posts') {
+            <div class="tab-heading">
+              <h2>{{ text().posts }}</h2>
+            </div>
+            @if (profile.recentPosts.length === 0) {
+              <div class="tab-empty">
+                <span aria-hidden="true">✎</span>
+                <p>{{ text().noPosts }}</p>
+              </div>
+            } @else {
+              <div class="post-list">
+                @for (post of profile.recentPosts; track post.id) {
+                  <article class="post-card">
+                    <div class="post-topline">
+                      <span class="post-type">{{ postTypeLabel(post.type) }}</span>
+                      <time [attr.datetime]="post.createdAt">{{ formatDate(post.createdAt) }}</time>
+                    </div>
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.body }}</p>
+                    @if (post.interestPath) {
+                      <span class="post-interest">{{ post.interestPath }}</span>
+                    }
+                    @if (post.imageUrls.length > 0) {
+                      <div class="post-media" [class.is-multiple]="post.imageUrls.length > 1">
+                        @for (imageUrl of post.imageUrls; track imageUrl) {
+                          <img [src]="imageUrl" [alt]="post.title" loading="lazy" referrerpolicy="no-referrer" />
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            }
+          }
+
+          @case ('history') {
+            <div class="tab-heading">
+              <h2>{{ text().history }}</h2>
+              <span>{{ profile.stats.historyEventsCount }}</span>
+            </div>
+            <app-profile-history-timeline [events]="profile.recentHistory" [emptyText]="text().noHistory" />
+          }
+
+          @case ('initiatives') {
+            <div class="tab-heading">
+              <h2>{{ text().initiatives }}</h2>
+              <span>{{ totalInitiatives() }}</span>
+            </div>
+
+            <section class="initiative-section">
+              <h3>{{ text().createdInitiatives }}</h3>
+              @if (profile.createdInitiatives.length === 0) {
+                <p class="section-empty">{{ text().noCreatedInitiatives }}</p>
+              } @else {
+                <div class="initiative-grid">
+                  @for (initiative of profile.createdInitiatives; track initiative.id) {
+                    <article class="initiative-card">
+                      <div class="initiative-badges">
+                        <span>{{ text().creator }}</span>
+                        <span>{{ initiativeStatus(initiative.status) }}</span>
+                      </div>
+                      <h4>{{ initiative.title }}</h4>
+                      <p>{{ initiative.shortDescription }}</p>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="initiative-section">
+              <h3>{{ text().joinedInitiatives }}</h3>
+              @if (profile.joinedInitiatives.length === 0) {
+                <p class="section-empty">{{ text().noJoinedInitiatives }}</p>
+              } @else {
+                <div class="initiative-grid">
+                  @for (initiative of profile.joinedInitiatives; track initiative.id) {
+                    <article class="initiative-card">
+                      <div class="initiative-badges">
+                        <span>{{ text().participant }}</span>
+                        <span>{{ initiativeStatus(initiative.status) }}</span>
+                      </div>
+                      <h4>{{ initiative.title }}</h4>
+                      <p>{{ initiative.shortDescription }}</p>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          @case ('interests') {
+            <div class="tab-heading">
+              <h2>{{ text().interests }}</h2>
+              <span>{{ profile.stats.interestsCount }}</span>
+            </div>
+            @if (profile.interests.length === 0) {
+              <div class="tab-empty"><p>{{ text().noInterests }}</p></div>
+            } @else {
+              <div class="interest-category-list">
+                @for (category of profile.interests; track category.id) {
+                  <section class="interest-category">
+                    <h3>{{ category.name }}</h3>
+                    <div class="interest-chips">
+                      @for (interest of category.interests; track interest.id) {
+                        <span>{{ interest.name }}</span>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+            }
+          }
+        }
+      </section>
+
+      <aside class="profile-aside">
+        <app-profile-about-card [profile]="profile.basicProfile" />
+
+        <section class="side-card">
+          <header>
+            <div>
+              <h2>{{ text().interestsCard }}</h2>
+              <span>{{ profile.stats.interestsCount }} {{ text().interestsCount }}</span>
+            </div>
+            <button type="button" (click)="selectTab('interests')">{{ text().seeAll }}</button>
+          </header>
+          @if (profile.interests.length === 0) {
+            <p class="muted-copy">{{ text().noInterests }}</p>
+          } @else {
+            <div class="interest-preview">
+              @for (category of profile.interests.slice(0, 2); track category.id) {
+                @for (interest of category.interests.slice(0, 3); track interest.id) {
+                  <span>{{ interest.name }}</span>
+                }
+              }
+            </div>
+          }
         </section>
 
-        <label>
-          {{ text().displayName }}
-          <input type="text" formControlName="displayName" autocomplete="name" [placeholder]="text().displayNamePlaceholder" />
-          @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
-            <span class="hint">{{ text().displayNameHint }}</span>
+        <section class="side-card">
+          <header>
+            <div>
+              <h2>{{ text().initiativesCard }}</h2>
+              <span>{{ totalInitiatives() }} {{ text().initiativesCount }}</span>
+            </div>
+          </header>
+          @if (previewInitiatives(profile).length === 0) {
+            <p class="muted-copy">{{ text().noCreatedInitiatives }}</p>
+          } @else {
+            <div class="initiative-preview-list">
+              @for (initiative of previewInitiatives(profile); track initiative.id) {
+                <article>
+                  <span class="initiative-mark" aria-hidden="true">{{ isCreatedInitiative(profile, initiative.id) ? '↗' : '＋' }}</span>
+                  <div>
+                    <h3>{{ initiative.title }}</h3>
+                    <p>
+                      {{ isCreatedInitiative(profile, initiative.id) ? text().creator : text().participant }} ·
+                      {{ initiativeStatus(initiative.status) }}
+                    </p>
+                  </div>
+                </article>
+              }
+            </div>
           }
-        </label>
+          <button class="card-link" type="button" (click)="selectTab('initiatives')">{{ text().viewAllInitiatives }}</button>
+        </section>
 
-        <label>
-          {{ text().city }}
-          <input type="text" formControlName="city" autocomplete="address-level2" [placeholder]="text().cityPlaceholder" />
-          @if (form.controls.city.touched && form.controls.city.invalid) {
-            <span class="hint">{{ text().cityHint }}</span>
-          }
-        </label>
-
-        <label>
-          {{ text().birthDate }}
-          <input type="date" formControlName="birthDate" />
-        </label>
-
-        <button type="submit" [disabled]="isSavingProfile()">
-          {{ isSavingProfile() ? text().savingProfile : text().saveProfile }}
-        </button>
-      </form>
-    </section>
-
-    <section class="profile-card interests-card">
-      <header class="section-header">
-        <div>
-          <h2>{{ text().interestsTitle }}</h2>
-          <p>{{ text().interestsDescription }}</p>
-        </div>
-      </header>
-
-      @if (interests().length === 0) {
-        <p class="status">{{ text().interestsEmpty }}</p>
-      } @else {
-        <div class="chips" [attr.aria-label]="text().interestsAria">
-          @for (interest of interests(); track interest.id) {
-            <button
-              type="button"
-              class="chip"
-              [class.selected]="isInterestSelected(interest.id)"
-              [attr.aria-pressed]="isInterestSelected(interest.id)"
-              (click)="toggleInterest(interest.id)"
-            >
-              {{ interest.name }}
-            </button>
-          }
-        </div>
-
-        <button type="button" class="save-interests" [disabled]="isSavingInterests()" (click)="saveInterests()">
-          {{ isSavingInterests() ? text().savingInterests : text().saveInterests }}
-        </button>
-      }
-    </section>
+        <section class="side-card followers-card">
+          <header><h2>{{ text().followers }}</h2></header>
+          <strong>{{ profile.stats.followersCount }}</strong>
+          <span>{{ text().followersCount }}</span>
+          <p>{{ text().followersEmpty }}</p>
+        </section>
+      </aside>
+    </div>
   }
-</section>
+</main>

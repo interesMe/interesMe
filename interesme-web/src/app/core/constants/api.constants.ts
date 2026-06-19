@@ -14,6 +14,9 @@ export const AUTH_API_ENDPOINTS = {
 export const PROFILE_API_ENDPOINTS = {
   me: `${API_BASE_URL}/profile/me`,
   myInterests: `${API_BASE_URL}/profile/me/interests`,
+  myView: `${API_BASE_URL}/users/me/profile-view`,
+  userView: (userId: string) => `${API_BASE_URL}/users/${userId}/profile-view`,
+  follow: (userId: string) => `${API_BASE_URL}/users/${userId}/follow`,
 } as const;
 
 export const HISTORY_API_ENDPOINTS = {

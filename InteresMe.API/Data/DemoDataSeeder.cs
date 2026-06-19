@@ -37,7 +37,8 @@ public static class DemoDataSeeder
 
         if (hasDemoUsers)
         {
-            logger.LogInformation("Development demo data already exists. Checking demo inboxes for local users.");
+            logger.LogInformation("Development demo data already exists. Checking local demo content.");
+            await DemoProfileDataSeeder.SeedAsync(dbContext, logger);
             await SeedDemoInboxForExistingUsersAsync(dbContext, logger);
             return;
         }
@@ -86,6 +87,7 @@ public static class DemoDataSeeder
             channels.Channels.Count,
             DemoPassword);
 
+        await DemoProfileDataSeeder.SeedAsync(dbContext, logger);
         await SeedDemoInboxForExistingUsersAsync(dbContext, logger);
     }
 

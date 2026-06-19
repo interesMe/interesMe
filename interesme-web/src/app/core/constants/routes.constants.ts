@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   onboardingLoading: 'onboarding/loading',
   onboardingHope: 'onboarding/hope',
   profile: 'profile',
+  publicProfile: 'u/:userId',
   publicInitiative: 'i/:slug',
   history: 'history',
   interests: 'interests',

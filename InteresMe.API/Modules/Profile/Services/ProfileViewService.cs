@@ -1,3 +1,4 @@
+using System.Text.Json;
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
@@ -10,26 +11,31 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
 {
     private const int InitiativePreviewLimit = 6;
     private const int RecentHistoryLimit = 10;
+    private const int RecentPostsLimit = 6;
 
     public async Task<ApplicationResult<ProfileViewResponse>> GetAsync(
         Guid viewerUserId,
         Guid profileUserId,
         CancellationToken cancellationToken = default)
     {
-        var basicProfile = await dbContext.Users
+        var profileData = await dbContext.Users
             .AsNoTracking()
             .Where(user => user.Id == profileUserId)
-            .Select(user => new BasicProfileResponse
+            .Select(user => new
             {
                 UserId = user.Id,
                 DisplayName = user.Profile != null ? user.Profile.DisplayName : user.DisplayName,
                 AvatarUrl = user.Profile != null ? user.Profile.AvatarUrl : null,
                 City = user.Profile != null ? user.Profile.City : null,
+                Bio = user.Profile != null ? user.Profile.Bio : null,
+                SocialLinksJson = user.Profile != null ? user.Profile.SocialLinksJson : null,
+                ProfileStatus = user.Profile != null ? user.Profile.ProfileStatus : null,
+                IsDemoUser = user.Email.EndsWith("@demo.interesme.local"),
                 JoinedAt = user.CreatedAt
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (basicProfile is null)
+        if (profileData is null)
         {
             return ApplicationResult<ProfileViewResponse>.Failure(
                 ApplicationErrorKind.NotFound,
@@ -37,21 +43,85 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
                 "User was not found.");
         }
 
-        var interestRows = await dbContext.UserInterests
+        var basicProfile = new BasicProfileResponse
+        {
+            UserId = profileData.UserId,
+            DisplayName = profileData.DisplayName,
+            AvatarUrl = profileData.AvatarUrl,
+            City = profileData.City,
+            Bio = profileData.Bio,
+            ActivityStatus = GetActivityStatus(
+                viewerUserId,
+                profileUserId,
+                profileData.IsDemoUser,
+                profileData.DisplayName),
+            ProfileStatus = profileData.ProfileStatus ?? "active_member",
+            SocialLinks = ParseSocialLinks(profileData.SocialLinksJson),
+            JoinedAt = profileData.JoinedAt
+        };
+
+        var parentInterestRows = await dbContext.UserInterests
             .AsNoTracking()
             .Where(userInterest => userInterest.UserId == profileUserId)
-            .OrderBy(userInterest => userInterest.Interest.Category.SortOrder)
-            .ThenBy(userInterest => userInterest.Interest.SortOrder)
             .Select(userInterest => new
             {
                 CategoryId = userInterest.Interest.Category.Id,
                 CategoryName = userInterest.Interest.Category.Name,
                 CategorySlug = userInterest.Interest.Category.Slug,
+                CategorySortOrder = userInterest.Interest.Category.SortOrder,
+                ParentInterestId = userInterest.Interest.Id,
                 InterestId = userInterest.Interest.Id,
                 InterestName = userInterest.Interest.Name,
-                InterestSlug = userInterest.Interest.Slug
+                InterestSlug = userInterest.Interest.Slug,
+                InterestSortOrder = userInterest.Interest.SortOrder
             })
             .ToListAsync(cancellationToken);
+
+        var subinterestRows = await dbContext.UserSubinterests
+            .AsNoTracking()
+            .Where(selection => selection.UserId == profileUserId)
+            .Select(selection => new
+            {
+                CategoryId = selection.Subinterest.Interest.Category.Id,
+                CategoryName = selection.Subinterest.Interest.Category.Name,
+                CategorySlug = selection.Subinterest.Interest.Category.Slug,
+                CategorySortOrder = selection.Subinterest.Interest.Category.SortOrder,
+                ParentInterestId = selection.Subinterest.InterestId,
+                InterestId = selection.Subinterest.Id,
+                InterestName = selection.Subinterest.Name,
+                InterestSlug = selection.Subinterest.Slug,
+                InterestSortOrder = selection.Subinterest.SortOrder
+            })
+            .ToListAsync(cancellationToken);
+
+        var selectedParentIds = subinterestRows
+            .Select(row => row.ParentInterestId)
+            .ToHashSet();
+        var interestRows = parentInterestRows
+            .Where(row => !selectedParentIds.Contains(row.ParentInterestId))
+            .Select(row => new ProfileInterestRow(
+                row.CategoryId,
+                row.CategoryName,
+                row.CategorySlug,
+                row.CategorySortOrder,
+                row.ParentInterestId,
+                row.InterestId,
+                row.InterestName,
+                row.InterestSlug,
+                row.InterestSortOrder))
+            .Concat(subinterestRows.Select(row => new ProfileInterestRow(
+                row.CategoryId,
+                row.CategoryName,
+                row.CategorySlug,
+                row.CategorySortOrder,
+                row.ParentInterestId,
+                row.InterestId,
+                row.InterestName,
+                row.InterestSlug,
+                row.InterestSortOrder)))
+            .OrderBy(row => row.CategorySortOrder)
+            .ThenBy(row => row.InterestSortOrder)
+            .ToList();
 
         var interests = interestRows
             .GroupBy(row => new { row.CategoryId, row.CategoryName, row.CategorySlug })
@@ -69,16 +139,18 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             })
             .ToList();
 
-        var sharedInterestsCount = viewerUserId == profileUserId
-            ? interestRows.Count
-            : await dbContext.UserInterests
+        var sharedInterestsCount = interestRows.Count;
+        if (viewerUserId != profileUserId)
+        {
+            var viewerParentInterestIds = await dbContext.UserInterests
                 .AsNoTracking()
-                .Where(profileInterest =>
-                    profileInterest.UserId == profileUserId &&
-                    dbContext.UserInterests.Any(viewerInterest =>
-                        viewerInterest.UserId == viewerUserId &&
-                        viewerInterest.InterestId == profileInterest.InterestId))
-                .CountAsync(cancellationToken);
+                .Where(viewerInterest => viewerInterest.UserId == viewerUserId)
+                .Select(viewerInterest => viewerInterest.InterestId)
+                .ToListAsync(cancellationToken);
+
+            sharedInterestsCount = interestRows.Count(row =>
+                viewerParentInterestIds.Contains(row.ParentInterestId));
+        }
 
         var createdInitiativesCount = await dbContext.Initiatives
             .AsNoTracking()
@@ -104,6 +176,10 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
         var historyEventsCount = await dbContext.UserHistoryEvents
             .AsNoTracking()
             .CountAsync(historyEvent => historyEvent.UserId == profileUserId, cancellationToken);
+
+        var postsCount = await dbContext.ProfilePosts
+            .AsNoTracking()
+            .CountAsync(post => post.UserId == profileUserId, cancellationToken);
 
         var isFollowing = viewerUserId != profileUserId && await dbContext.UserFollows
             .AsNoTracking()
@@ -180,6 +256,35 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             })
             .ToListAsync(cancellationToken);
 
+        var recentPostRows = await dbContext.ProfilePosts
+            .AsNoTracking()
+            .Where(post => post.UserId == profileUserId)
+            .OrderByDescending(post => post.CreatedAt)
+            .Take(RecentPostsLimit)
+            .Select(post => new
+            {
+                post.Id,
+                post.Title,
+                post.Body,
+                post.Type,
+                post.InterestPath,
+                post.MediaUrlsJson,
+                post.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+        var recentPosts = recentPostRows
+            .Select(post => new ProfilePostPreviewResponse
+            {
+                Id = post.Id,
+                Title = post.Title,
+                Body = post.Body,
+                Type = post.Type,
+                InterestPath = post.InterestPath,
+                ImageUrls = ParseMediaUrls(post.MediaUrlsJson),
+                CreatedAt = post.CreatedAt
+            })
+            .ToList();
+
         var response = new ProfileViewResponse
         {
             BasicProfile = basicProfile,
@@ -192,7 +297,7 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
                 FollowersCount = followersCount,
                 FollowingCount = followingCount,
                 HistoryEventsCount = historyEventsCount,
-                PostsCount = 0
+                PostsCount = postsCount
             },
             ViewerRelation = new ViewerRelationResponse
             {
@@ -204,7 +309,7 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             CreatedInitiatives = createdInitiatives,
             JoinedInitiatives = joinedInitiatives,
             RecentHistory = recentHistory,
-            RecentPosts = []
+            RecentPosts = recentPosts
         };
 
         return ApplicationResult<ProfileViewResponse>.Success(response);
@@ -274,5 +379,73 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
                 ProfileErrorCodes.UserNotFound,
                 "User was not found.");
     }
+
+    private static string GetActivityStatus(
+        Guid viewerUserId,
+        Guid profileUserId,
+        bool isDemoUser,
+        string displayName)
+    {
+        if (viewerUserId == profileUserId)
+        {
+            return "online";
+        }
+
+        if (!isDemoUser)
+        {
+            return "unknown";
+        }
+
+        return displayName is "Anna Designer" or "Alex Developer" or "Olivia AI Researcher"
+            ? "recently_active"
+            : "offline";
+    }
+
+    private static List<ProfileSocialLinkResponse> ParseSocialLinks(string? socialLinksJson)
+    {
+        if (string.IsNullOrWhiteSpace(socialLinksJson))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<ProfileSocialLinkResponse>>(
+                socialLinksJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static List<string> ParseMediaUrls(string? mediaUrlsJson)
+    {
+        if (string.IsNullOrWhiteSpace(mediaUrlsJson))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(mediaUrlsJson) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private sealed record ProfileInterestRow(
+        Guid CategoryId,
+        string CategoryName,
+        string CategorySlug,
+        int CategorySortOrder,
+        Guid ParentInterestId,
+        Guid InterestId,
+        string InterestName,
+        string InterestSlug,
+        int InterestSortOrder);
 
 }

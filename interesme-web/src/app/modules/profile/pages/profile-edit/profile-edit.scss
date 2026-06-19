@@ -1,0 +1,261 @@
+.profile-shell {
+  display: grid;
+  gap: 24px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+
+.profile-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--im-primary-hover);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  color: var(--im-text);
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.subtitle,
+.section-header p,
+.status {
+  color: var(--im-muted);
+}
+
+.profile-card {
+  border: 1px solid var(--im-border);
+  border-radius: 8px;
+  padding: 22px;
+  background: var(--im-surface);
+  box-shadow: var(--im-shadow-card);
+}
+
+.account-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.avatar {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--im-avatar-soft-bg);
+  color: var(--im-primary-hover);
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-info {
+  display: grid;
+  gap: 4px;
+}
+
+.profile-info h2 {
+  color: var(--im-text);
+  font-size: 20px;
+}
+
+.profile-info p {
+  color: var(--im-muted);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 16px;
+  background: var(--im-primary-hover);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.form-card,
+.interests-card {
+  display: grid;
+  gap: 18px;
+}
+
+.section-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-header h2 {
+  color: var(--im-text);
+  font-size: 22px;
+}
+
+.profile-form {
+  display: grid;
+  gap: 16px;
+}
+
+.avatar-upload {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  border: 1px solid var(--im-border);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--im-surface-soft);
+}
+
+.avatar-preview {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--im-avatar-soft-bg);
+  color: var(--im-primary-hover);
+  font-size: 32px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-actions {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: var(--im-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--im-border);
+  border-radius: 8px;
+  padding: 0 13px;
+  background: var(--im-surface);
+  color: var(--im-text);
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--im-primary-hover);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.16);
+}
+
+.hint {
+  color: var(--im-error-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hint.neutral {
+  color: var(--im-muted);
+}
+
+.message {
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.error {
+  border: 1px solid var(--im-error-border);
+  background: var(--im-error-bg);
+  color: var(--im-error-text);
+}
+
+.success {
+  border: 1px solid var(--im-success-border);
+  background: var(--im-success-bg);
+  color: var(--im-success-text);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  min-height: 38px;
+  border: 1px solid var(--im-border);
+  padding: 0 13px;
+  background: var(--im-surface);
+  color: var(--im-text);
+}
+
+.chip.selected {
+  border-color: var(--im-border-active, var(--im-primary-hover));
+  background: rgba(20, 184, 166, 0.14);
+  color: var(--im-primary-hover);
+}
+
+.save-interests {
+  justify-self: start;
+}
+
+@media (max-width: 640px) {
+  .profile-header,
+  .section-header {
+    display: grid;
+  }
+
+  .account-card {
+    grid-template-columns: 1fr;
+  }
+
+  .avatar-upload {
+    grid-template-columns: 1fr;
+  }
+}

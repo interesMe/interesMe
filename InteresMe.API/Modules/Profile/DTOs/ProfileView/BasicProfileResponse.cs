@@ -10,5 +10,13 @@ public sealed class BasicProfileResponse
 
     public string? City { get; set; }
 
+    public string? Bio { get; set; }
+
+    public string ActivityStatus { get; set; } = "unknown";
+
+    public string ProfileStatus { get; set; } = "active_member";
+
+    public List<ProfileSocialLinkResponse> SocialLinks { get; set; } = [];
+
     public DateTime JoinedAt { get; set; }
 }
