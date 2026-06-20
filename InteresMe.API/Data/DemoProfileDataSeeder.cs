@@ -5,6 +5,7 @@ using InteresMe.API.Modules.History.Services;
 using InteresMe.API.Modules.Initiatives.Domain.Entities;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
 using InteresMe.API.Modules.Interests.Models;
+using InteresMe.API.Modules.Posts.Feed.Models;
 using InteresMe.API.Modules.Profile.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -246,38 +247,38 @@ internal static class DemoProfileDataSeeder
         IReadOnlyCollection<User> demoUsers,
         DateTime now)
     {
-        var definitions = new Dictionary<Guid, ProfilePostSeed[]>();
+        var definitions = new Dictionary<Guid, PostSeed[]>();
 
         foreach (var localUser in localUsers)
         {
             definitions[localUser.Id] =
             [
-                new("InteresMe profile system is alive", "Connected profile view, history, interests and follow system into one user journey page.", "result", "Build → Programming → Backend", 1, ["https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80"]),
-                new("Looking for people to test initiatives", "Need a few students to create test initiatives, join them and break the flow before real users do.", "looking", "Build → Startups", 3),
-                new("Football team idea", "Thinking about weekly football groups where people join by interest, not by awkward random chats.", "idea", "Move → Sport → Football", 6, ["https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1200&q=80"])
+                new("Connected profile view, history, interests and follow system into one user journey page.", 1),
+                new("Need a few students to create test initiatives, join them and break the flow before real users do.", 3),
+                new("Thinking about weekly football groups where people join by interest, not by awkward random chats.", 6)
             ];
         }
 
         AddUserPosts(definitions, demoUsers, "Anna Designer",
         [
-            new("New community hub concept", "A calm space where student initiatives can explain what they need and find people ready to help.", "idea", "Create → Design → UI/UX Design", 2, ["https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1200&q=80"]),
-            new("Designing softer onboarding for student initiatives", "Testing a shorter path from choosing interests to joining a first meaningful initiative.", "progress", "Build → Product", 5, ["https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80"]),
-            new("Looking for a frontend dev for a design experiment", "I have the flow and prototype. Looking for someone who enjoys accessible Angular interfaces.", "looking", "Build → Programming → Frontend", 8)
+            new("A calm space where student initiatives can explain what they need and find people ready to help.", 2),
+            new("Testing a shorter path from choosing interests to joining a first meaningful initiative.", 5),
+            new("I have the flow and prototype. Looking for someone who enjoys accessible Angular interfaces.", 8)
         ]);
         AddUserPosts(definitions, demoUsers, "Sarah Musician",
         [
-            new("A new rehearsal format", "Trying shorter weekly sessions focused on one song and one concrete result.", "progress", "Create → Music", 2),
-            new("Looking for a guitarist", "Our student band needs someone who enjoys indie arrangements and collaborative writing.", "looking", "Create → Music → Guitar", 7)
+            new("Trying shorter weekly sessions focused on one song and one concrete result.", 2),
+            new("Our student band needs someone who enjoys indie arrangements and collaborative writing.", 7)
         ]);
         AddUserPosts(definitions, demoUsers, "Diana Photographer",
         [
-            new("Campus photo walk results", "We collected quiet student stories from places people usually walk past.", "result", "Create → Photography → Visual Storytelling", 3),
-            new("Portrait practice this weekend", "Planning a small outdoor portrait session for beginners and curious volunteers.", "moment", "Create → Photography → Portrait", 9)
+            new("We collected quiet student stories from places people usually walk past.", 3),
+            new("Planning a small outdoor portrait session for beginners and curious volunteers.", 9)
         ]);
         AddUserPosts(definitions, demoUsers, "Mark Startup Founder",
         [
-            new("Student startup club validation", "The strongest signal is still whether students return to work together after the first meetup.", "result", "Build → Startups → Student Startup", 4),
-            new("Pitch practice without the theatre", "Looking for teams that want direct product feedback instead of polished presentation advice.", "looking", "Build → Startups", 10)
+            new("The strongest signal is still whether students return to work together after the first meetup.", 4),
+            new("Looking for teams that want direct product feedback instead of polished presentation advice.", 10)
         ]);
 
         if (definitions.Count == 0)
@@ -286,36 +287,27 @@ internal static class DemoProfileDataSeeder
         }
 
         var userIds = definitions.Keys.ToList();
-        var existing = await dbContext.ProfilePosts
-            .Where(post => userIds.Contains(post.UserId))
+        var existing = await dbContext.Posts
+            .Where(post => userIds.Contains(post.AuthorId))
             .ToListAsync();
-        var existingByKey = existing.ToDictionary(post => (post.UserId, post.Title));
+        var existingBodies = existing
+            .Select(post => (post.AuthorId, post.Body))
+            .ToHashSet();
 
         foreach (var (userId, posts) in definitions)
         {
             foreach (var post in posts)
             {
-                if (existingByKey.TryGetValue((userId, post.Title), out var existingPost))
+                if (existingBodies.Contains((userId, post.Body)))
                 {
-                    if (string.IsNullOrWhiteSpace(existingPost.MediaUrlsJson) && post.ImageUrls is { Length: > 0 })
-                    {
-                        existingPost.MediaUrlsJson = JsonSerializer.Serialize(post.ImageUrls);
-                    }
-
                     continue;
                 }
 
-                dbContext.ProfilePosts.Add(new ProfilePost
+                dbContext.Posts.Add(new Post
                 {
                     Id = Guid.NewGuid(),
-                    UserId = userId,
-                    Title = post.Title,
+                    AuthorId = userId,
                     Body = post.Body,
-                    Type = post.Type,
-                    InterestPath = post.InterestPath,
-                    MediaUrlsJson = post.ImageUrls is { Length: > 0 }
-                        ? JsonSerializer.Serialize(post.ImageUrls)
-                        : null,
                     CreatedAt = now.AddDays(-post.DaysAgo)
                 });
             }
@@ -563,10 +555,10 @@ internal static class DemoProfileDataSeeder
     };
 
     private static void AddUserPosts(
-        IDictionary<Guid, ProfilePostSeed[]> definitions,
+        IDictionary<Guid, PostSeed[]> definitions,
         IEnumerable<User> users,
         string displayName,
-        ProfilePostSeed[] posts)
+        PostSeed[] posts)
     {
         var user = users.FirstOrDefault(item => item.DisplayName == displayName);
         if (user is not null)
@@ -610,11 +602,7 @@ internal static class DemoProfileDataSeeder
         ];
     }
 
-    private sealed record ProfilePostSeed(
-        string Title,
+    private sealed record PostSeed(
         string Body,
-        string Type,
-        string InterestPath,
-        int DaysAgo,
-        string[]? ImageUrls = null);
+        int DaysAgo);
 }

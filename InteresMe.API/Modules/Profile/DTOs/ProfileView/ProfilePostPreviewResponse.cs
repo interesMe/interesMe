@@ -4,15 +4,13 @@ public sealed class ProfilePostPreviewResponse
 {
     public Guid Id { get; set; }
 
-    public string Title { get; set; } = string.Empty;
-
     public string Body { get; set; } = string.Empty;
 
-    public string Type { get; set; } = string.Empty;
+    public Guid? InitiativeId { get; set; }
 
-    public string? InterestPath { get; set; }
+    public string? InitiativeTitle { get; set; }
 
-    public List<string> ImageUrls { get; set; } = [];
+    public int LikesCount { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

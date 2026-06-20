@@ -9,6 +9,10 @@ using InteresMe.API.Modules.Initiatives.Domain.Entities;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
 using InteresMe.API.Modules.History.Models;
 using InteresMe.API.Modules.Interests.Models;
+using InteresMe.API.Modules.Posts.Comments.Models;
+using InteresMe.API.Modules.Posts.Feed.Models;
+using InteresMe.API.Modules.Posts.Likes.Models;
+using InteresMe.API.Modules.Posts.Shares.Models;
 using InteresMe.API.Modules.Profile.Models;
 using InteresMe.API.Modules.Verification.Models;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +41,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
 
-    public DbSet<ProfilePost> ProfilePosts => Set<ProfilePost>();
+    public DbSet<Post> Posts => Set<Post>();
+
+    public DbSet<Comment> Comments => Set<Comment>();
+
+    public DbSet<PostLike> PostLikes => Set<PostLike>();
+
+    public DbSet<PostShareLink> PostShareLinks => Set<PostShareLink>();
 
     public DbSet<DirectConversation> DirectConversations => Set<DirectConversation>();
 

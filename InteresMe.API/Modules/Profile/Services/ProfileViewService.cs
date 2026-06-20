@@ -177,9 +177,9 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             .AsNoTracking()
             .CountAsync(historyEvent => historyEvent.UserId == profileUserId, cancellationToken);
 
-        var postsCount = await dbContext.ProfilePosts
+        var postsCount = await dbContext.Posts
             .AsNoTracking()
-            .CountAsync(post => post.UserId == profileUserId, cancellationToken);
+            .CountAsync(post => post.AuthorId == profileUserId, cancellationToken);
 
         var isFollowing = viewerUserId != profileUserId && await dbContext.UserFollows
             .AsNoTracking()
@@ -256,34 +256,22 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             })
             .ToListAsync(cancellationToken);
 
-        var recentPostRows = await dbContext.ProfilePosts
+        var recentPosts = await dbContext.Posts
             .AsNoTracking()
-            .Where(post => post.UserId == profileUserId)
+            .Where(post => post.AuthorId == profileUserId)
             .OrderByDescending(post => post.CreatedAt)
+            .ThenByDescending(post => post.Id)
             .Take(RecentPostsLimit)
-            .Select(post => new
-            {
-                post.Id,
-                post.Title,
-                post.Body,
-                post.Type,
-                post.InterestPath,
-                post.MediaUrlsJson,
-                post.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
-        var recentPosts = recentPostRows
             .Select(post => new ProfilePostPreviewResponse
             {
                 Id = post.Id,
-                Title = post.Title,
                 Body = post.Body,
-                Type = post.Type,
-                InterestPath = post.InterestPath,
-                ImageUrls = ParseMediaUrls(post.MediaUrlsJson),
+                InitiativeId = post.InitiativeId,
+                InitiativeTitle = post.Initiative != null ? post.Initiative.Title : null,
+                LikesCount = dbContext.PostLikes.Count(like => like.PostId == post.Id),
                 CreatedAt = post.CreatedAt
             })
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         var response = new ProfileViewResponse
         {
@@ -413,23 +401,6 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             return JsonSerializer.Deserialize<List<ProfileSocialLinkResponse>>(
                 socialLinksJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static List<string> ParseMediaUrls(string? mediaUrlsJson)
-    {
-        if (string.IsNullOrWhiteSpace(mediaUrlsJson))
-        {
-            return [];
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<List<string>>(mediaUrlsJson) ?? [];
         }
         catch (JsonException)
         {

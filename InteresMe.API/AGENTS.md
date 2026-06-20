@@ -58,6 +58,21 @@ Avoid:
 - N+1 queries
 - loading unnecessary collections
 
+## API Standards
+
+Every new module must:
+
+- use ApplicationResult
+- use ApiErrorResponse
+- reject unknown JSON fields
+- validate null/empty/whitespace values
+- validate pagination and cursors
+- derive ownership from JWT
+- keep controllers thin
+- keep business logic in services
+- avoid information leakage
+- reuse existing project patterns
+
 ## API
 
 - Return DTOs only.

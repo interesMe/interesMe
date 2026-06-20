@@ -3,6 +3,7 @@ using System;
 using InteresMe.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InteresMe.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260620071959_MoveProfilePostsToPostsFeed")]
+    partial class MoveProfilePostsToPostsFeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -712,35 +715,6 @@ namespace InteresMe.API.Data.Migrations
                     b.ToTable("user_subinterests", "interests");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Posts.Comments.Models.Comment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(1200)
-                        .HasColumnType("character varying(1200)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("PostId", "CreatedAt", "Id");
-
-                    b.ToTable("comments", "posts");
-                });
-
             modelBuilder.Entity("InteresMe.API.Modules.Posts.Feed.Models.Post", b =>
                 {
                     b.Property<Guid>("Id")
@@ -769,45 +743,6 @@ namespace InteresMe.API.Data.Migrations
                         .IsDescending(false, true, true);
 
                     b.ToTable("posts", "posts");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Posts.Likes.Models.PostLike", b =>
-                {
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("PostId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("likes", "posts");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Posts.Shares.Models.PostShareLink", b =>
-                {
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("PostId");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.ToTable("share_links", "posts");
                 });
 
             modelBuilder.Entity("InteresMe.API.Modules.Profile.Models.UserFollow", b =>
@@ -1241,25 +1176,6 @@ namespace InteresMe.API.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("InteresMe.API.Modules.Posts.Comments.Models.Comment", b =>
-                {
-                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InteresMe.API.Modules.Posts.Feed.Models.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-
-                    b.Navigation("Post");
-                });
-
             modelBuilder.Entity("InteresMe.API.Modules.Posts.Feed.Models.Post", b =>
                 {
                     b.HasOne("InteresMe.API.Modules.Auth.Models.User", "Author")
@@ -1276,36 +1192,6 @@ namespace InteresMe.API.Data.Migrations
                     b.Navigation("Author");
 
                     b.Navigation("Initiative");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Posts.Likes.Models.PostLike", b =>
-                {
-                    b.HasOne("InteresMe.API.Modules.Posts.Feed.Models.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InteresMe.API.Modules.Auth.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("InteresMe.API.Modules.Posts.Shares.Models.PostShareLink", b =>
-                {
-                    b.HasOne("InteresMe.API.Modules.Posts.Feed.Models.Post", "Post")
-                        .WithOne()
-                        .HasForeignKey("InteresMe.API.Modules.Posts.Shares.Models.PostShareLink", "PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("InteresMe.API.Modules.Profile.Models.UserFollow", b =>
