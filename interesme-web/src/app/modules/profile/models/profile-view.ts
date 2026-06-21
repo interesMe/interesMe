@@ -1,4 +1,5 @@
 import { InitiativeGoalType, InitiativeStatus, InitiativeVisibility } from '../../initiatives/models';
+import { PostAttachment } from '../../posts/models';
 
 export interface ProfileViewResponse {
   basicProfile: BasicProfile;
@@ -88,10 +89,10 @@ export interface ProfileHistoryPreview {
 
 export interface ProfilePostPreview {
   id: string;
-  title: string;
   body: string;
-  type: string;
-  interestPath: string | null;
-  imageUrls: string[];
+  initiativeId: string | null;
+  initiativeTitle: string | null;
+  likesCount: number;
+  attachments: PostAttachment[];
   createdAt: string;
 }

@@ -43,6 +43,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Post> Posts => Set<Post>();
 
+    public DbSet<PostAttachment> PostAttachments => Set<PostAttachment>();
+
     public DbSet<Comment> Comments => Set<Comment>();
 
     public DbSet<PostLike> PostLikes => Set<PostLike>();

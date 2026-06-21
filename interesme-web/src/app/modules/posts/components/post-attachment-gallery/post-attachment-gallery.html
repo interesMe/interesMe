@@ -1,0 +1,17 @@
+@if (orderedAttachments().length > 0) {
+  <div
+    class="post-attachment-gallery"
+    [class.is-single]="orderedAttachments().length === 1"
+    [class.is-three]="orderedAttachments().length === 3"
+  >
+    @for (attachment of orderedAttachments(); track attachment.id) {
+      <img
+        [src]="imageUrl(attachment.url)"
+        [alt]="imageAlt()"
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+      />
+    }
+  </div>
+}

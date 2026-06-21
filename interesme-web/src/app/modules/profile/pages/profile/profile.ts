@@ -10,6 +10,9 @@ import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { ChatApiService } from '../../../chat/services/chat-api.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { InitiativeStatus } from '../../../initiatives/models';
+import { PostAttachmentGallery } from '../../../posts/components/post-attachment-gallery/post-attachment-gallery';
+import { Post } from '../../../posts/models';
+import { PostsApiService } from '../../../posts/services/posts-api.service';
 import { ProfileHistoryTimelineComponent } from '../../components/profile-history-timeline/profile-history-timeline';
 import { ProfileAboutCardComponent } from '../../components/profile-about-card/profile-about-card';
 import { ProfileActivityStatus, ProfileInitiativePreview, ProfileStatus, ProfileViewResponse } from '../../models';
@@ -20,7 +23,7 @@ type ProfileTab = 'posts' | 'history' | 'initiatives' | 'interests';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink, ProfileAboutCardComponent, ProfileHistoryTimelineComponent],
+  imports: [RouterLink, ProfileAboutCardComponent, ProfileHistoryTimelineComponent, PostAttachmentGallery],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +33,7 @@ export class ProfileComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly profileApi = inject(ProfileApiService);
+  private readonly postsApi = inject(PostsApiService);
   private readonly chatApi = inject(ChatApiService);
   private readonly authService = inject(AuthService);
   private readonly i18n = inject(I18nService);
@@ -41,11 +45,17 @@ export class ProfileComponent implements OnInit {
   readonly followLoading = signal(false);
   readonly messageLoading = signal(false);
   readonly publicUserId = signal<string | null>(null);
+  readonly posts = signal<Post[]>([]);
+  readonly postsLoading = signal(true);
+  readonly postsLoadingMore = signal(false);
+  readonly postsError = signal<string | null>(null);
+  readonly postsNextCursor = signal<string | null>(null);
   readonly isOwnProfile = computed(() => {
     const publicUserId = this.publicUserId();
     return publicUserId === null || publicUserId === this.authService.user()?.id;
   });
   readonly editProfileRoute = ['/', APP_ROUTES.profile, 'edit'];
+  readonly createPostRoute = ['/', APP_ROUTES.posts, 'new'];
   readonly totalInitiatives = computed(() => {
     const stats = this.profile()?.stats;
     return (stats?.createdInitiativesCount ?? 0) + (stats?.joinedInitiativesCount ?? 0);
@@ -76,6 +86,12 @@ export class ProfileComponent implements OnInit {
       initiatives: this.i18n.t('profileView.tab.initiatives'),
       interests: this.i18n.t('profileView.tab.interests'),
       noPosts: this.i18n.t('profileView.posts.empty'),
+      createPost: this.i18n.t('profileView.posts.create'),
+      loadingPosts: this.i18n.t('profileView.posts.loading'),
+      loadMorePosts: this.i18n.t('profileView.posts.loadMore'),
+      loadingMorePosts: this.i18n.t('profileView.posts.loadingMore'),
+      postsErrorFallback: this.i18n.t('profileView.posts.errorFallback'),
+      retryPosts: this.i18n.t('profileView.posts.retry'),
       noHistory: this.i18n.t('profileView.history.empty'),
       createdInitiatives: this.i18n.t('profileView.initiatives.created'),
       joinedInitiatives: this.i18n.t('profileView.initiatives.joined'),
@@ -108,6 +124,49 @@ export class ProfileComponent implements OnInit {
       this.publicUserId.set(params.get('userId'));
       this.activeTab.set('posts');
       this.loadProfile();
+      this.loadPosts();
+    });
+  }
+
+  loadPosts(): void {
+    this.postsLoading.set(true);
+    this.postsError.set(null);
+    this.posts.set([]);
+    this.postsNextCursor.set(null);
+
+    const userId = this.publicUserId();
+    const request = userId ? this.postsApi.getUserPosts(userId) : this.postsApi.getMyPosts();
+
+    request.pipe(finalize(() => this.postsLoading.set(false))).subscribe({
+      next: (page) => {
+        this.posts.set(page.items);
+        this.postsNextCursor.set(page.nextCursor);
+      },
+      error: (error: unknown) => {
+        this.postsError.set(getApiErrorMessage(error, this.text().postsErrorFallback));
+      },
+    });
+  }
+
+  loadMorePosts(): void {
+    const cursor = this.postsNextCursor();
+    if (!cursor || this.postsLoadingMore()) {
+      return;
+    }
+
+    this.postsLoadingMore.set(true);
+    this.postsError.set(null);
+    const userId = this.publicUserId();
+    const request = userId ? this.postsApi.getUserPosts(userId, cursor) : this.postsApi.getMyPosts(cursor);
+
+    request.pipe(finalize(() => this.postsLoadingMore.set(false))).subscribe({
+      next: (page) => {
+        this.posts.update((current) => [...current, ...page.items]);
+        this.postsNextCursor.set(page.nextCursor);
+      },
+      error: (error: unknown) => {
+        this.postsError.set(getApiErrorMessage(error, this.text().postsErrorFallback));
+      },
     });
   }
 
@@ -247,17 +306,12 @@ export class ProfileComponent implements OnInit {
     return this.i18n.t(keys[status]);
   }
 
-  postTypeLabel(type: string): string {
-    const keys: Record<string, 'profileView.posts.type.idea' | 'profileView.posts.type.result' | 'profileView.posts.type.progress' | 'profileView.posts.type.looking' | 'profileView.posts.type.moment'> = {
-      idea: 'profileView.posts.type.idea',
-      result: 'profileView.posts.type.result',
-      progress: 'profileView.posts.type.progress',
-      looking: 'profileView.posts.type.looking',
-      moment: 'profileView.posts.type.moment',
-    };
-
-    const key = keys[type];
-    return key ? this.i18n.t(key) : type;
+  formatPostDate(value: string): string {
+    const locale = this.i18n.currentLocale() === 'uk' ? 'uk-UA' : 'en-US';
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
   }
 
   previewInitiatives(profile: ProfileViewResponse): ProfileInitiativePreview[] {

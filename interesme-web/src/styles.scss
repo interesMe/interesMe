@@ -227,6 +227,46 @@ input {
   margin: 0;
 }
 
+// Profile post-list states are global utilities to keep the existing profile component within its style budget.
+.create-post-link {
+  border-radius: 10px;
+  padding: 9px 13px;
+  background: var(--im-primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.posts-state {
+  display: grid;
+  min-height: 260px;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: var(--im-muted);
+  text-align: center;
+}
+
+.posts-inline-error {
+  margin-top: 14px;
+  border: 1px solid var(--im-error-border);
+  border-radius: var(--im-radius-md);
+  padding: 11px 14px;
+  background: var(--im-error-bg);
+  color: var(--im-error-text);
+  font-size: 13px;
+}
+
+.load-more-posts {
+  margin-top: 18px;
+}
+
+.load-more-posts:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .placeholder-page h1 {
   color: var(--im-text);
   font-size: 28px;

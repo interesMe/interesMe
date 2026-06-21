@@ -18,4 +18,6 @@ public sealed class Post
     public User Author { get; set; } = null!;
 
     public Initiative? Initiative { get; set; }
+
+    public ICollection<PostAttachment> Attachments { get; set; } = [];
 }

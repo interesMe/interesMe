@@ -97,6 +97,9 @@ builder.Services.AddScoped<IInterestCatalogService, InterestCatalogService>();
 builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
 builder.Services.AddScoped<IUserHistoryService, UserHistoryService>();
 builder.Services.AddScoped<IPostFeedService, PostFeedService>();
+builder.Services.AddScoped<IPostCreateRequestReader, PostCreateRequestReader>();
+builder.Services.AddScoped<IPostAttachmentValidator, PostAttachmentValidator>();
+builder.Services.AddScoped<IPostAttachmentStorage, LocalPostAttachmentStorage>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 builder.Services.AddScoped<IPostShareService, PostShareService>();
@@ -188,6 +191,17 @@ builder.Services
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
 
 await app.ApplyMigrationsAsync();
 

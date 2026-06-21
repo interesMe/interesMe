@@ -115,35 +115,52 @@
           @case ('posts') {
             <div class="tab-heading">
               <h2>{{ text().posts }}</h2>
+              @if (isOwnProfile()) {
+                <a class="create-post-link" [routerLink]="createPostRoute">{{ text().createPost }}</a>
+              }
             </div>
-            @if (profile.recentPosts.length === 0) {
+            @if (postsLoading()) {
+              <div class="posts-state" aria-live="polite">
+                <span class="loader" aria-hidden="true"></span>
+                <p>{{ text().loadingPosts }}</p>
+              </div>
+            } @else if (postsError() && posts().length === 0) {
+              <div class="posts-state" role="alert">
+                <p>{{ postsError() }}</p>
+                <button class="button button-secondary" type="button" (click)="loadPosts()">
+                  {{ text().retryPosts }}
+                </button>
+              </div>
+            } @else if (posts().length === 0) {
               <div class="tab-empty">
                 <span aria-hidden="true">✎</span>
                 <p>{{ text().noPosts }}</p>
               </div>
             } @else {
               <div class="post-list">
-                @for (post of profile.recentPosts; track post.id) {
+                @for (post of posts(); track post.id) {
                   <article class="post-card">
                     <div class="post-topline">
-                      <span class="post-type">{{ postTypeLabel(post.type) }}</span>
-                      <time [attr.datetime]="post.createdAt">{{ formatDate(post.createdAt) }}</time>
+                      @if (post.initiativeTitle) {
+                        <span class="post-initiative">{{ post.initiativeTitle }}</span>
+                      } @else {
+                        <span></span>
+                      }
+                      <time [attr.datetime]="post.createdAt">{{ formatPostDate(post.createdAt) }}</time>
                     </div>
-                    <h3>{{ post.title }}</h3>
                     <p>{{ post.body }}</p>
-                    @if (post.interestPath) {
-                      <span class="post-interest">{{ post.interestPath }}</span>
-                    }
-                    @if (post.imageUrls.length > 0) {
-                      <div class="post-media" [class.is-multiple]="post.imageUrls.length > 1">
-                        @for (imageUrl of post.imageUrls; track imageUrl) {
-                          <img [src]="imageUrl" [alt]="post.title" loading="lazy" referrerpolicy="no-referrer" />
-                        }
-                      </div>
-                    }
+                    <app-post-attachment-gallery [attachments]="post.attachments" />
                   </article>
                 }
               </div>
+              @if (postsError()) {
+                <div class="posts-inline-error" role="alert">{{ postsError() }}</div>
+              }
+              @if (postsNextCursor()) {
+                <button class="load-more-posts button button-secondary" type="button" [disabled]="postsLoadingMore()" (click)="loadMorePosts()">
+                  {{ postsLoadingMore() ? text().loadingMorePosts : text().loadMorePosts }}
+                </button>
+              }
             }
           }
 

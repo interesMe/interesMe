@@ -23,6 +23,13 @@ export const HISTORY_API_ENDPOINTS = {
   myHistory: `${API_BASE_URL}/users/me/history`,
 } as const;
 
+export const POSTS_API_ENDPOINTS = {
+  create: `${API_BASE_URL}/posts`,
+  byId: (postId: string) => `${API_BASE_URL}/posts/${postId}`,
+  myPosts: `${API_BASE_URL}/users/me/posts`,
+  userPosts: (userId: string) => `${API_BASE_URL}/users/${userId}/posts`,
+} as const;
+
 export const INTERESTS_API_ENDPOINTS = {
   list: `${API_BASE_URL}/interests`,
   catalog: `${API_BASE_URL}/interests/catalog`,

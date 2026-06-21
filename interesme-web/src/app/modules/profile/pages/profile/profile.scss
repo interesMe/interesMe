@@ -339,25 +339,10 @@ a {
   line-height: 1.55;
 }
 
-.post-type,
-.post-interest {
+.post-initiative {
   color: var(--im-teal-readable);
   font-size: 12px;
   font-weight: 800;
-}
-
-.post-media {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 4px;
-  overflow: hidden;
-  border-radius: var(--im-radius-md);
-}
-
-.post-media img {
-  width: 100%;
-  height: 260px;
-  object-fit: cover;
 }
 
 .post-card time,

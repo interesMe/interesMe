@@ -12,11 +12,15 @@ namespace InteresMe.API.Modules.Posts.Feed.Services;
 
 public sealed class PostFeedService(
     AppDbContext dbContext,
-    IUserHistoryService userHistoryService) : IPostFeedService
+    IUserHistoryService userHistoryService,
+    IPostAttachmentValidator attachmentValidator,
+    IPostAttachmentStorage attachmentStorage,
+    ILogger<PostFeedService> logger) : IPostFeedService
 {
     public async Task<ApplicationResult<PostResponse>> CreateAsync(
         Guid authorId,
         CreatePostRequest? request,
+        IReadOnlyList<IFormFile> attachments,
         CancellationToken cancellationToken = default)
     {
         var body = request?.Body?.Trim();
@@ -34,6 +38,17 @@ public sealed class PostFeedService(
                 ApplicationErrorKind.Validation,
                 PostErrorCodes.BodyTooLong,
                 $"Post body cannot exceed {PostFeedRules.MaxBodyLength} characters.");
+        }
+
+        var attachmentValidation = await attachmentValidator.ValidateAsync(
+            attachments,
+            cancellationToken);
+        if (!attachmentValidation.IsSuccess)
+        {
+            return ApplicationResult<PostResponse>.Failure(
+                attachmentValidation.ErrorKind ?? ApplicationErrorKind.Validation,
+                attachmentValidation.ErrorCode ?? PostErrorCodes.RequestInvalid,
+                attachmentValidation.ErrorMessage ?? "Post attachments are invalid.");
         }
 
         var author = await dbContext.Users
@@ -87,20 +102,61 @@ public sealed class PostFeedService(
             CreatedAt = DateTime.UtcNow
         };
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        IReadOnlyList<StagedPostAttachment> stagedAttachments = [];
+        try
+        {
+            stagedAttachments = await attachmentStorage.StageAsync(
+                authorId,
+                post.Id,
+                attachmentValidation.Response!,
+                cancellationToken);
 
-        dbContext.Posts.Add(post);
-        await userHistoryService.AddEventAsync(
-            new AddUserHistoryEventRequest(
-                UserId: authorId,
-                Type: HistoryEventTypes.CreatedPost,
-                Title: "Published a post",
-                TargetType: "post",
-                TargetId: post.Id,
-                OccurredAt: new DateTimeOffset(post.CreatedAt)),
-            cancellationToken);
+            foreach (var stagedAttachment in stagedAttachments)
+            {
+                post.Attachments.Add(new PostAttachment
+                {
+                    Id = stagedAttachment.Id,
+                    PostId = post.Id,
+                    Kind = PostAttachmentKinds.Image,
+                    StoragePath = stagedAttachment.StoragePath,
+                    ContentType = stagedAttachment.ContentType,
+                    SizeBytes = stagedAttachment.SizeBytes,
+                    SortOrder = stagedAttachment.SortOrder,
+                    CreatedAt = post.CreatedAt
+                });
+            }
 
-        await transaction.CommitAsync(cancellationToken);
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            dbContext.Posts.Add(post);
+            await userHistoryService.AddEventAsync(
+                new AddUserHistoryEventRequest(
+                    UserId: authorId,
+                    Type: HistoryEventTypes.CreatedPost,
+                    Title: "Published a post",
+                    TargetType: "post",
+                    TargetId: post.Id,
+                    OccurredAt: new DateTimeOffset(post.CreatedAt)),
+                cancellationToken);
+
+            attachmentStorage.MoveToFinal(stagedAttachments);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            attachmentStorage.CleanupAll(stagedAttachments);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            attachmentStorage.CleanupAll(stagedAttachments);
+            logger.LogError(exception, "Failed to publish a post with attachments.");
+
+            return ApplicationResult<PostResponse>.Failure(
+                ApplicationErrorKind.InternalServerError,
+                PostErrorCodes.AttachmentUploadFailed,
+                "Post could not be published.");
+        }
 
         return ApplicationResult<PostResponse>.Success(new PostResponse
         {
@@ -113,6 +169,10 @@ public sealed class PostFeedService(
             InitiativeTitle = initiativeTitle,
             LikesCount = 0,
             IsLikedByCurrentUser = false,
+            Attachments = post.Attachments
+                .OrderBy(attachment => attachment.SortOrder)
+                .Select(ToAttachmentResponse)
+                .ToList(),
             CreatedAt = post.CreatedAt
         });
     }
@@ -198,6 +258,18 @@ public sealed class PostFeedService(
                 LikesCount = dbContext.PostLikes.Count(like => like.PostId == post.Id),
                 IsLikedByCurrentUser = dbContext.PostLikes.Any(like =>
                     like.PostId == post.Id && like.UserId == viewerUserId),
+                Attachments = post.Attachments
+                    .OrderBy(attachment => attachment.SortOrder)
+                    .Select(attachment => new PostAttachmentResponse
+                    {
+                        Id = attachment.Id,
+                        Kind = attachment.Kind,
+                        Url = attachment.StoragePath,
+                        ContentType = attachment.ContentType,
+                        SizeBytes = attachment.SizeBytes,
+                        Order = attachment.SortOrder
+                    })
+                    .ToList(),
                 CreatedAt = post.CreatedAt
             })
             .Take(pageSize + 1)
@@ -235,6 +307,28 @@ public sealed class PostFeedService(
                 LikesCount = dbContext.PostLikes.Count(like => like.PostId == post.Id),
                 IsLikedByCurrentUser = dbContext.PostLikes.Any(like =>
                     like.PostId == post.Id && like.UserId == viewerUserId),
+                Attachments = post.Attachments
+                    .OrderBy(attachment => attachment.SortOrder)
+                    .Select(attachment => new PostAttachmentResponse
+                    {
+                        Id = attachment.Id,
+                        Kind = attachment.Kind,
+                        Url = attachment.StoragePath,
+                        ContentType = attachment.ContentType,
+                        SizeBytes = attachment.SizeBytes,
+                        Order = attachment.SortOrder
+                    })
+                    .ToList(),
                 CreatedAt = post.CreatedAt
             });
+
+    private static PostAttachmentResponse ToAttachmentResponse(PostAttachment attachment) => new()
+    {
+        Id = attachment.Id,
+        Kind = attachment.Kind,
+        Url = attachment.StoragePath,
+        ContentType = attachment.ContentType,
+        SizeBytes = attachment.SizeBytes,
+        Order = attachment.SortOrder
+    };
 }

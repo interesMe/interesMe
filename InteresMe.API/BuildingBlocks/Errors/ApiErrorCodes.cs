@@ -15,4 +15,6 @@ public static class ApiErrorCodes
     public const string InternalError = "server.internal_error";
 
     public const string FeatureNotImplemented = "feature.not_implemented";
+
+    public const string RequestTooLarge = "request.too_large";
 }

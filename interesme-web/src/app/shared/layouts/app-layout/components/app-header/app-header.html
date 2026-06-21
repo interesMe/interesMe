@@ -3,4 +3,8 @@
     <p class="eyebrow">{{ text().eyebrow }}</p>
     <h1>{{ text().title }}</h1>
   </div>
+  <a class="create-post-action" [routerLink]="createPostRoute">
+    <span aria-hidden="true">+</span>
+    {{ text().createPost }}
+  </a>
 </header>

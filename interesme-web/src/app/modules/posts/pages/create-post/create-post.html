@@ -1,0 +1,115 @@
+<main class="create-post-page">
+  <header class="page-heading">
+    <p class="eyebrow">{{ text().eyebrow }}</p>
+    <h1>{{ text().title }}</h1>
+    <p>{{ text().description }}</p>
+  </header>
+
+  <div class="create-post-layout">
+    <form class="post-form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="format-badge">
+        <span aria-hidden="true">✎</span>
+        {{ text().textOnly }}
+      </div>
+
+      <label for="post-body">{{ text().bodyLabel }}</label>
+      <textarea
+        id="post-body"
+        formControlName="body"
+        rows="11"
+        [attr.maxlength]="maxBodyLength"
+        [placeholder]="text().bodyPlaceholder"
+        [attr.aria-invalid]="bodyValidationMessage() ? true : null"
+        [attr.aria-describedby]="bodyValidationMessage() ? 'post-body-error' : 'post-body-hint'"
+      ></textarea>
+
+      <div class="field-meta">
+        <div>
+          @if (bodyValidationMessage(); as validationMessage) {
+            <p id="post-body-error" class="field-error" role="alert">{{ validationMessage }}</p>
+          } @else {
+            <p id="post-body-hint">{{ text().bodyHint }}</p>
+          }
+        </div>
+        <span>{{ form.controls.body.value.length }} / {{ maxBodyLength }}</span>
+      </div>
+
+      <section class="image-picker" [attr.aria-label]="text().imagesLabel">
+        <div class="image-picker-heading">
+          <div>
+            <h2>{{ text().imagesLabel }}</h2>
+            <p>{{ text().imagesHint }}</p>
+          </div>
+          <label class="image-picker-action" [class.is-disabled]="isSubmitting()">
+            <span aria-hidden="true">+</span>
+            {{ text().imagesAction }}
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp"
+              [disabled]="isSubmitting()"
+              (change)="selectImages($event)"
+            />
+          </label>
+        </div>
+
+        @if (selectedImages().length > 0) {
+          <div class="selected-image-grid">
+            @for (image of selectedImages(); track image.id) {
+              <article class="selected-image">
+                <img [src]="image.previewUrl" [alt]="image.file.name" />
+                <div class="selected-image-meta">
+                  <strong [title]="image.file.name">{{ image.file.name }}</strong>
+                  <span>{{ formatFileSize(image.file.size) }}</span>
+                </div>
+                <button
+                  type="button"
+                  [disabled]="isSubmitting()"
+                  [attr.aria-label]="text().removeImage"
+                  [title]="text().removeImage"
+                  (click)="removeImage(image.id)"
+                >
+                  ×
+                </button>
+              </article>
+            }
+          </div>
+        }
+
+        @if (attachmentError()) {
+          <p class="field-error attachment-error" role="alert">{{ attachmentError() }}</p>
+        }
+      </section>
+
+      @if (errorMessage()) {
+        <div class="api-error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      <div class="form-actions">
+        <a class="button button-secondary" [routerLink]="profileRoute">{{ text().cancel }}</a>
+        <button
+          class="button button-primary"
+          type="submit"
+          [disabled]="
+            isSubmitting() ||
+            !form.controls.body.value.trim() ||
+            form.controls.body.value.length > maxBodyLength
+          "
+        >
+          {{ isSubmitting() ? text().publishing : text().publish }}
+        </button>
+      </div>
+    </form>
+
+    <aside class="future-card">
+      <span class="future-icon" aria-hidden="true">↗</span>
+      <h2>{{ text().futureTitle }}</h2>
+      <p>{{ text().futureDescription }}</p>
+      <div class="future-lines" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </aside>
+  </div>
+</main>

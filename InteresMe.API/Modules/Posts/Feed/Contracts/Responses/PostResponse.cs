@@ -20,5 +20,7 @@ public sealed class PostResponse
 
     public bool IsLikedByCurrentUser { get; set; }
 
+    public IReadOnlyList<PostAttachmentResponse> Attachments { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 }

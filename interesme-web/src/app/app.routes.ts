@@ -46,6 +46,10 @@ export const routes: Routes = [
         loadChildren: () => import('./modules/profile/profile.routes').then((routesFile) => routesFile.PROFILE_ROUTES),
       },
       {
+        path: APP_ROUTES.posts,
+        loadChildren: () => import('./modules/posts/posts.routes').then((routesFile) => routesFile.POSTS_ROUTES),
+      },
+      {
         path: APP_ROUTES.publicProfile,
         loadComponent: () =>
           import('./modules/profile/pages/profile/profile').then((component) => component.ProfileComponent),

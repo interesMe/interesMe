@@ -1,5 +1,5 @@
+using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.BuildingBlocks.Security;
-using InteresMe.API.Modules.Posts.Feed.Contracts.Requests;
 using InteresMe.API.Modules.Posts.Feed.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +12,28 @@ namespace InteresMe.API.Modules.Posts.Feed.Controllers;
 [Route("api/posts")]
 public sealed class PostsController(
     IPostFeedService postFeedService,
+    IPostCreateRequestReader postCreateRequestReader,
     ICurrentUser currentUser) : ControllerBase
 {
     [HttpPost]
+    [RequestSizeLimit(PostFeedRules.MaxMultipartRequestSizeBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = PostFeedRules.MaxMultipartRequestSizeBytes)]
     public async Task<IActionResult> Create(
-        [FromBody] CreatePostRequest? request,
         CancellationToken cancellationToken)
     {
+        var binding = await postCreateRequestReader.ReadAsync(Request, cancellationToken);
+        if (binding.ErrorMessage is not null)
+        {
+            return ToActionResult(ApplicationResult<object>.Failure(
+                ApplicationErrorKind.Validation,
+                binding.ErrorCode ?? PostErrorCodes.RequestInvalid,
+                binding.ErrorMessage));
+        }
+
         var result = await postFeedService.CreateAsync(
             currentUser.UserId,
-            request,
+            binding.Request,
+            binding.Attachments,
             cancellationToken);
         if (!result.IsSuccess)
         {

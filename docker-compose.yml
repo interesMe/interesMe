@@ -41,6 +41,9 @@ services:
     ports:
       - "8080:8080"
 
+    volumes:
+      - post_uploads:/app/wwwroot/uploads
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -100,3 +103,4 @@ services:
 volumes:
   postgres_data:
   frontend_node_modules:
+  post_uploads:

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Posts.Shares.Contracts.Responses;
+using InteresMe.API.Modules.Posts.Feed.Contracts.Responses;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -89,6 +90,18 @@ public sealed class PostShareService(AppDbContext dbContext) : IPostShareService
                         Slug = link.Post.Initiative.Slug,
                         Title = link.Post.Initiative.Title
                     },
+                Attachments = link.Post.Attachments
+                    .OrderBy(attachment => attachment.SortOrder)
+                    .Select(attachment => new PostAttachmentResponse
+                    {
+                        Id = attachment.Id,
+                        Kind = attachment.Kind,
+                        Url = attachment.StoragePath,
+                        ContentType = attachment.ContentType,
+                        SizeBytes = attachment.SizeBytes,
+                        Order = attachment.SortOrder
+                    })
+                    .ToList(),
                 CreatedAt = link.Post.CreatedAt
             })
             .FirstOrDefaultAsync(cancellationToken);

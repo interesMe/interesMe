@@ -9,6 +9,7 @@ public interface IPostFeedService
     Task<ApplicationResult<PostResponse>> CreateAsync(
         Guid authorId,
         CreatePostRequest? request,
+        IReadOnlyList<IFormFile> attachments,
         CancellationToken cancellationToken = default);
 
     Task<ApplicationResult<PostResponse>> GetByIdAsync(

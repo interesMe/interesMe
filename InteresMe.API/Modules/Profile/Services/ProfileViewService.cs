@@ -3,6 +3,7 @@ using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Initiatives.Domain.Enums;
 using InteresMe.API.Modules.Profile.DTOs.ProfileView;
+using InteresMe.API.Modules.Posts.Feed.Contracts.Responses;
 using Microsoft.EntityFrameworkCore;
 
 namespace InteresMe.API.Modules.Profile.Services;
@@ -269,6 +270,18 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
                 InitiativeId = post.InitiativeId,
                 InitiativeTitle = post.Initiative != null ? post.Initiative.Title : null,
                 LikesCount = dbContext.PostLikes.Count(like => like.PostId == post.Id),
+                Attachments = post.Attachments
+                    .OrderBy(attachment => attachment.SortOrder)
+                    .Select(attachment => new PostAttachmentResponse
+                    {
+                        Id = attachment.Id,
+                        Kind = attachment.Kind,
+                        Url = attachment.StoragePath,
+                        ContentType = attachment.ContentType,
+                        SizeBytes = attachment.SizeBytes,
+                        Order = attachment.SortOrder
+                    })
+                    .ToList(),
                 CreatedAt = post.CreatedAt
             })
             .ToListAsync(cancellationToken);

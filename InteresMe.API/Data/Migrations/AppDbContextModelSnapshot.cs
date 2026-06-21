@@ -771,6 +771,52 @@ namespace InteresMe.API.Data.Migrations
                     b.ToTable("posts", "posts");
                 });
 
+            modelBuilder.Entity("InteresMe.API.Modules.Posts.Feed.Models.PostAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId", "SortOrder")
+                        .IsUnique();
+
+                    b.ToTable("post_attachments", "posts", t =>
+                        {
+                            t.HasCheckConstraint("CK_post_attachments_SizeBytes_positive", "\"SizeBytes\" > 0");
+
+                            t.HasCheckConstraint("CK_post_attachments_SortOrder_nonnegative", "\"SortOrder\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("InteresMe.API.Modules.Posts.Likes.Models.PostLike", b =>
                 {
                     b.Property<Guid>("PostId")
@@ -1278,6 +1324,17 @@ namespace InteresMe.API.Data.Migrations
                     b.Navigation("Initiative");
                 });
 
+            modelBuilder.Entity("InteresMe.API.Modules.Posts.Feed.Models.PostAttachment", b =>
+                {
+                    b.HasOne("InteresMe.API.Modules.Posts.Feed.Models.Post", "Post")
+                        .WithMany("Attachments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("InteresMe.API.Modules.Posts.Likes.Models.PostLike", b =>
                 {
                     b.HasOne("InteresMe.API.Modules.Posts.Feed.Models.Post", "Post")
@@ -1409,6 +1466,11 @@ namespace InteresMe.API.Data.Migrations
             modelBuilder.Entity("InteresMe.API.Modules.Interests.Models.InterestCategory", b =>
                 {
                     b.Navigation("Interests");
+                });
+
+            modelBuilder.Entity("InteresMe.API.Modules.Posts.Feed.Models.Post", b =>
+                {
+                    b.Navigation("Attachments");
                 });
 #pragma warning restore 612, 618
         }
