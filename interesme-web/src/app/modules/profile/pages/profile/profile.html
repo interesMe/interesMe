@@ -122,10 +122,13 @@
             @if (postsLoading()) {
               <div class="posts-state" aria-live="polite">
                 <span class="loader" aria-hidden="true"></span>
-                <p>{{ text().loadingPosts }}</p>
+                <h3>{{ text().loadingPostsTitle }}</h3>
+                <p>{{ text().loadingPostsDescription }}</p>
               </div>
             } @else if (postsError() && posts().length === 0) {
               <div class="posts-state" role="alert">
+                <span class="posts-state-icon is-error" aria-hidden="true">!</span>
+                <h3>{{ text().postsErrorTitle }}</h3>
                 <p>{{ postsError() }}</p>
                 <button class="button button-secondary" type="button" (click)="loadPosts()">
                   {{ text().retryPosts }}
@@ -134,7 +137,11 @@
             } @else if (posts().length === 0) {
               <div class="tab-empty">
                 <span aria-hidden="true">✎</span>
-                <p>{{ text().noPosts }}</p>
+                <h3>{{ text().noPostsTitle }}</h3>
+                <p>{{ isOwnProfile() ? text().noOwnPostsDescription : text().noPublicPostsDescription }}</p>
+                @if (isOwnProfile()) {
+                  <a class="button button-primary" [routerLink]="createPostRoute">{{ text().createPost }}</a>
+                }
               </div>
             } @else {
               <div class="post-list">
@@ -158,8 +165,10 @@
               }
               @if (postsNextCursor()) {
                 <button class="load-more-posts button button-secondary" type="button" [disabled]="postsLoadingMore()" (click)="loadMorePosts()">
-                  {{ postsLoadingMore() ? text().loadingMorePosts : text().loadMorePosts }}
+                  {{ postsLoadingMore() ? text().loadingMorePosts : postsError() ? text().retryPosts : text().loadMorePosts }}
                 </button>
+              } @else if (!postsError()) {
+                <p class="posts-end"><span aria-hidden="true">✓</span>{{ text().postsEnd }}</p>
               }
             }
           }

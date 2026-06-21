@@ -74,6 +74,14 @@
               </article>
             }
           </div>
+        } @else {
+          <div class="image-picker-empty">
+            <span aria-hidden="true">▧</span>
+            <div>
+              <strong>{{ text().imagesEmptyTitle }}</strong>
+              <p>{{ text().imagesEmptyDescription }}</p>
+            </div>
+          </div>
         }
 
         @if (attachmentError()) {

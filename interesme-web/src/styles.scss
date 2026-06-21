@@ -248,6 +248,41 @@ input {
   text-align: center;
 }
 
+.posts-state h3,
+.posts-state p,
+.tab-empty h3,
+.tab-empty p {
+  margin: 0;
+}
+
+.posts-state h3,
+.tab-empty h3 {
+  color: var(--im-text);
+  font-size: 17px;
+}
+
+.posts-state p,
+.tab-empty p {
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.posts-state-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--im-surface-soft);
+  color: var(--im-primary-hover);
+  font-weight: 900;
+}
+
+.posts-state-icon.is-error {
+  background: var(--im-error-bg);
+  color: var(--im-error-text);
+}
+
 .posts-inline-error {
   margin-top: 14px;
   border: 1px solid var(--im-error-border);
@@ -265,6 +300,21 @@ input {
 .load-more-posts:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.posts-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 18px 0 0;
+  color: var(--im-muted);
+  font-size: 13px;
+}
+
+.posts-end span {
+  color: var(--im-teal-readable);
+  font-weight: 900;
 }
 
 .placeholder-page h1 {

@@ -77,6 +77,8 @@ export class CreatePostPage implements OnDestroy {
       imagesLabel: this.i18n.t('createPost.attachments.label'),
       imagesAction: this.i18n.t('createPost.attachments.action'),
       imagesHint: this.i18n.t('createPost.attachments.hint'),
+      imagesEmptyTitle: this.i18n.t('createPost.attachments.emptyTitle'),
+      imagesEmptyDescription: this.i18n.t('createPost.attachments.emptyDescription'),
       removeImage: this.i18n.t('createPost.attachments.remove'),
       countError: this.i18n.t('createPost.attachments.countError', { max: MAX_IMAGE_COUNT }),
       typeError: this.i18n.t('createPost.attachments.typeError'),

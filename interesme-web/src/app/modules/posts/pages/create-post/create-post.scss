@@ -181,6 +181,31 @@ textarea[aria-invalid='true'] {
   gap: 10px;
 }
 
+.image-picker-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px dashed var(--im-border);
+  border-radius: var(--im-radius-md);
+  padding: 14px;
+  background: var(--im-surface-soft);
+}
+
+.image-picker-empty > span {
+  color: var(--im-teal-readable);
+  font-size: 22px;
+}
+
+.image-picker-empty strong {
+  font-size: 13px;
+}
+
+.image-picker-empty p {
+  margin: 3px 0 0;
+  color: var(--im-muted);
+  font-size: 12px;
+}
+
 .selected-image {
   position: relative;
   display: grid;
