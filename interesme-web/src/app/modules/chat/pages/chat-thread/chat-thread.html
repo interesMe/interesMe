@@ -41,7 +41,18 @@
                   <strong>{{ isOwnMessage(message) ? 'You' : senderName(message) }}</strong>
                   <span>{{ formatDate(message.createdAt) }}</span>
                 </div>
-                <p>{{ message.text }}</p>
+                @if (hasText(message)) {
+                  <p>{{ message.text }}</p>
+                }
+                @if (message.attachments.length > 0) {
+                  <div class="message-attachments" [class.is-single]="message.attachments.length === 1">
+                    @for (attachment of message.attachments; track attachment.id) {
+                      <a [href]="imageUrl(attachment.url)" target="_blank" rel="noopener noreferrer">
+                        <img [src]="imageUrl(attachment.url)" [alt]="attachment.fileName" loading="lazy" />
+                      </a>
+                    }
+                  </div>
+                }
               </div>
             </article>
           }
@@ -50,16 +61,56 @@
 
       @if (canSend()) {
         <form class="composer" (ngSubmit)="sendMessage()">
-          <textarea
-            name="message"
-            rows="2"
-            [ngModel]="draft()"
-            (ngModelChange)="draft.set($event)"
-            placeholder="Write a message"
-          ></textarea>
-          <button class="button button-primary" type="submit" [disabled]="isSending() || !draft().trim()">
-            {{ isSending() ? 'Sending' : 'Send' }}
-          </button>
+          <div class="composer-main">
+            @if (selectedImages().length > 0) {
+              <div class="selected-images">
+                @for (image of selectedImages(); track image.id) {
+                  <div class="selected-image">
+                    <img [src]="image.previewUrl" [alt]="image.file.name" />
+                    <button type="button" aria-label="Remove image" (click)="removeSelectedImage(image.id)">x</button>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (composerError()) {
+              <p class="composer-error" role="alert">{{ composerError() }}</p>
+            }
+
+            <textarea
+              name="message"
+              rows="2"
+              maxlength="2000"
+              [ngModel]="draft()"
+              (ngModelChange)="draft.set($event); composerError.set(null)"
+              placeholder="Write a message"
+            ></textarea>
+          </div>
+
+          <div class="composer-actions">
+            <input
+              #imageInput
+              class="attachment-input"
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              multiple
+              [disabled]="!canAttachImages() || isSending() || selectedImages().length >= 4"
+              (change)="selectImages($event)"
+            />
+            <button
+              class="attachment-button"
+              type="button"
+              aria-label="Attach images"
+              title="Attach images"
+              [disabled]="!canAttachImages() || isSending() || selectedImages().length >= 4"
+              (click)="imageInput.click()"
+            >
+              +
+            </button>
+            <button class="button button-primary" type="submit" [disabled]="!canSubmit()">
+              {{ isSending() ? 'Sending' : 'Send' }}
+            </button>
+          </div>
         </form>
       }
     </section>

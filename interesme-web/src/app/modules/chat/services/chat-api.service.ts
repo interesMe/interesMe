@@ -23,7 +23,26 @@ export class ChatApiService {
     return this.http.get<ChatMessage[]>(CHAT_API_ENDPOINTS.directMessages(conversationId, take));
   }
 
-  sendDirectMessage(conversationId: string, request: SendMessageRequest): Observable<ChatMessage> {
+  sendDirectMessage(
+    conversationId: string,
+    request: SendMessageRequest,
+    attachments: readonly File[] = [],
+  ): Observable<ChatMessage> {
+    if (attachments.length > 0) {
+      const formData = new FormData();
+      const text = request.text.trim();
+
+      if (text) {
+        formData.append('body', text);
+      }
+
+      for (const attachment of attachments) {
+        formData.append('attachments', attachment);
+      }
+
+      return this.http.post<ChatMessage>(CHAT_API_ENDPOINTS.directMessagesBase(conversationId), formData);
+    }
+
     return this.http.post<ChatMessage>(CHAT_API_ENDPOINTS.directMessagesBase(conversationId), request);
   }
 

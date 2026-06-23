@@ -11,6 +11,7 @@ using InteresMe.API.Modules.Auth.Services;
 using InteresMe.API.Modules.Chat.Channels.Services;
 using InteresMe.API.Modules.Chat.DirectMessages.Services;
 using InteresMe.API.Modules.Chat.Groups.Services;
+using InteresMe.API.Modules.Chat.Shared.Services;
 using InteresMe.API.Modules.Discovery.Services;
 using InteresMe.API.Modules.History.Services;
 using InteresMe.API.Modules.Initiatives.Services.InitiativeManagement;
@@ -103,6 +104,9 @@ builder.Services.AddScoped<IPostAttachmentStorage, LocalPostAttachmentStorage>()
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 builder.Services.AddScoped<IPostShareService, PostShareService>();
+builder.Services.AddScoped<IChatMessageCreateRequestReader, ChatMessageCreateRequestReader>();
+builder.Services.AddScoped<IChatMessageAttachmentValidator, ChatMessageAttachmentValidator>();
+builder.Services.AddScoped<IChatMessageAttachmentStorage, LocalChatMessageAttachmentStorage>();
 builder.Services.AddScoped<IDirectMessageService, DirectMessageService>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 builder.Services.AddScoped<IChannelService, ChannelService>();

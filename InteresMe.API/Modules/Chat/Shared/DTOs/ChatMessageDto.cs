@@ -18,7 +18,9 @@ public sealed class ChatMessageDto
 
     public string? SenderDisplayName { get; set; }
 
-    public string Text { get; set; } = string.Empty;
+    public string? Text { get; set; }
+
+    public IReadOnlyList<ChatMessageAttachmentDto> Attachments { get; set; } = [];
 
     public DateTime CreatedAt { get; set; }
 

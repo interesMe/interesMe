@@ -11,7 +11,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InteresMe.API.Modules.Chat.DirectMessages.Services;
 
-public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessageService
+public sealed class DirectMessageService(
+    AppDbContext dbContext,
+    IChatMessageAttachmentValidator attachmentValidator,
+    IChatMessageAttachmentStorage attachmentStorage) : IDirectMessageService
 {
     public async Task<List<DirectConversationDto>> GetConversationsAsync(
         Guid userId,
@@ -125,6 +128,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
         var messages = await dbContext.ChatMessages
             .AsNoTracking()
             .Include(message => message.SenderUser)
+            .Include(message => message.Attachments)
             .Where(message => message.DirectConversationId == conversationId)
             .OrderByDescending(message => message.CreatedAt)
             .Take(ChatMessageRules.NormalizeTake(take))
@@ -138,20 +142,21 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
     public async Task<ApplicationResult<ChatMessageDto>> SendMessageAsync(
         Guid userId,
         Guid conversationId,
-        SendMessageRequest? request,
+        string? text,
+        IReadOnlyList<IFormFile> attachments,
         CancellationToken cancellationToken = default)
     {
-        var text = ChatMessageRules.NormalizeMessageText(request?.Text);
+        var normalizedText = ChatMessageRules.NormalizeMessageText(text);
 
-        if (string.IsNullOrWhiteSpace(text))
+        if (string.IsNullOrWhiteSpace(normalizedText) && attachments.Count == 0)
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Validation,
                 ChatErrorCodes.MessageEmpty,
-                "Message text is required.");
+                "Message text or an image attachment is required.");
         }
 
-        if (text.Length > ChatMessageRules.MessageMaxLength)
+        if (normalizedText.Length > ChatMessageRules.MessageMaxLength)
         {
             return ApplicationResult<ChatMessageDto>.Failure(
                 ApplicationErrorKind.Validation,
@@ -181,6 +186,15 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
                 "You do not have access to this direct conversation.");
         }
 
+        var attachmentValidation = await attachmentValidator.ValidateAsync(attachments, cancellationToken);
+        if (!attachmentValidation.IsSuccess)
+        {
+            return ApplicationResult<ChatMessageDto>.Failure(
+                attachmentValidation.ErrorKind ?? ApplicationErrorKind.Validation,
+                attachmentValidation.ErrorCode ?? ChatErrorCodes.MessageValidationFailed,
+                attachmentValidation.ErrorMessage ?? "Message attachments are invalid.");
+        }
+
         var now = DateTime.UtcNow;
         var message = new ChatMessage
         {
@@ -188,14 +202,47 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
             ConversationType = ChatConversationType.Direct,
             DirectConversationId = conversationId,
             SenderUserId = userId,
-            Text = text,
+            Text = string.IsNullOrWhiteSpace(normalizedText) ? null : normalizedText,
             CreatedAt = now,
             IsDeleted = false
         };
 
-        conversation.UpdatedAt = now;
-        dbContext.ChatMessages.Add(message);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        IReadOnlyList<StagedChatMessageAttachment> stagedAttachments = [];
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            stagedAttachments = await attachmentStorage.StageAsync(
+                conversationId,
+                message.Id,
+                attachmentValidation.Response ?? [],
+                cancellationToken);
+
+            foreach (var attachment in stagedAttachments.OrderBy(current => current.SortOrder))
+            {
+                message.Attachments.Add(new ChatMessageAttachment
+                {
+                    Id = attachment.Id,
+                    ChatMessageId = message.Id,
+                    Url = attachment.StoragePath,
+                    FileName = $"{attachment.Id:D}{Path.GetExtension(attachment.StoragePath)}",
+                    ContentType = attachment.ContentType,
+                    SizeBytes = attachment.SizeBytes,
+                    CreatedAt = now
+                });
+            }
+
+            conversation.UpdatedAt = now;
+            dbContext.ChatMessages.Add(message);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            attachmentStorage.MoveToFinal(stagedAttachments);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            attachmentStorage.CleanupAll(stagedAttachments);
+            throw;
+        }
 
         await dbContext.Entry(message)
             .Reference(currentMessage => currentMessage.SenderUser)
@@ -211,7 +258,8 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
             .AsSplitQuery()
             .Include(conversation => conversation.Participants)
                 .ThenInclude(participant => participant.User)
-            .Include(conversation => conversation.Messages.OrderByDescending(message => message.CreatedAt).Take(1));
+            .Include(conversation => conversation.Messages.OrderByDescending(message => message.CreatedAt).Take(1))
+                .ThenInclude(message => message.Attachments);
 
     private async Task<AccessError?> VerifyParticipantAccessAsync(
         Guid userId,
@@ -259,7 +307,7 @@ public sealed class DirectMessageService(AppDbContext dbContext) : IDirectMessag
             ParticipantsCount = conversation.Participants.Count,
             LastMessagePreview = lastMessage is null
                 ? null
-                : ChatMessageRules.ToPreview(lastMessage.Text),
+                : ChatMessageRules.ToPreview(lastMessage.Text, lastMessage.Attachments.Count > 0),
             Participants = conversation.Participants
                 .OrderBy(participant => participant.JoinedAt)
                 .Select(participant => new DirectConversationParticipantDto

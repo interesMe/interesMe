@@ -65,6 +65,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
+    public DbSet<ChatMessageAttachment> ChatMessageAttachments => Set<ChatMessageAttachment>();
+
     public DbSet<Initiative> Initiatives => Set<Initiative>();
 
     public DbSet<InitiativeInterest> InitiativeInterests => Set<InitiativeInterest>();
@@ -389,8 +391,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .IsRequired();
 
             entity.Property(message => message.Text)
-                .HasMaxLength(2000)
-                .IsRequired();
+                .HasMaxLength(2000);
 
             entity.Property(message => message.CreatedAt)
                 .IsRequired();
@@ -444,6 +445,42 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(message => message.SenderUser)
                 .WithMany()
                 .HasForeignKey(message => message.SenderUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ChatMessageAttachment>(entity =>
+        {
+            entity.ToTable("chat_message_attachments", "chat");
+
+            entity.HasKey(attachment => attachment.Id);
+
+            entity.Property(attachment => attachment.Url)
+                .HasMaxLength(512)
+                .IsRequired();
+
+            entity.Property(attachment => attachment.FileName)
+                .HasMaxLength(128)
+                .IsRequired();
+
+            entity.Property(attachment => attachment.ContentType)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            entity.Property(attachment => attachment.SizeBytes)
+                .IsRequired();
+
+            entity.Property(attachment => attachment.CreatedAt)
+                .IsRequired();
+
+            entity.HasIndex(attachment => attachment.ChatMessageId);
+
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_chat_message_attachments_size_positive",
+                "\"SizeBytes\" > 0"));
+
+            entity.HasOne(attachment => attachment.ChatMessage)
+                .WithMany(message => message.Attachments)
+                .HasForeignKey(attachment => attachment.ChatMessageId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

@@ -8,10 +8,20 @@ export interface ChatMessage {
   channelId: string | null;
   senderUserId: string;
   senderDisplayName: string | null;
-  text: string;
+  text: string | null;
+  attachments: ChatMessageAttachment[];
   createdAt: string;
   editedAt: string | null;
   isDeleted: boolean;
+}
+
+export interface ChatMessageAttachment {
+  id: string;
+  url: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
 }
 
 export interface SendMessageRequest {

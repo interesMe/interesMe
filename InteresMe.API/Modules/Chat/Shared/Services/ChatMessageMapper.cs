@@ -15,6 +15,19 @@ public static class ChatMessageMapper
         SenderUserId = message.SenderUserId,
         SenderDisplayName = message.SenderUser?.DisplayName,
         Text = message.Text,
+        Attachments = message.Attachments
+            .OrderBy(attachment => attachment.CreatedAt)
+            .ThenBy(attachment => attachment.Id)
+            .Select(attachment => new ChatMessageAttachmentDto
+            {
+                Id = attachment.Id,
+                Url = attachment.Url,
+                FileName = attachment.FileName,
+                ContentType = attachment.ContentType,
+                SizeBytes = attachment.SizeBytes,
+                CreatedAt = attachment.CreatedAt
+            })
+            .ToList(),
         CreatedAt = message.CreatedAt,
         EditedAt = message.EditedAt,
         IsDeleted = message.IsDeleted

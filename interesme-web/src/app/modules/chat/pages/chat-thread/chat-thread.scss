@@ -101,6 +101,30 @@
   white-space: pre-wrap;
 }
 
+.message-attachments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 150px));
+  gap: 8px;
+}
+
+.message-attachments.is-single {
+  grid-template-columns: minmax(0, 220px);
+}
+
+.message-attachments a {
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--im-surface);
+}
+
+.message-attachments img {
+  width: 100%;
+  aspect-ratio: 1;
+  display: block;
+  object-fit: cover;
+}
+
 .empty-thread {
   margin: auto;
   display: grid;
@@ -124,6 +148,12 @@
   background: var(--im-surface);
 }
 
+.composer-main {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
 .composer textarea {
   width: 100%;
   resize: vertical;
@@ -138,11 +168,89 @@
   font: inherit;
 }
 
+.selected-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-image {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border: 1px solid var(--im-border);
+  border-radius: 12px;
+  background: var(--im-surface-soft);
+}
+
+.selected-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.selected-image button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.72);
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.composer-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .composer textarea:focus {
   border-color: var(--im-primary);
 }
 
-.composer button {
+.composer-actions {
+  align-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attachment-input {
+  display: none;
+}
+
+.attachment-button {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-md);
+  background: var(--im-surface-soft);
+  color: var(--im-primary-hover);
+  font-size: 26px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.attachment-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.composer-actions button {
   align-self: end;
 }
 
@@ -155,5 +263,9 @@
 
   .message-bubble {
     max-width: 92%;
+  }
+
+  .composer-actions {
+    justify-content: end;
   }
 }

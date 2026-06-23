@@ -20,7 +20,7 @@ public sealed class ChatMessage
 
     public Guid SenderUserId { get; set; }
 
-    public string Text { get; set; } = string.Empty;
+    public string? Text { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
@@ -35,4 +35,6 @@ public sealed class ChatMessage
     public Channel? Channel { get; set; }
 
     public User SenderUser { get; set; } = null!;
+
+    public ICollection<ChatMessageAttachment> Attachments { get; set; } = [];
 }

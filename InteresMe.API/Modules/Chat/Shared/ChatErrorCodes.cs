@@ -20,4 +20,10 @@ public static class ChatErrorCodes
 
     public const string MessageEmpty = "chat.message.empty";
     public const string MessageTooLong = "chat.message.too_long";
+    public const string MessageValidationFailed = "chat.message.validation_failed";
+    public const string AttachmentInvalidType = "chat.message.attachment.invalid_type";
+    public const string AttachmentTooLarge = "chat.message.attachment.too_large";
+    public const string AttachmentTooMany = "chat.message.attachment.too_many";
+    public const string AttachmentTotalTooLarge = "chat.message.attachment.total_too_large";
+    public const string AttachmentEmpty = "chat.message.attachment.empty";
 }

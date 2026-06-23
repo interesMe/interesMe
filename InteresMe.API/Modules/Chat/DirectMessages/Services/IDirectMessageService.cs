@@ -24,6 +24,7 @@ public interface IDirectMessageService
     Task<ApplicationResult<ChatMessageDto>> SendMessageAsync(
         Guid userId,
         Guid conversationId,
-        SendMessageRequest? request,
+        string? text,
+        IReadOnlyList<IFormFile> attachments,
         CancellationToken cancellationToken = default);
 }
