@@ -22,6 +22,7 @@ public static class ChatMessageMapper
             {
                 Id = attachment.Id,
                 Url = attachment.Url,
+                DownloadUrl = attachment.Url,
                 FileName = attachment.FileName,
                 ContentType = attachment.ContentType,
                 SizeBytes = attachment.SizeBytes,

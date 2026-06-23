@@ -5,6 +5,7 @@ public sealed record StagedChatMessageAttachment(
     string StagingPath,
     string FinalPath,
     string StoragePath,
+    string FileName,
     string ContentType,
     long SizeBytes,
     int SortOrder);

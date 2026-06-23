@@ -10,17 +10,27 @@ import { Channel, ChatMessage, DirectConversation, GroupChat } from '../../model
 import { ChatApiService } from '../../services/chat-api.service';
 
 type ThreadType = 'direct' | 'group' | 'channel';
-type SelectedChatImage = {
+type SelectedChatAttachment = {
   id: string;
   file: File;
-  previewUrl: string;
+  previewUrl: string | null;
 };
 
-const MAX_IMAGE_COUNT = 4;
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-const MAX_TOTAL_IMAGE_SIZE_BYTES = 20 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const ALLOWED_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
+const MAX_ATTACHMENT_COUNT = 10;
+const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024;
+const MAX_TOTAL_ATTACHMENT_SIZE_BYTES = 50 * 1024 * 1024;
+const IMAGE_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_ATTACHMENT_TYPES = new Map<string, string[]>([
+  ['jpg', ['image/jpeg']],
+  ['jpeg', ['image/jpeg']],
+  ['png', ['image/png']],
+  ['webp', ['image/webp']],
+  ['pdf', ['application/pdf']],
+  ['docx', ['application/vnd.openxmlformats-officedocument.wordprocessingml.document']],
+  ['xlsx', ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']],
+  ['txt', ['text/plain']],
+  ['zip', ['application/zip', 'application/x-zip-compressed']],
+]);
 
 @Component({
   selector: 'app-chat-thread-page',
@@ -41,7 +51,7 @@ export class ChatThreadPage implements OnInit, OnDestroy {
   readonly channel = signal<Channel | null>(null);
   readonly messages = signal<ChatMessage[]>([]);
   readonly draft = signal('');
-  readonly selectedImages = signal<SelectedChatImage[]>([]);
+  readonly selectedImages = signal<SelectedChatAttachment[]>([]);
   readonly composerError = signal<string | null>(null);
   readonly isLoading = signal(true);
   readonly isSending = signal(false);
@@ -181,34 +191,34 @@ export class ChatThreadPage implements OnInit, OnDestroy {
     }
 
     const existingImages = this.selectedImages();
-    if (existingImages.length + files.length > MAX_IMAGE_COUNT) {
-      this.composerError.set(`You can attach at most ${MAX_IMAGE_COUNT} images.`);
+    if (existingImages.length + files.length > MAX_ATTACHMENT_COUNT) {
+      this.composerError.set(`You can attach at most ${MAX_ATTACHMENT_COUNT} files.`);
       return;
     }
 
     const totalSize = existingImages.reduce((sum, image) => sum + image.file.size, 0) +
       files.reduce((sum, file) => sum + file.size, 0);
-    if (totalSize > MAX_TOTAL_IMAGE_SIZE_BYTES) {
-      this.composerError.set('Attached images must be 20 MiB or smaller in total.');
+    if (totalSize > MAX_TOTAL_ATTACHMENT_SIZE_BYTES) {
+      this.composerError.set('Attached files must be 50 MiB or smaller in total.');
       return;
     }
 
-    const nextImages: SelectedChatImage[] = [];
+    const nextImages: SelectedChatAttachment[] = [];
     for (const file of files) {
-      if (!this.isSupportedImage(file)) {
-        this.composerError.set('Choose JPEG, PNG, or WebP images only.');
+      if (!this.isSupportedAttachment(file)) {
+        this.composerError.set('Choose JPEG, PNG, WebP, PDF, DOCX, XLSX, TXT, or ZIP files only.');
         this.revokeImages(nextImages);
         return;
       }
 
       if (file.size <= 0) {
-        this.composerError.set('Empty image files cannot be attached.');
+        this.composerError.set('Empty files cannot be attached.');
         this.revokeImages(nextImages);
         return;
       }
 
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        this.composerError.set('Each image must be 5 MiB or smaller.');
+      if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+        this.composerError.set('Each file must be 25 MiB or smaller.');
         this.revokeImages(nextImages);
         return;
       }
@@ -216,7 +226,7 @@ export class ChatThreadPage implements OnInit, OnDestroy {
       nextImages.push({
         id: crypto.randomUUID(),
         file,
-        previewUrl: URL.createObjectURL(file),
+        previewUrl: this.isImageFile(file) ? URL.createObjectURL(file) : null,
       });
     }
 
@@ -226,7 +236,7 @@ export class ChatThreadPage implements OnInit, OnDestroy {
 
   removeSelectedImage(imageId: string): void {
     const image = this.selectedImages().find((current) => current.id === imageId);
-    if (image) {
+    if (image?.previewUrl) {
       URL.revokeObjectURL(image.previewUrl);
     }
 
@@ -252,6 +262,26 @@ export class ChatThreadPage implements OnInit, OnDestroy {
     }
 
     return `${APP_ENVIRONMENT.apiBaseUrl.replace(/\/api\/?$/, '')}${url}`;
+  }
+
+  attachmentUrl(url: string): string {
+    return this.imageUrl(url);
+  }
+
+  isImageAttachment(contentType: string): boolean {
+    return IMAGE_CONTENT_TYPES.has(contentType);
+  }
+
+  formatFileSize(sizeBytes: number): string {
+    if (sizeBytes < 1024 * 1024) {
+      return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
+    }
+
+    return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  fileExtension(fileName: string): string {
+    return fileName.split('.').pop()?.toUpperCase() ?? 'FILE';
   }
 
   formatDate(value: string): string {
@@ -354,15 +384,22 @@ export class ChatThreadPage implements OnInit, OnDestroy {
     this.selectedImages.set([]);
   }
 
-  private revokeImages(images: readonly SelectedChatImage[]): void {
+  private revokeImages(images: readonly SelectedChatAttachment[]): void {
     for (const image of images) {
-      URL.revokeObjectURL(image.previewUrl);
+      if (image.previewUrl) {
+        URL.revokeObjectURL(image.previewUrl);
+      }
     }
   }
 
-  private isSupportedImage(file: File): boolean {
+  private isSupportedAttachment(file: File): boolean {
     const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const contentTypes = ALLOWED_ATTACHMENT_TYPES.get(extension);
 
-    return ALLOWED_IMAGE_TYPES.has(file.type) && ALLOWED_IMAGE_EXTENSIONS.has(extension);
+    return Boolean(contentTypes?.some((contentType) => contentType.toLowerCase() === file.type.toLowerCase()));
+  }
+
+  private isImageFile(file: File): boolean {
+    return IMAGE_CONTENT_TYPES.has(file.type);
   }
 }

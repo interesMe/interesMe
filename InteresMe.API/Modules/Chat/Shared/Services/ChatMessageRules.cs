@@ -6,9 +6,9 @@ public static class ChatMessageRules
     public const int MessagesDefaultTake = 50;
     public const int MessagesMaxTake = 100;
     public const int LastMessagePreviewMaxLength = 140;
-    public const int MaxAttachmentCount = 4;
-    public const long MaxAttachmentSizeBytes = 5 * 1024 * 1024;
-    public const long MaxTotalAttachmentSizeBytes = 20 * 1024 * 1024;
+    public const int MaxAttachmentCount = 10;
+    public const long MaxAttachmentSizeBytes = 25 * 1024 * 1024;
+    public const long MaxTotalAttachmentSizeBytes = 50 * 1024 * 1024;
     public const long MaxMultipartRequestSizeBytes = MaxTotalAttachmentSizeBytes + (1024 * 1024);
 
     public static int NormalizeTake(int take) =>
@@ -23,7 +23,7 @@ public static class ChatMessageRules
     {
         if (string.IsNullOrWhiteSpace(text))
         {
-            return hasAttachments ? "Image" : string.Empty;
+            return hasAttachments ? "Attachment" : string.Empty;
         }
 
         return text.Length <= LastMessagePreviewMaxLength

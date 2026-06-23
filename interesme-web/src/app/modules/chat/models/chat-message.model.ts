@@ -18,6 +18,7 @@ export interface ChatMessage {
 export interface ChatMessageAttachment {
   id: string;
   url: string;
+  downloadUrl: string;
   fileName: string;
   contentType: string;
   sizeBytes: number;

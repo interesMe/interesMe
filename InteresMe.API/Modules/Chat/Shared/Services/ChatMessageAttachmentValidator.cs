@@ -8,10 +8,21 @@ public sealed class ChatMessageAttachmentValidator : IChatMessageAttachmentValid
     private static readonly Dictionary<string, AttachmentFormat> FormatsByExtension =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            [".jpg"] = new(".jpg", "image/jpeg", ImageSignature.Jpeg),
-            [".jpeg"] = new(".jpg", "image/jpeg", ImageSignature.Jpeg),
-            [".png"] = new(".png", "image/png", ImageSignature.Png),
-            [".webp"] = new(".webp", "image/webp", ImageSignature.WebP)
+            [".jpg"] = new(".jpg", ["image/jpeg"], AttachmentSignature.Jpeg),
+            [".jpeg"] = new(".jpg", ["image/jpeg"], AttachmentSignature.Jpeg),
+            [".png"] = new(".png", ["image/png"], AttachmentSignature.Png),
+            [".webp"] = new(".webp", ["image/webp"], AttachmentSignature.WebP),
+            [".pdf"] = new(".pdf", ["application/pdf"], AttachmentSignature.Pdf),
+            [".docx"] = new(
+                ".docx",
+                ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+                AttachmentSignature.Zip),
+            [".xlsx"] = new(
+                ".xlsx",
+                ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+                AttachmentSignature.Zip),
+            [".txt"] = new(".txt", ["text/plain"], AttachmentSignature.Text),
+            [".zip"] = new(".zip", ["application/zip", "application/x-zip-compressed"], AttachmentSignature.Zip)
         };
 
     public async Task<ApplicationResult<IReadOnlyList<ValidatedChatMessageAttachment>>> ValidateAsync(
@@ -20,9 +31,9 @@ public sealed class ChatMessageAttachmentValidator : IChatMessageAttachmentValid
     {
         if (files.Count > ChatMessageRules.MaxAttachmentCount)
         {
-            return Failure(
-                ChatErrorCodes.AttachmentTooMany,
-                $"A message can contain at most {ChatMessageRules.MaxAttachmentCount} images.");
+                return Failure(
+                    ChatErrorCodes.AttachmentTooMany,
+                    $"A message can contain at most {ChatMessageRules.MaxAttachmentCount} files.");
         }
 
         long totalSize = 0;
@@ -38,36 +49,37 @@ public sealed class ChatMessageAttachmentValidator : IChatMessageAttachmentValid
 
             if (file.Length > ChatMessageRules.MaxAttachmentSizeBytes)
             {
-                return Failure(ChatErrorCodes.AttachmentTooLarge, "Each message image must be 5 MiB or smaller.");
+                return Failure(ChatErrorCodes.AttachmentTooLarge, "Each message attachment must be 25 MiB or smaller.");
             }
 
             totalSize += file.Length;
             if (totalSize > ChatMessageRules.MaxTotalAttachmentSizeBytes)
             {
-                return Failure(ChatErrorCodes.AttachmentTotalTooLarge, "Message images must be 20 MiB or smaller in total.");
+                return Failure(ChatErrorCodes.AttachmentTotalTooLarge, "Message attachments must be 50 MiB or smaller in total.");
             }
 
             var extension = Path.GetExtension(file.FileName);
             if (string.IsNullOrWhiteSpace(extension) ||
                 !FormatsByExtension.TryGetValue(extension, out var expectedFormat))
             {
-                return Failure(ChatErrorCodes.AttachmentInvalidType, "Message images must be JPEG, PNG, or WebP files.");
+                return Failure(ChatErrorCodes.AttachmentInvalidType, "Message attachments must be JPEG, PNG, WebP, PDF, DOCX, XLSX, TXT, or ZIP files.");
             }
 
-            if (!string.Equals(file.ContentType, expectedFormat.ContentType, StringComparison.OrdinalIgnoreCase))
+            if (!expectedFormat.ContentTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
             {
-                return Failure(ChatErrorCodes.AttachmentInvalidType, "Message image content type does not match its extension.");
+                return Failure(ChatErrorCodes.AttachmentInvalidType, "Message attachment content type does not match its extension.");
             }
 
             var detectedSignature = await ReadSignatureAsync(file, cancellationToken);
             if (detectedSignature != expectedFormat.Signature)
             {
-                return Failure(ChatErrorCodes.AttachmentInvalidType, "Message image content does not match its extension and content type.");
+                return Failure(ChatErrorCodes.AttachmentInvalidType, "Message attachment content does not match its extension and content type.");
             }
 
             validated.Add(new ValidatedChatMessageAttachment(
                 file,
                 expectedFormat.CanonicalExtension,
+                SanitizeFileName(file.FileName, expectedFormat.CanonicalExtension),
                 expectedFormat.ContentType,
                 file.Length,
                 index));
@@ -76,11 +88,11 @@ public sealed class ChatMessageAttachmentValidator : IChatMessageAttachmentValid
         return ApplicationResult<IReadOnlyList<ValidatedChatMessageAttachment>>.Success(validated);
     }
 
-    private static async Task<ImageSignature> ReadSignatureAsync(
+    private static async Task<AttachmentSignature> ReadSignatureAsync(
         IFormFile file,
         CancellationToken cancellationToken)
     {
-        var header = new byte[12];
+        var header = new byte[(int)Math.Min(file.Length, 512)];
         await using var stream = file.OpenReadStream();
         var bytesRead = await stream.ReadAtLeastAsync(
             header,
@@ -91,22 +103,88 @@ public sealed class ChatMessageAttachmentValidator : IChatMessageAttachmentValid
         if (bytesRead >= 8 && header.AsSpan(0, 8).SequenceEqual(
             new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }))
         {
-            return ImageSignature.Png;
+            return AttachmentSignature.Png;
         }
 
         if (bytesRead >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF)
         {
-            return ImageSignature.Jpeg;
+            return AttachmentSignature.Jpeg;
         }
 
         if (bytesRead >= 12 &&
             header.AsSpan(0, 4).SequenceEqual("RIFF"u8) &&
             header.AsSpan(8, 4).SequenceEqual("WEBP"u8))
         {
-            return ImageSignature.WebP;
+            return AttachmentSignature.WebP;
         }
 
-        return ImageSignature.Unknown;
+        if (bytesRead >= 5 && header.AsSpan(0, 5).SequenceEqual("%PDF-"u8))
+        {
+            return AttachmentSignature.Pdf;
+        }
+
+        if (bytesRead >= 4 &&
+            header[0] == 0x50 &&
+            header[1] == 0x4B &&
+            (header[2] == 0x03 || header[2] == 0x05 || header[2] == 0x07) &&
+            (header[3] == 0x04 || header[3] == 0x06 || header[3] == 0x08))
+        {
+            return AttachmentSignature.Zip;
+        }
+
+        if (LooksLikeText(header.AsSpan(0, bytesRead)))
+        {
+            return AttachmentSignature.Text;
+        }
+
+        return AttachmentSignature.Unknown;
+    }
+
+    private static bool LooksLikeText(ReadOnlySpan<byte> bytes)
+    {
+        foreach (var value in bytes)
+        {
+            if (value == 0)
+            {
+                return false;
+            }
+
+            if (value < 0x09 || (value > 0x0D && value < 0x20))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string SanitizeFileName(string fileName, string canonicalExtension)
+    {
+        var safeName = Path.GetFileName(fileName);
+        if (string.IsNullOrWhiteSpace(safeName))
+        {
+            return $"attachment{canonicalExtension}";
+        }
+
+        foreach (var invalidCharacter in Path.GetInvalidFileNameChars())
+        {
+            safeName = safeName.Replace(invalidCharacter, '_');
+        }
+
+        if (!safeName.EndsWith(canonicalExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            safeName = $"{Path.GetFileNameWithoutExtension(safeName)}{canonicalExtension}";
+        }
+
+        const int maxLength = 255;
+        if (safeName.Length <= maxLength)
+        {
+            return safeName;
+        }
+
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(safeName);
+        var maxNameLength = Math.Max(1, maxLength - canonicalExtension.Length);
+        return string.Concat(nameWithoutExtension.AsSpan(0, Math.Min(nameWithoutExtension.Length, maxNameLength)), canonicalExtension);
     }
 
     private static ApplicationResult<IReadOnlyList<ValidatedChatMessageAttachment>> Failure(
@@ -119,14 +197,20 @@ public sealed class ChatMessageAttachmentValidator : IChatMessageAttachmentValid
 
     private sealed record AttachmentFormat(
         string CanonicalExtension,
-        string ContentType,
-        ImageSignature Signature);
+        IReadOnlyList<string> ContentTypes,
+        AttachmentSignature Signature)
+    {
+        public string ContentType => ContentTypes.First();
+    }
 
-    private enum ImageSignature
+    private enum AttachmentSignature
     {
         Unknown,
         Jpeg,
         Png,
-        WebP
+        WebP,
+        Pdf,
+        Zip,
+        Text
     }
 }

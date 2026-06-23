@@ -459,11 +459,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .IsRequired();
 
             entity.Property(attachment => attachment.FileName)
-                .HasMaxLength(128)
+                .HasMaxLength(255)
                 .IsRequired();
 
             entity.Property(attachment => attachment.ContentType)
-                .HasMaxLength(64)
+                .HasMaxLength(128)
                 .IsRequired();
 
             entity.Property(attachment => attachment.SizeBytes)

@@ -118,6 +118,28 @@
   background: var(--im-surface);
 }
 
+.message-attachments .file-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--im-border);
+  color: var(--im-text);
+  text-decoration: none;
+}
+
+.file-card-meta strong,
+.selected-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-card-meta span {
+  color: var(--im-muted);
+  font-size: 12px;
+}
+
 .message-attachments img {
   width: 100%;
   aspect-ratio: 1;
@@ -178,6 +200,8 @@
   position: relative;
   width: 72px;
   height: 72px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   border: 1px solid var(--im-border);
   border-radius: 12px;

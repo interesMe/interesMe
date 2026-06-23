@@ -224,7 +224,7 @@ public sealed class DirectMessageService(
                     Id = attachment.Id,
                     ChatMessageId = message.Id,
                     Url = attachment.StoragePath,
-                    FileName = $"{attachment.Id:D}{Path.GetExtension(attachment.StoragePath)}",
+                    FileName = attachment.FileName,
                     ContentType = attachment.ContentType,
                     SizeBytes = attachment.SizeBytes,
                     CreatedAt = now

@@ -47,9 +47,24 @@
                 @if (message.attachments.length > 0) {
                   <div class="message-attachments" [class.is-single]="message.attachments.length === 1">
                     @for (attachment of message.attachments; track attachment.id) {
-                      <a [href]="imageUrl(attachment.url)" target="_blank" rel="noopener noreferrer">
-                        <img [src]="imageUrl(attachment.url)" [alt]="attachment.fileName" loading="lazy" />
-                      </a>
+                      @if (isImageAttachment(attachment.contentType)) {
+                        <a [href]="attachmentUrl(attachment.downloadUrl || attachment.url)" target="_blank" rel="noopener noreferrer">
+                          <img [src]="attachmentUrl(attachment.url)" [alt]="attachment.fileName" loading="lazy" />
+                        </a>
+                      } @else {
+                        <a
+                          class="file-card"
+                          [href]="attachmentUrl(attachment.downloadUrl || attachment.url)"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span class="file-card-icon">{{ fileExtension(attachment.fileName) }}</span>
+                          <span class="file-card-meta">
+                            <strong>{{ attachment.fileName }}</strong>
+                            <span>{{ formatFileSize(attachment.sizeBytes) }}</span>
+                          </span>
+                        </a>
+                      }
                     }
                   </div>
                 }
@@ -66,8 +81,13 @@
               <div class="selected-images">
                 @for (image of selectedImages(); track image.id) {
                   <div class="selected-image">
-                    <img [src]="image.previewUrl" [alt]="image.file.name" />
-                    <button type="button" aria-label="Remove image" (click)="removeSelectedImage(image.id)">x</button>
+                    @if (image.previewUrl) {
+                      <img [src]="image.previewUrl" [alt]="image.file.name" />
+                    } @else {
+                      <span class="selected-file-icon">{{ fileExtension(image.file.name) }}</span>
+                      <span class="selected-file-name">{{ image.file.name }}</span>
+                    }
+                    <button type="button" aria-label="Remove attachment" (click)="removeSelectedImage(image.id)">x</button>
                   </div>
                 }
               </div>
@@ -92,17 +112,17 @@
               #imageInput
               class="attachment-input"
               type="file"
-              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx,.txt,.zip,image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,application/zip"
               multiple
-              [disabled]="!canAttachImages() || isSending() || selectedImages().length >= 4"
+              [disabled]="!canAttachImages() || isSending() || selectedImages().length >= 10"
               (change)="selectImages($event)"
             />
             <button
               class="attachment-button"
               type="button"
-              aria-label="Attach images"
-              title="Attach images"
-              [disabled]="!canAttachImages() || isSending() || selectedImages().length >= 4"
+              aria-label="Attach files"
+              title="Attach files"
+              [disabled]="!canAttachImages() || isSending() || selectedImages().length >= 10"
               (click)="imageInput.click()"
             >
               +

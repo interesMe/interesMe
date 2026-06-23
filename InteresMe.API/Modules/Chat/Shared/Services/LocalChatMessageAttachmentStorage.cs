@@ -44,6 +44,7 @@ public sealed class LocalChatMessageAttachmentStorage(
                     stagingPath,
                     finalPath,
                     storagePath,
+                    attachment.FileName,
                     attachment.ContentType,
                     attachment.SizeBytes,
                     attachment.SortOrder);
