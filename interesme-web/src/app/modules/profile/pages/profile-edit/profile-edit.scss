@@ -13,6 +13,10 @@
   gap: 16px;
 }
 
+.profile-header > div {
+  flex: 1;
+}
+
 .eyebrow {
   margin: 0;
   color: var(--im-primary-hover);
@@ -89,11 +93,16 @@ h1 {
 }
 
 button,
-input {
+input,
+a {
   font: inherit;
 }
 
-button {
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 42px;
   border: 0;
   border-radius: 8px;
@@ -102,11 +111,24 @@ button {
   color: #ffffff;
   cursor: pointer;
   font-weight: 700;
+  text-decoration: none;
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
+}
+
+.cancel-link {
+  color: var(--im-primary-hover);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.button-secondary {
+  border: 1px solid var(--im-border);
+  background: var(--im-surface);
+  color: var(--im-text);
 }
 
 .form-card,
@@ -169,6 +191,52 @@ button:disabled {
   justify-items: start;
 }
 
+.avatar-picker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: var(--im-primary-hover);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.avatar-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.avatar-picker.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.selected-avatar-file {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--im-muted);
+  font-size: 13px;
+}
+
+.text-button {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+  color: var(--im-primary-hover);
+  font-size: 13px;
+}
+
+.text-button.is-danger {
+  color: var(--im-error-text);
+}
+
 label {
   display: grid;
   gap: 7px;
@@ -191,6 +259,10 @@ input {
 input:focus {
   border-color: var(--im-primary-hover);
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.16);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--im-error-border);
 }
 
 .hint {
@@ -245,6 +317,12 @@ input:focus {
   justify-self: start;
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 @media (max-width: 640px) {
   .profile-header,
   .section-header {
@@ -257,5 +335,15 @@ input:focus {
 
   .avatar-upload {
     grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    display: grid;
+  }
+
+  .form-actions .button,
+  .form-actions button,
+  .cancel-link {
+    width: 100%;
   }
 }

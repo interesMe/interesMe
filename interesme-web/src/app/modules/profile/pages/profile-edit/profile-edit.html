@@ -5,6 +5,7 @@
       <h1>{{ text().title }}</h1>
       <p class="subtitle">{{ text().subtitle }}</p>
     </div>
+    <a class="cancel-link" [routerLink]="profileRoute">{{ text().cancel }}</a>
   </header>
 
   <section class="profile-card account-card">
@@ -56,38 +57,77 @@
           </div>
 
           <div class="avatar-actions">
-            <label>
-              {{ text().avatarImage }}
-              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="selectAvatar($event)" />
-              <span class="hint neutral">{{ text().avatarHint }}</span>
+            <label class="avatar-picker" [class.is-disabled]="isSavingProfile()">
+              <span>{{ selectedAvatarFile() ? text().changeAvatar : text().avatarImage }}</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                [disabled]="isSavingProfile()"
+                (change)="selectAvatar($event)"
+              />
             </label>
+            @if (selectedAvatarFile(); as selectedAvatar) {
+              <div class="selected-avatar-file">
+                <span>{{ selectedAvatar.name }}</span>
+                <button class="text-button is-danger" type="button" [disabled]="isSavingProfile()" (click)="removeSelectedAvatar()">
+                  {{ text().removeSelectedAvatar }}
+                </button>
+              </div>
+            }
+            <span class="hint neutral">{{ text().avatarHint }}</span>
           </div>
         </section>
 
         <label>
           {{ text().displayName }}
-          <input type="text" formControlName="displayName" autocomplete="name" [placeholder]="text().displayNamePlaceholder" />
-          @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
-            <span class="hint">{{ text().displayNameHint }}</span>
+          <input
+            type="text"
+            formControlName="displayName"
+            autocomplete="name"
+            [placeholder]="text().displayNamePlaceholder"
+            [attr.aria-invalid]="displayNameValidationMessage() ? true : null"
+          />
+          @if (displayNameValidationMessage(); as validationMessage) {
+            <span class="hint">{{ validationMessage }}</span>
+          } @else {
+            <span class="hint neutral">{{ text().displayNameHint }}</span>
           }
         </label>
 
         <label>
           {{ text().city }}
-          <input type="text" formControlName="city" autocomplete="address-level2" [placeholder]="text().cityPlaceholder" />
-          @if (form.controls.city.touched && form.controls.city.invalid) {
-            <span class="hint">{{ text().cityHint }}</span>
+          <input
+            type="text"
+            formControlName="city"
+            autocomplete="address-level2"
+            [placeholder]="text().cityPlaceholder"
+            [attr.aria-invalid]="cityValidationMessage() ? true : null"
+          />
+          @if (cityValidationMessage(); as validationMessage) {
+            <span class="hint">{{ validationMessage }}</span>
+          } @else {
+            <span class="hint neutral">{{ text().cityHint }}</span>
           }
         </label>
 
         <label>
           {{ text().birthDate }}
-          <input type="date" formControlName="birthDate" />
+          <input
+            type="date"
+            formControlName="birthDate"
+            [attr.aria-invalid]="birthDateValidationMessage() ? true : null"
+          />
+          @if (birthDateValidationMessage(); as validationMessage) {
+            <span class="hint">{{ validationMessage }}</span>
+          }
         </label>
 
-        <button type="submit" [disabled]="isSavingProfile()">
-          {{ isSavingProfile() ? text().savingProfile : text().saveProfile }}
-        </button>
+        <div class="form-actions">
+          <a class="button button-secondary" [routerLink]="profileRoute">{{ text().cancel }}</a>
+          <button type="submit" [disabled]="form.invalid || isSavingProfile()">
+            {{ isSavingProfile() ? text().savingProfile : text().saveProfile }}
+          </button>
+        </div>
       </form>
     </section>
 

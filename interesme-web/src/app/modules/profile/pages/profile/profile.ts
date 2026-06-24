@@ -41,6 +41,7 @@ export class ProfileComponent implements OnInit {
   readonly profile = signal<ProfileViewResponse | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
   readonly activeTab = signal<ProfileTab>('posts');
   readonly followLoading = signal(false);
   readonly messageLoading = signal(false);
@@ -68,6 +69,7 @@ export class ProfileComponent implements OnInit {
       errorTitle: this.i18n.t('profileView.error.title'),
       errorFallback: this.i18n.t('profileView.error.fallback'),
       retry: this.i18n.t('profileView.error.retry'),
+      profileUpdated: this.i18n.t('profileView.message.profileUpdated'),
       sharedInterests: this.i18n.t('profileView.header.sharedInterests'),
       joined: this.i18n.t('profileView.header.joined'),
       statusUnavailable: this.i18n.t('profileView.status.unavailable'),
@@ -127,6 +129,10 @@ export class ProfileComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    if (history.state?.profileUpdated === true) {
+      this.successMessage.set(this.i18n.t('profileView.message.profileUpdated'));
+    }
+
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.publicUserId.set(params.get('userId'));
       this.activeTab.set('posts');

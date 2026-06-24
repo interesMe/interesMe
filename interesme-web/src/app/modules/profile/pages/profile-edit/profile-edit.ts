@@ -1,8 +1,10 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { finalize, forkJoin } from 'rxjs';
 
 import { APP_ENVIRONMENT } from '../../../../core/constants/app-environment.constants';
+import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -12,21 +14,24 @@ import { ProfileApiService } from '../../services/profile-api.service';
 @Component({
   selector: 'app-profile-edit',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './profile-edit.html',
   styleUrl: './profile-edit.scss',
 })
 export class ProfileEditComponent implements OnInit, OnDestroy {
   private static readonly allowedAvatarTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-  private static readonly maxAvatarSizeBytes = 2 * 1024 * 1024;
+  private static readonly maxAvatarSizeBytes = 5 * 1024 * 1024;
 
   private readonly authService = inject(AuthService);
   private readonly profileApi = inject(ProfileApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly i18n = inject(I18nService);
+  private readonly router = inject(Router);
+  private fileInput: HTMLInputElement | null = null;
   private objectAvatarPreviewUrl: string | null = null;
 
   readonly user = this.authService.user;
+  readonly profileRoute = ['/', APP_ROUTES.profile];
   readonly isLoading = signal(true);
   readonly isSavingProfile = signal(false);
   readonly isSavingInterests = signal(false);
@@ -63,6 +68,10 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
       cityPlaceholder: this.i18n.t('profile.form.cityPlaceholder'),
       cityHint: this.i18n.t('profile.form.cityHint'),
       birthDate: this.i18n.t('profile.form.birthDate'),
+      birthDateHint: this.i18n.t('profile.form.birthDateHint'),
+      changeAvatar: this.i18n.t('profile.form.changeAvatar'),
+      removeSelectedAvatar: this.i18n.t('profile.form.removeSelectedAvatar'),
+      cancel: this.i18n.t('profile.form.cancel'),
       savingProfile: this.i18n.t('profile.form.saving'),
       saveProfile: this.i18n.t('profile.form.save'),
       interestsTitle: this.i18n.t('profile.interests.title'),
@@ -71,13 +80,14 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
       interestsAria: this.i18n.t('profile.interests.aria'),
       savingInterests: this.i18n.t('profile.interests.saving'),
       saveInterests: this.i18n.t('profile.interests.save'),
+      profileSaved: this.i18n.t('profile.messages.profileSaved'),
     };
   });
 
   readonly form = this.formBuilder.group({
     displayName: ['', [Validators.required, Validators.maxLength(80)]],
     city: ['', [Validators.maxLength(120)]],
-    birthDate: [''],
+    birthDate: ['', [futureDateValidator]],
   });
 
   ngOnInit(): void {
@@ -112,17 +122,17 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
         ? this.profileApi.createMyProfileWithAvatar(request, avatarFile)
         : this.profileApi.createMyProfile(request);
 
-    saveRequest.subscribe({
+    saveRequest.pipe(finalize(() => this.isSavingProfile.set(false))).subscribe({
       next: (profile) => {
         this.applyProfile(profile);
         this.profileExists.set(true);
-        this.selectedAvatarFile.set(null);
-        this.successMessage.set(this.i18n.t('profile.messages.profileSaved'));
-        this.isSavingProfile.set(false);
+        this.clearSelectedAvatar({ keepProfilePreview: true });
+        void this.router.navigate(this.profileRoute, {
+          state: { profileUpdated: true },
+        });
       },
       error: (error: unknown) => {
         this.errorMessage.set(getApiErrorMessage(error, this.i18n.t('profile.messages.profileSaveError')));
-        this.isSavingProfile.set(false);
       },
     });
   }
@@ -169,6 +179,7 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
 
   selectAvatar(event: Event): void {
     const input = event.target as HTMLInputElement;
+    this.fileInput = input;
     const file = input.files?.[0] ?? null;
 
     this.errorMessage.set(null);
@@ -184,8 +195,7 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
 
     if (validation) {
       input.value = '';
-      this.selectedAvatarFile.set(null);
-      this.setAvatarPreviewFromProfile();
+      this.clearSelectedAvatar({ keepProfilePreview: true });
       this.errorMessage.set(validation);
       return;
     }
@@ -194,6 +204,43 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
     this.revokeObjectAvatarPreviewUrl();
     this.objectAvatarPreviewUrl = URL.createObjectURL(file);
     this.avatarPreviewUrl.set(this.objectAvatarPreviewUrl);
+  }
+
+  removeSelectedAvatar(): void {
+    this.clearSelectedAvatar({ keepProfilePreview: true });
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+  }
+
+  displayNameValidationMessage(): string | null {
+    const control = this.form.controls.displayName;
+    if (!control.touched) {
+      return null;
+    }
+
+    if (control.hasError('required') || control.value.trim().length === 0) {
+      return this.i18n.t('profile.validation.displayNameRequired');
+    }
+
+    return control.hasError('maxlength') ? this.i18n.t('profile.validation.displayNameTooLong') : null;
+  }
+
+  cityValidationMessage(): string | null {
+    const control = this.form.controls.city;
+    if (!control.touched) {
+      return null;
+    }
+
+    return control.hasError('maxlength') ? this.i18n.t('profile.validation.cityTooLong') : null;
+  }
+
+  birthDateValidationMessage(): string | null {
+    const control = this.form.controls.birthDate;
+    if (!control.touched || !control.value) {
+      return null;
+    }
+
+    return control.hasError('futureDate') ? this.text().birthDateHint : null;
   }
 
   private loadProfilePage(): void {
@@ -218,6 +265,7 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
           });
           this.avatarUrl.set(null);
           this.resolvedAvatarUrl.set(null);
+          this.clearSelectedAvatar({ keepProfilePreview: true });
           this.setAvatarPreviewFromProfile();
         }
 
@@ -240,6 +288,8 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
     this.avatarUrl.set(profile.avatarUrl);
     this.resolvedAvatarUrl.set(this.resolveAvatarUrl(profile.avatarUrl));
     this.setAvatarPreviewFromProfile();
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   private buildProfileRequest(): ProfileRequest {
@@ -274,6 +324,21 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
   private setAvatarPreviewFromProfile(): void {
     this.revokeObjectAvatarPreviewUrl();
     this.avatarPreviewUrl.set(this.resolvedAvatarUrl());
+  }
+
+  private clearSelectedAvatar(options: { keepProfilePreview: boolean }): void {
+    this.selectedAvatarFile.set(null);
+    if (this.fileInput) {
+      this.fileInput.value = '';
+    }
+
+    if (options.keepProfilePreview) {
+      this.setAvatarPreviewFromProfile();
+      return;
+    }
+
+    this.revokeObjectAvatarPreviewUrl();
+    this.avatarPreviewUrl.set(null);
   }
 
   private resolveAvatarUrl(avatarUrl: string | null): string | null {
@@ -317,4 +382,12 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
       this.objectAvatarPreviewUrl = null;
     }
   }
+}
+
+function futureDateValidator(control: AbstractControl<string>): ValidationErrors | null {
+  if (!control.value) {
+    return null;
+  }
+
+  return new Date(control.value) > new Date() ? { futureDate: true } : null;
 }

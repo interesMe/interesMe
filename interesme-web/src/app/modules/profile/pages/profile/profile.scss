@@ -325,7 +325,6 @@ a {
 .post-card {
   display: grid;
   gap: 14px;
-  cursor: pointer;
 }
 
 .post-topline {
@@ -340,16 +339,12 @@ a {
 }
 
 .post-actions {
-  display: flex;
-  justify-content: flex-end;
   border-top: 1px solid var(--im-border);
   padding-top: 12px;
 }
 
 .post-actions span {
   color: var(--im-primary-hover);
-  font-size: 13px;
-  font-weight: 850;
 }
 
 .post-initiative {
@@ -498,6 +493,12 @@ a {
   font-size: 13px;
 }
 
+.inline-success {
+  border-color: var(--im-success-border);
+  background: var(--im-success-bg);
+  color: var(--im-success-text);
+}
+
 .profile-skeleton {
   display: grid;
   gap: 20px;
@@ -605,7 +606,4 @@ a {
     grid-template-columns: 1fr;
   }
 
-  .post-card {
-    display: grid;
-  }
 }

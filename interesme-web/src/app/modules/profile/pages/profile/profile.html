@@ -18,6 +18,9 @@
     @if (error()) {
       <div class="inline-error" role="alert">{{ error() }}</div>
     }
+    @if (successMessage()) {
+      <div class="inline-error inline-success" role="status">{{ successMessage() }}</div>
+    }
 
     <header class="profile-hero">
       <div class="profile-cover" aria-hidden="true"></div>

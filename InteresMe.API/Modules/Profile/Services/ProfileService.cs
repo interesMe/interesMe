@@ -21,7 +21,7 @@ public sealed class ProfileService(
     private const int BioMaxLength = 500;
     private const int CityMaxLength = 120;
     private const int AvatarUrlMaxLength = 2048;
-    private const long AvatarMaxSizeBytes = 2 * 1024 * 1024;
+    private const long AvatarMaxSizeBytes = 5 * 1024 * 1024;
     private const string AvatarUploadPathPrefix = "/uploads/avatars/";
     private static readonly Dictionary<string, string> AllowedAvatarExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -430,7 +430,7 @@ public sealed class ProfileService(
 
         if (file.Length > AvatarMaxSizeBytes)
         {
-            return "Avatar file must be 2 MB or smaller.";
+            return "Avatar file must be 5 MB or smaller.";
         }
 
         var extension = Path.GetExtension(file.FileName);
