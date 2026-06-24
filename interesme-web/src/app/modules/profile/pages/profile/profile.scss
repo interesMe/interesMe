@@ -256,8 +256,7 @@ a {
 .muted-copy,
 .section-empty,
 .side-card header + span,
-.followers-card p,
-.social-section p {
+.followers-card p {
   color: var(--im-muted);
   font-size: 13px;
 }
@@ -326,6 +325,7 @@ a {
 .post-card {
   display: grid;
   gap: 14px;
+  cursor: pointer;
 }
 
 .post-topline {
@@ -337,6 +337,19 @@ a {
 .post-card p {
   color: var(--im-muted);
   line-height: 1.55;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--im-border);
+  padding-top: 12px;
+}
+
+.post-actions span {
+  color: var(--im-primary-hover);
+  font-size: 13px;
+  font-weight: 850;
 }
 
 .post-initiative {

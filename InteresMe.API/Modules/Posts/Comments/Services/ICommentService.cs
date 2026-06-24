@@ -12,6 +12,13 @@ public interface ICommentService
         CreateCommentRequest? request,
         CancellationToken cancellationToken = default);
 
+    Task<ApplicationResult<CommentResponse>> CreateReplyAsync(
+        Guid authorId,
+        Guid postId,
+        Guid parentCommentId,
+        CreateCommentRequest? request,
+        CancellationToken cancellationToken = default);
+
     Task<ApplicationResult<CommentPageResponse>> GetForPostAsync(
         Guid postId,
         string? cursor,

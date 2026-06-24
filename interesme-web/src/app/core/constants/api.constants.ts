@@ -28,6 +28,10 @@ export const POSTS_API_ENDPOINTS = {
   byId: (postId: string) => `${API_BASE_URL}/posts/${postId}`,
   myPosts: `${API_BASE_URL}/users/me/posts`,
   userPosts: (userId: string) => `${API_BASE_URL}/users/${userId}/posts`,
+  comments: (postId: string) => `${API_BASE_URL}/posts/${postId}/comments`,
+  comment: (postId: string, commentId: string) => `${API_BASE_URL}/posts/${postId}/comments/${commentId}`,
+  commentReplies: (postId: string, commentId: string) =>
+    `${API_BASE_URL}/posts/${postId}/comments/${commentId}/replies`,
 } as const;
 
 export const INTERESTS_API_ENDPOINTS = {

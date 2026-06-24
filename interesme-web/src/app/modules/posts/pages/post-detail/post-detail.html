@@ -1,0 +1,232 @@
+<main class="post-detail-page">
+  <a class="back-link" [routerLink]="profileRoute">← {{ text().backToProfile }}</a>
+
+  @if (postLoading()) {
+    <section class="state-card" aria-live="polite">
+      <span class="loader" aria-hidden="true"></span>
+      <p>{{ text().loadingPost }}</p>
+    </section>
+  } @else if (postError() && !post()) {
+    <section class="state-card is-error" role="alert">
+      <span aria-hidden="true">!</span>
+      <h1>{{ text().postErrorTitle }}</h1>
+      <p>{{ postError() }}</p>
+      <button class="button button-secondary" type="button" (click)="loadPost()">{{ text().retry }}</button>
+    </section>
+  } @else if (post(); as post) {
+    <article class="post-card">
+      <header class="post-header">
+        <div class="author-avatar">
+          @if (avatarUrl(post.authorAvatarUrl); as avatar) {
+            <img [src]="avatar" [alt]="post.authorDisplayName" />
+          } @else {
+            <span>{{ initials(post.authorDisplayName) }}</span>
+          }
+        </div>
+        <div>
+          <h1>{{ post.authorDisplayName }}</h1>
+          <div class="post-meta">
+            @if (post.initiativeTitle) {
+              <span>{{ post.initiativeTitle }}</span>
+            }
+            <time [attr.datetime]="post.createdAt">{{ formatDate(post.createdAt) }}</time>
+          </div>
+        </div>
+      </header>
+
+      <p class="post-body">{{ post.body }}</p>
+      <app-post-attachment-gallery [attachments]="post.attachments" />
+    </article>
+
+    <section class="comments-card" [attr.aria-label]="text().commentsTitle">
+      <header class="comments-heading">
+        <div>
+          <h2>{{ text().commentsTitle }}</h2>
+          <p>{{ text().commentsSubtitle }}</p>
+        </div>
+        <span>{{ totalCommentCount() }}</span>
+      </header>
+
+      <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="submitComment()" novalidate>
+        <label for="comment-body">{{ text().commentLabel }}</label>
+        <textarea
+          id="comment-body"
+          formControlName="body"
+          rows="4"
+          [attr.maxlength]="maxCommentLength"
+          [placeholder]="text().commentPlaceholder"
+          [attr.aria-invalid]="commentValidationMessage() ? true : null"
+          [attr.aria-describedby]="commentValidationMessage() ? 'comment-body-error' : 'comment-body-hint'"
+        ></textarea>
+        <div class="comment-meta">
+          <div>
+            @if (commentValidationMessage(); as validationMessage) {
+              <p id="comment-body-error" class="field-error" role="alert">{{ validationMessage }}</p>
+            } @else {
+              <p id="comment-body-hint">{{ text().commentHint }}</p>
+            }
+          </div>
+          <span>{{ commentForm.controls.body.value.length }} / {{ maxCommentLength }}</span>
+        </div>
+        <button
+          class="button button-primary"
+          type="submit"
+          [disabled]="
+            isSubmitting() ||
+            !commentForm.controls.body.value.trim() ||
+            commentForm.controls.body.value.length > maxCommentLength
+          "
+        >
+          {{ isSubmitting() ? text().submittingComment : text().submitComment }}
+        </button>
+      </form>
+
+      @if (commentsLoading()) {
+        <div class="comments-state" aria-live="polite">
+          <span class="loader" aria-hidden="true"></span>
+          <p>{{ text().loadingComments }}</p>
+        </div>
+      } @else if (commentsError() && comments().length === 0) {
+        <div class="comments-state is-error" role="alert">
+          <span aria-hidden="true">!</span>
+          <h3>{{ text().commentsErrorTitle }}</h3>
+          <p>{{ commentsError() }}</p>
+          <button class="button button-secondary" type="button" (click)="loadComments()">{{ text().retry }}</button>
+        </div>
+      } @else if (comments().length === 0) {
+        <div class="comments-state">
+          <span aria-hidden="true">✎</span>
+          <h3>{{ text().commentsEmptyTitle }}</h3>
+          <p>{{ text().commentsEmptyDescription }}</p>
+        </div>
+      } @else {
+        @if (commentsError()) {
+          <div class="inline-error" role="alert">{{ commentsError() }}</div>
+        }
+
+        <div class="comment-list">
+          @for (comment of comments(); track comment.id) {
+            <article class="comment-item">
+              <div class="comment-avatar">
+                @if (avatarUrl(comment.author.avatarUrl); as avatar) {
+                  <img [src]="avatar" [alt]="comment.author.displayName" />
+                } @else {
+                  <span>{{ initials(comment.author.displayName) }}</span>
+                }
+              </div>
+              <div class="comment-content">
+                <header>
+                  <strong>{{ comment.author.displayName }}</strong>
+                  <time [attr.datetime]="comment.createdAt">{{ formatDate(comment.createdAt) }}</time>
+                </header>
+                <p>{{ comment.body }}</p>
+                <div class="comment-actions">
+                  <button type="button" [disabled]="isSubmittingReply()" (click)="startReply(comment.id)">
+                    {{ text().reply }}
+                  </button>
+                  @if (canDelete(comment)) {
+                    <button
+                      class="is-danger"
+                      type="button"
+                      [disabled]="isDeleting() === comment.id"
+                      (click)="deleteComment(comment.id)"
+                    >
+                      {{ isDeleting() === comment.id ? text().deletingComment : text().deleteComment }}
+                    </button>
+                  }
+                </div>
+
+                @if (replyingToCommentId() === comment.id) {
+                  <form class="reply-form" [formGroup]="replyForm" (ngSubmit)="submitReply(comment.id)" novalidate>
+                    <label [for]="'reply-body-' + comment.id">{{ text().replyLabel }}</label>
+                    <textarea
+                      [id]="'reply-body-' + comment.id"
+                      formControlName="body"
+                      rows="3"
+                      [attr.maxlength]="maxCommentLength"
+                      [placeholder]="text().replyPlaceholder"
+                      [attr.aria-invalid]="replyValidationMessage() ? true : null"
+                      [attr.aria-describedby]="replyValidationMessage() ? 'reply-body-error' : 'reply-body-hint'"
+                    ></textarea>
+                    <div class="comment-meta">
+                      <div>
+                        @if (replyValidationMessage(); as validationMessage) {
+                          <p id="reply-body-error" class="field-error" role="alert">{{ validationMessage }}</p>
+                        } @else {
+                          <p id="reply-body-hint">{{ text().commentHint }}</p>
+                        }
+                      </div>
+                      <span>{{ replyForm.controls.body.value.length }} / {{ maxCommentLength }}</span>
+                    </div>
+                    <div class="reply-form-actions">
+                      <button class="button button-secondary" type="button" [disabled]="isSubmittingReply()" (click)="cancelReply()">
+                        {{ text().cancelReply }}
+                      </button>
+                      <button
+                        class="button button-primary"
+                        type="submit"
+                        [disabled]="
+                          isSubmittingReply() ||
+                          !replyForm.controls.body.value.trim() ||
+                          replyForm.controls.body.value.length > maxCommentLength
+                        "
+                      >
+                        {{ isSubmittingReply() ? text().submittingReply : text().submitReply }}
+                      </button>
+                    </div>
+                  </form>
+                }
+
+                @if (comment.replies.length > 0) {
+                  <div class="reply-list">
+                    @for (reply of comment.replies; track reply.id) {
+                      <article class="reply-item">
+                        <div class="comment-avatar is-reply">
+                          @if (avatarUrl(reply.author.avatarUrl); as avatar) {
+                            <img [src]="avatar" [alt]="reply.author.displayName" />
+                          } @else {
+                            <span>{{ initials(reply.author.displayName) }}</span>
+                          }
+                        </div>
+                        <div class="comment-content is-reply">
+                          <header>
+                            <strong>{{ reply.author.displayName }}</strong>
+                            <time [attr.datetime]="reply.createdAt">{{ formatDate(reply.createdAt) }}</time>
+                          </header>
+                          <p>{{ reply.body }}</p>
+                          @if (canDelete(reply)) {
+                            <div class="comment-actions">
+                              <button
+                                class="is-danger"
+                                type="button"
+                                [disabled]="isDeleting() === reply.id"
+                                (click)="deleteComment(reply.id)"
+                              >
+                                {{ isDeleting() === reply.id ? text().deletingComment : text().deleteComment }}
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        </div>
+
+        @if (commentsNextCursor()) {
+          <button
+            class="load-more button button-secondary"
+            type="button"
+            [disabled]="commentsLoadingMore()"
+            (click)="loadMoreComments()"
+          >
+            {{ commentsLoadingMore() ? text().loadingMore : text().loadMore }}
+          </button>
+        }
+      }
+    </section>
+  }
+</main>

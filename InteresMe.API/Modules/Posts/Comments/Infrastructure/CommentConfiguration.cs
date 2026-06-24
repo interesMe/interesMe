@@ -21,6 +21,8 @@ public sealed class CommentConfiguration : IEntityTypeConfiguration<Comment>
 
         builder.HasIndex(comment => new { comment.PostId, comment.CreatedAt, comment.Id });
 
+        builder.HasIndex(comment => new { comment.ParentCommentId, comment.CreatedAt, comment.Id });
+
         builder.HasIndex(comment => comment.AuthorId);
 
         builder.HasOne(comment => comment.Post)
@@ -31,6 +33,11 @@ public sealed class CommentConfiguration : IEntityTypeConfiguration<Comment>
         builder.HasOne(comment => comment.Author)
             .WithMany()
             .HasForeignKey(comment => comment.AuthorId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(comment => comment.ParentComment)
+            .WithMany(comment => comment.Replies)
+            .HasForeignKey(comment => comment.ParentCommentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

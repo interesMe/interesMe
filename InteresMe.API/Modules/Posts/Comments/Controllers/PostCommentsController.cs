@@ -31,6 +31,25 @@ public sealed class PostCommentsController(
             : ToActionResult(result);
     }
 
+    [HttpPost("{commentId}/replies")]
+    public async Task<IActionResult> CreateReply(
+        Guid postId,
+        Guid commentId,
+        [FromBody] CreateCommentRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var result = await commentService.CreateReplyAsync(
+            currentUser.UserId,
+            postId,
+            commentId,
+            request,
+            cancellationToken);
+
+        return result.IsSuccess
+            ? StatusCode(StatusCodes.Status201Created, result.Response)
+            : ToActionResult(result);
+    }
+
     [HttpGet]
     public Task<IActionResult> GetForPost(
         Guid postId,

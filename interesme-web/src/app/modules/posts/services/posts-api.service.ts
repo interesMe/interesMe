@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { POSTS_API_ENDPOINTS } from '../../../core/constants/api.constants';
-import { CreatePostRequest, Post, PostPage } from '../models';
+import { CommentPage, CreateCommentRequest, CreatePostRequest, Post, PostComment, PostPage } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class PostsApiService {
@@ -37,6 +37,24 @@ export class PostsApiService {
     return this.http.get<PostPage>(POSTS_API_ENDPOINTS.userPosts(userId), {
       params: this.pageParams(cursor, pageSize),
     });
+  }
+
+  getComments(postId: string, cursor?: string | null, pageSize = 20): Observable<CommentPage> {
+    return this.http.get<CommentPage>(POSTS_API_ENDPOINTS.comments(postId), {
+      params: this.pageParams(cursor, pageSize),
+    });
+  }
+
+  createComment(postId: string, request: CreateCommentRequest): Observable<PostComment> {
+    return this.http.post<PostComment>(POSTS_API_ENDPOINTS.comments(postId), request);
+  }
+
+  createReply(postId: string, commentId: string, request: CreateCommentRequest): Observable<PostComment> {
+    return this.http.post<PostComment>(POSTS_API_ENDPOINTS.commentReplies(postId, commentId), request);
+  }
+
+  deleteComment(postId: string, commentId: string): Observable<void> {
+    return this.http.delete<void>(POSTS_API_ENDPOINTS.comment(postId, commentId));
   }
 
   private pageParams(cursor: string | null | undefined, pageSize: number): HttpParams {

@@ -15,6 +15,62 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
         CreateCommentRequest? request,
         CancellationToken cancellationToken = default)
     {
+        return await CreateCommentAsync(
+            authorId,
+            postId,
+            parentCommentId: null,
+            request,
+            cancellationToken);
+    }
+
+    public async Task<ApplicationResult<CommentResponse>> CreateReplyAsync(
+        Guid authorId,
+        Guid postId,
+        Guid parentCommentId,
+        CreateCommentRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        var parentComment = await dbContext.Comments
+            .AsNoTracking()
+            .Where(comment => comment.Id == parentCommentId && comment.PostId == postId)
+            .Select(comment => new
+            {
+                comment.Id,
+                comment.ParentCommentId
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (parentComment is null)
+        {
+            return ApplicationResult<CommentResponse>.Failure(
+                ApplicationErrorKind.NotFound,
+                CommentErrorCodes.ParentUnavailable,
+                "Parent comment is unavailable for replying.");
+        }
+
+        if (parentComment.ParentCommentId is not null)
+        {
+            return ApplicationResult<CommentResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                CommentErrorCodes.ReplyToReplyNotSupported,
+                "Replying to replies is not supported.");
+        }
+
+        return await CreateCommentAsync(
+            authorId,
+            postId,
+            parentComment.Id,
+            request,
+            cancellationToken);
+    }
+
+    private async Task<ApplicationResult<CommentResponse>> CreateCommentAsync(
+        Guid authorId,
+        Guid postId,
+        Guid? parentCommentId,
+        CreateCommentRequest? request,
+        CancellationToken cancellationToken)
+    {
         var body = request?.Body?.Trim();
         if (string.IsNullOrWhiteSpace(body))
         {
@@ -68,6 +124,7 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
             Id = Guid.NewGuid(),
             PostId = postId,
             AuthorId = authorId,
+            ParentCommentId = parentCommentId,
             Body = body,
             CreatedAt = DateTime.UtcNow
         };
@@ -79,9 +136,11 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
         {
             Id = comment.Id,
             PostId = comment.PostId,
+            ParentCommentId = comment.ParentCommentId,
             Author = author,
             Body = comment.Body,
-            CreatedAt = comment.CreatedAt
+            CreatedAt = comment.CreatedAt,
+            Replies = []
         });
     }
 
@@ -127,7 +186,7 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
 
         var query = dbContext.Comments
             .AsNoTracking()
-            .Where(comment => comment.PostId == postId);
+            .Where(comment => comment.PostId == postId && comment.ParentCommentId == null);
 
         if (decodedCursor is CommentCursor pageCursor)
         {
@@ -139,20 +198,18 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
         var comments = await query
             .OrderBy(comment => comment.CreatedAt)
             .ThenBy(comment => comment.Id)
-            .Select(comment => new CommentResponse
+            .Select(comment => new CommentRow
             {
                 Id = comment.Id,
                 PostId = comment.PostId,
-                Author = new CommentAuthorResponse
-                {
-                    Id = comment.AuthorId,
-                    DisplayName = comment.Author.Profile != null
-                        ? comment.Author.Profile.DisplayName
-                        : comment.Author.DisplayName,
-                    AvatarUrl = comment.Author.Profile != null
-                        ? comment.Author.Profile.AvatarUrl
-                        : null
-                },
+                ParentCommentId = comment.ParentCommentId,
+                AuthorId = comment.AuthorId,
+                AuthorDisplayName = comment.Author.Profile != null
+                    ? comment.Author.Profile.DisplayName
+                    : comment.Author.DisplayName,
+                AuthorAvatarUrl = comment.Author.Profile != null
+                    ? comment.Author.Profile.AvatarUrl
+                    : null,
                 Body = comment.Body,
                 CreatedAt = comment.CreatedAt
             })
@@ -164,10 +221,43 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
         var nextCursor = hasMore
             ? new CommentCursor(items[^1].CreatedAt, items[^1].Id).Encode()
             : null;
+        var itemIds = items.Select(comment => comment.Id).ToArray();
+        var replies = itemIds.Length == 0
+            ? []
+            : await dbContext.Comments
+                .AsNoTracking()
+                .Where(comment => comment.PostId == postId &&
+                    comment.ParentCommentId != null &&
+                    itemIds.Contains(comment.ParentCommentId.Value))
+                .OrderBy(comment => comment.CreatedAt)
+                .ThenBy(comment => comment.Id)
+                .Select(comment => new CommentRow
+                {
+                    Id = comment.Id,
+                    PostId = comment.PostId,
+                    ParentCommentId = comment.ParentCommentId,
+                    AuthorId = comment.AuthorId,
+                    AuthorDisplayName = comment.Author.Profile != null
+                        ? comment.Author.Profile.DisplayName
+                        : comment.Author.DisplayName,
+                    AuthorAvatarUrl = comment.Author.Profile != null
+                        ? comment.Author.Profile.AvatarUrl
+                        : null,
+                    Body = comment.Body,
+                    CreatedAt = comment.CreatedAt
+                })
+                .ToListAsync(cancellationToken);
+        var repliesByParentId = replies
+            .GroupBy(reply => reply.ParentCommentId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(reply => reply.ToResponse()).ToList());
 
         return ApplicationResult<CommentPageResponse>.Success(new CommentPageResponse
         {
-            Items = items,
+            Items = items.Select(comment => comment.ToResponse(
+                repliesByParentId.TryGetValue(comment.Id, out var commentReplies) ? commentReplies : []))
+                .ToList(),
             NextCursor = nextCursor
         });
     }
@@ -203,5 +293,41 @@ public sealed class CommentService(AppDbContext dbContext) : ICommentService
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return ApplicationResult<bool>.Success(true);
+    }
+
+    private sealed class CommentRow
+    {
+        public Guid Id { get; init; }
+
+        public Guid PostId { get; init; }
+
+        public Guid? ParentCommentId { get; init; }
+
+        public Guid AuthorId { get; init; }
+
+        public string AuthorDisplayName { get; init; } = string.Empty;
+
+        public string? AuthorAvatarUrl { get; init; }
+
+        public string Body { get; init; } = string.Empty;
+
+        public DateTime CreatedAt { get; init; }
+
+        public CommentResponse ToResponse(IReadOnlyList<CommentResponse>? replies = null) =>
+            new()
+            {
+                Id = Id,
+                PostId = PostId,
+                ParentCommentId = ParentCommentId,
+                Author = new CommentAuthorResponse
+                {
+                    Id = AuthorId,
+                    DisplayName = AuthorDisplayName,
+                    AvatarUrl = AuthorAvatarUrl
+                },
+                Body = Body,
+                CreatedAt = CreatedAt,
+                Replies = replies ?? []
+            };
     }
 }

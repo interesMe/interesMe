@@ -146,7 +146,13 @@
             } @else {
               <div class="post-list">
                 @for (post of posts(); track post.id) {
-                  <article class="post-card">
+                  <article
+                    class="post-card"
+                    [routerLink]="postDetailRoute(post.id)"
+                    tabindex="0"
+                    role="link"
+                    [attr.aria-label]="text().openPost"
+                  >
                     <div class="post-topline">
                       @if (post.initiativeTitle) {
                         <span class="post-initiative">{{ post.initiativeTitle }}</span>
@@ -157,6 +163,9 @@
                     </div>
                     <p>{{ post.body }}</p>
                     <app-post-attachment-gallery [attachments]="post.attachments" />
+                    <div class="post-actions">
+                      <span>{{ text().comments }}</span>
+                    </div>
                   </article>
                 }
               </div>

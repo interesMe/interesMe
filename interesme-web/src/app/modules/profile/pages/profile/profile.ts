@@ -97,6 +97,8 @@ export class ProfileComponent implements OnInit {
       postsErrorTitle: this.i18n.t('profileView.posts.errorTitle'),
       postsErrorFallback: this.i18n.t('profileView.posts.errorFallback'),
       retryPosts: this.i18n.t('profileView.posts.retry'),
+      openPost: this.i18n.t('profileView.posts.openPost'),
+      comments: this.i18n.t('profileView.posts.comments'),
       noHistory: this.i18n.t('profileView.history.empty'),
       createdInitiatives: this.i18n.t('profileView.initiatives.created'),
       joinedInitiatives: this.i18n.t('profileView.initiatives.joined'),
@@ -317,6 +319,10 @@ export class ProfileComponent implements OnInit {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(value));
+  }
+
+  postDetailRoute(postId: string): string[] {
+    return ['/', APP_ROUTES.posts, postId];
   }
 
   previewInitiatives(profile: ProfileViewResponse): ProfileInitiativePreview[] {
