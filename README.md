@@ -1,102 +1,121 @@
 # InteresMe
 
-InteresMe is a social discovery platform focused on meaningful connections through interests, goals, projects, and lifestyle.
+InteresMe — вебплатформа соціального пошуку (social discovery), яка допомагає людям знаходити релевантних людей, спільноти та ініціативи на основі спільних інтересів, цілей, навичок і активностей.
 
-This repository is a **monorepo** with a single ASP.NET Core backend and an Angular frontend.
+## Навчальний проєкт
+
+Цей репозиторій використовується як репозиторій проєкту для лабораторної роботи №1 "Ініціалізація командного проєкту". InteresMe — це наявний реальний програмний проєкт, який продовжує розвиватись; для лабораторної роботи він доповнений навчальною документацією, а не створений виключно для навчальних цілей.
+
+## Склад команди
+
+| Учасник | Роль | GitHub username |
+| ------- | ---- | ---------------- |
+| Максим | Project Manager (Team Lead), Product Owner, Developer, Designer, Analyst | `kqwakrss` |
+
+Проєкт виконується одноосібно — Максим виконує всі ролі, передбачені завданням.
+
+[Проєктний документ — project-brief.md](./project-brief.md)
 
 ---
 
-## Tech Stack
+## Технологічний стек
 
-### Backend (`InteresMe.API`)
+### Бекенд (`InteresMe.API`)
 - ASP.NET Core 8
-- Modular folder structure (one Web API project)
+- Модульна структура (єдиний Web API проєкт, модулі за доменами)
 - PostgreSQL + Entity Framework Core
-- JWT authentication (Swagger **Authorize** button)
-- BCrypt password hashing
+- JWT автентифікація (кнопка **Authorize** у Swagger), OAuth через Google та GitHub
+- Хешування паролів через BCrypt
 - Swagger / OpenAPI
 - Docker
 
-### Frontend (`InteresMe.Client`)
+### Фронтенд (`interesme-web`)
 - Angular
 - TypeScript
 - Tailwind CSS
-- Nginx (Docker)
+- Nginx (у Docker-збірці)
 
 ---
 
-## Project Structure
+## Структура репозиторію
 
 ```txt
 interesme/
-├── InteresMe.API/              # Backend (single project)
+├── InteresMe.API/              # Бекенд (єдиний проєкт)
 │   ├── Modules/
-│   │   ├── Auth/               # Register, Login, JWT
-│   │   ├── Users/
-│   │   ├── Feed/
-│   │   └── Chat/
-│   ├── Data/                   # DbContext, migrations
-│   ├── Security/               # JWT, BCrypt
-│   ├── Configuration/          # Env, Swagger
+│   │   ├── Auth/                # Реєстрація, вхід, JWT, OAuth
+│   │   ├── Profile/              # Профіль користувача
+│   │   ├── Posts/                 # Стрічка, коментарі, лайки, поширення
+│   │   ├── Chat/                  # Особисті повідомлення, групи, канали
+│   │   ├── Discovery/             # Пошук релевантних людей і контенту
+│   │   ├── Interests/             # Ієрархічний каталог інтересів
+│   │   ├── Initiatives/           # Ініціативи/проєкти для пошуку учасників
+│   │   ├── History/                # Історія активності користувача
+│   │   └── Verification/           # Верифікація
+│   ├── Data/                     # DbContext, міграції
+│   ├── Security/                 # JWT, BCrypt
+│   ├── Configuration/             # Env, Swagger
 │   └── Dockerfile
-├── InteresMe.Client/
+├── interesme-web/                # Фронтенд (Angular)
 ├── docker-compose.yml
-├── .env.example                # Copy to .env (not committed)
+├── .env.example                  # Копіювати в .env (не комітиться)
+├── project-brief.md              # Проєктний документ (лабораторна №1)
 └── InteresMe.sln
 ```
 
-Each module contains: `Controllers/`, `Services/`, `DTOs/`, `Models/`.
+Кожен бекенд-модуль містить: `Controllers/`, `Services/`, `DTOs/`, `Models/`.
 
 ---
 
-## Getting Started
-
-### 1. Environment variables
+## Змінні середовища
 
 ```bash
 cp .env.example .env
 ```
 
-Generate secrets and paste them into `.env`:
+Згенеруйте секрети та вставте їх у `.env`:
 
 ```bash
 openssl rand -base64 32   # POSTGRES_PASSWORD
 openssl rand -base64 48   # AUTH_TOKEN_SECRET
 ```
 
-| Variable | Description |
-|----------|-------------|
-| `POSTGRES_USER` | Database user |
-| `POSTGRES_PASSWORD` | Database password (min 16 chars) |
-| `POSTGRES_DB` | Database name |
-| `POSTGRES_HOST` | `localhost` for local run, `postgres` in Docker |
-| `POSTGRES_PORT` | Default `5432` |
-| `AUTH_TOKEN_SECRET` | JWT signing key (min 32 chars) |
-| `GOOGLE_CLIENT_ID` | Google OAuth web client ID |
-| `GITHUB_CLIENT_ID` | GitHub OAuth app client ID |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret |
-| `FRONTEND_OAUTH_CALLBACK_URL` | Frontend route used after backend OAuth callback |
+| Змінна | Опис |
+|--------|------|
+| `POSTGRES_USER` | Користувач бази даних |
+| `POSTGRES_PASSWORD` | Пароль бази даних (мін. 16 символів) |
+| `POSTGRES_DB` | Назва бази даних |
+| `POSTGRES_HOST` | `localhost` для локального запуску, `postgres` у Docker |
+| `POSTGRES_PORT` | За замовчуванням `5432` |
+| `AUTH_TOKEN_SECRET` | Ключ підпису JWT (мін. 32 символи) |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID для фронтенду |
+| `GITHUB_CLIENT_ID` | GitHub OAuth App Client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App Client Secret |
+| `FRONTEND_OAUTH_CALLBACK_URL` | Маршрут фронтенду після OAuth-колбеку бекенду |
+| `FRONTEND_PORT` | Порт фронтенд dev-сервера в Docker Compose |
 
-Never commit `.env` — it is listed in `.gitignore`.
+Ніколи не комітьте `.env` — він внесений у `.gitignore`.
 
-### 2. Run with Docker (recommended)
+---
+
+## Запуск через Docker (рекомендовано)
 
 ```bash
 docker compose up --build
 ```
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5050 |
+| Сервіс | URL |
+|--------|-----|
+| Frontend | http://localhost:4201 |
 | API | http://localhost:8080 |
 | Swagger | http://localhost:8080/swagger |
 | PostgreSQL | localhost:5432 |
 
-Migrations are applied automatically when the API starts.
+Міграції застосовуються автоматично під час старту API.
 
-### 3. Run locally (without Docker)
+## Локальний запуск (без Docker)
 
-Start PostgreSQL, then:
+Запустіть PostgreSQL, потім:
 
 ```bash
 dotnet run --project InteresMe.API
@@ -107,55 +126,75 @@ dotnet run --project InteresMe.API
 | API | http://localhost:5097 |
 | Swagger | http://localhost:5097/swagger |
 
----
-
-## API Overview
-
-### Auth (PostgreSQL, public)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Login, returns JWT |
-
-### Protected modules (require JWT)
-
-| Module | Base route |
-|--------|------------|
-| Users | `/api/users` |
-| Feed | `/api/feed` |
-| Chat | `/api/chat` |
-
-### Swagger + JWT
-
-1. Call `POST /api/auth/login`
-2. Copy the `token` from the response
-3. Click **Authorize** in Swagger
-4. Paste the token (without `Bearer`)
-5. Call protected endpoints
-
----
-
-## Development
+Для фронтенду — у каталозі `interesme-web`:
 
 ```bash
-# Restore & build
-dotnet restore InteresMe.sln
-dotnet build InteresMe.sln
-
-# EF migrations (from repo root)
-dotnet ef migrations add MigrationName \
-  --project InteresMe.API/InteresMe.API.csproj \
-  --output-dir Data/Migrations
+npm install
+npm start
 ```
 
 ---
 
-## Current Status
+## Огляд API
 
-- Auth with PostgreSQL, BCrypt, JWT
-- Users, Feed, Chat modules (in-memory data for Feed/Chat/Users)
-- Docker Compose with Postgres
-- CI: build backend + frontend on `main`
+### Auth (публічні маршрути)
 
-Planned: full persistence for all modules, interest-based discovery, communities, matching.
+| Метод | Маршрут | Опис |
+|-------|---------|------|
+| POST | `/api/auth/register` | Створення акаунта |
+| POST | `/api/auth/login` | Вхід, повертає JWT |
+
+### Захищені модулі (потребують JWT)
+
+| Модуль | Базовий маршрут |
+|--------|-----------------|
+| Profile | `/api/profile`, `/api/users` |
+| Posts | `/api/posts` |
+| Chat | `/api/chat`, особисті повідомлення / групи / канали |
+| Discovery | `/api/discovery` |
+| Interests | `/api/interests` |
+| Initiatives | `/api/initiatives` |
+| History | `/api/history` |
+
+### Swagger + JWT
+
+1. Викличте `POST /api/auth/login`
+2. Скопіюйте `token` з відповіді
+3. Натисніть **Authorize** у Swagger
+4. Вставте токен (без `Bearer`)
+5. Викликайте захищені ендпоінти
+
+---
+
+## Команди розробки
+
+```bash
+# Відновлення та збірка бекенду
+dotnet restore InteresMe.sln
+dotnet build InteresMe.sln
+
+# EF-міграції (з кореня репозиторію)
+dotnet ef migrations add MigrationName \
+  --project InteresMe.API/InteresMe.API.csproj \
+  --output-dir Data/Migrations
+
+# Фронтенд
+cd interesme-web
+npm install
+npm start
+```
+
+---
+
+## Поточний стан
+
+- Автентифікація через PostgreSQL, BCrypt, JWT, OAuth (Google, GitHub)
+- Реалізовані модулі: Auth, Profile, Posts (стрічка, коментарі, лайки, поширення, зображення), Chat (особисті повідомлення, групи, канали, вкладення), Discovery, Interests (каталог), Initiatives, History, Verification
+- Docker Compose з PostgreSQL
+- CI: збірка бекенду та фронтенду на `main`
+
+## Запланована функціональність
+
+- Розширений алгоритм рекомендацій та підбору за інтересами
+- Розвиток спільнот і групових просторів за інтересами
+- Подальше покриття тестами та розширення персистентності даних
