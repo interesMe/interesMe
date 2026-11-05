@@ -20,14 +20,14 @@ InteresMe — вебплатформа соціального пошуку (soci
 - [Лабораторна робота №2 — Класифікація проєкту та аналіз оточення](./project-classification.md)
 - [Лабораторна робота №3 — Побудова життєвого циклу проєкту](./project-lifecycle.md)
 - [Лабораторна робота №4 — Налаштування проєкту в Jira (беклог, Epics, Sprint 1)](./jira-setup.md)
-- [Лабораторна робота №5 — Планування часу та вартості проєкту](./docs/time-cost-plan.md) (розрахунки перевіряє [`docs/calc/time_cost_calc.py`](./docs/calc/time_cost_calc.py))
+- [Лабораторна робота №5 — Планування часу та вартості проєкту](./docs/time-cost-plan.md) (розрахунки перевіряє [`docs/calc/time_cost_calc.py`](./docs/calc/time_cost_calc.py), підготовка до захисту — [`docs/LAB5_DEFENSE_UA.md`](./docs/LAB5_DEFENSE_UA.md))
 
 ### Jira
 
 - [Jira-проєкт `IME` (Scrum-дошка)](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2)
 - [Roadmap / Хронологія](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/timeline)
-- [Релізи (v1.0-MVP, v1.1)](https://nubip-team-u9qon6a8.atlassian.net/projects/IME?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page)
-- [Velocity Chart](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/reports/velocity) — Sprint 1: 0 SP, Sprint 2: 21 SP; активний Sprint 3 (19 SP)
+- [Релізи (v1.0-MVP — Released, v1.1 — Unreleased)](https://nubip-team-u9qon6a8.atlassian.net/projects/IME?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page)
+- [Velocity Chart](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/reports/velocity) — Sprint 1: 0 SP, Sprint 2: 21 SP, Sprint 3: 19 SP (MVP v1.0 завершено); підготовлено Sprint 4 (13 SP)
 
 ---
 
@@ -215,7 +215,7 @@ npx ng test --watch=false
 - Автентифікація через PostgreSQL, BCrypt, JWT, OAuth (Google, GitHub)
 - Реалізовані модулі: Auth, Profile, Posts (стрічка, коментарі, лайки, поширення, зображення), Chat (особисті повідомлення, групи, канали, вкладення), Discovery, Interests (каталог), Initiatives, History, Verification
 - Пошук однодумців за спільними інтересами (`GET /api/discovery/people`, сторінка «Однодумці»), навички в профілі
-- Автотести бекенду (`InteresMe.API.Tests`, 43 тести) запускаються в CI
+- Автотести бекенду (`InteresMe.API.Tests`, 80 інтеграційних тестів на PostgreSQL) та фронтенду (`interesme-web`, 17 unit-тестів) запускаються в CI
 - Docker Compose з PostgreSQL
 - CI: збірка бекенду та фронтенду на `main`
 

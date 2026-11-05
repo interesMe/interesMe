@@ -2,7 +2,7 @@
 
 **Команда:** 1 особа — Максим (усі ролі) | **Jira:** [IME board](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2) · [Roadmap](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/timeline) · [Релізи](https://nubip-team-u9qon6a8.atlassian.net/projects/IME?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page) | **Дата:** 05.11.2026
 
-Лабораторна робота №5 «Планування часу та вартості проекту в Jira». Продовжує [лабораторну №4 — `jira-setup.md`](../jira-setup.md). Усі числа взято з Jira-проєкту `IME`. Кожну формулу перевіряє скрипт [`docs/calc/time_cost_calc.py`](calc/time_cost_calc.py) (`python3 docs/calc/time_cost_calc.py` → «All assertions passed»).
+Лабораторна робота №5 «Планування часу та вартості проекту в Jira». Продовжує [лабораторну №4 — `jira-setup.md`](../jira-setup.md). Усі числа взято з Jira-проєкту `IME`. Кожну формулу перевіряє скрипт [`docs/calc/time_cost_calc.py`](calc/time_cost_calc.py) (`python3 docs/calc/time_cost_calc.py` → «All assertions passed»). Відповіді на контрольні запитання та сценарій захисту зібрано у [`docs/LAB5_DEFENSE_UA.md`](LAB5_DEFENSE_UA.md).
 
 > **Як отримано Velocity.** Sprint 1 (21.10–04.11) закрито з **0 Completed SP** — історичні дані не фальсифікувались. Реальну Velocity отримано в результаті виконання та завершення двох повноцінних спринтів:
 > - **Sprint 2** (21 SP, 5 Stories `IME-7..IME-11`): онбординг, профіль, інтереси та пошук однодумців (коміти [`6901308`](https://github.com/interesMe/interesMe/commit/6901308), [`1c08286`](https://github.com/interesMe/interesMe/commit/1c08286)). Фактичний Time Spent — **17 хв**.
@@ -30,7 +30,7 @@
 
 **Налаштування Jira.** Estimation = Story Points. Time Tracking увімкнено (робочий день 4 год, тиждень 5 днів). Поле «Учет времени» (Original / Remaining / Time Spent) додано на екрани Story/Subtask. Зв'язки `blocks` (13 шт.), релізи `v1.0-MVP` (40 SP — **Released**) і `v1.1` (13 SP — Unreleased), Roadmap з датами всіх Epics, Sprint 4 (`Sprint 4 — Комунікація (v1.1)`, 13 SP, 7 Subtasks `IME-50..IME-56`) сформовано в беклозі до старту.
 
-**Залежності (`blocks`).** Stories: IME-7→8, 8→9, 9→10, 10→11, 11→12, 8→13, 13→14, 14→15, 8→16, 17→18. Epics: IME-3→IME-4, IME-3→IME-5, IME-4→IME-6. Циклів немає: кожне ребро веде від меншого ключа до більшого, тобто граф топологічно впорядкований.
+**Залежності (`blocks`).** Stories: IME-7→8, 8→9, 9→10, 10→11, 11→12, 8→13, 13→14, 14→15, 8→16, 17→18. Epics: IME-3→IME-4, IME-3→IME-5, IME-4→IME-6. Дати Epics на Roadmap узгоджено без перетинів (`IME-3`: 21.10–04.11, `IME-4`: 05.11–11.11, `IME-5`: 06.11–18.11, `IME-6`: 12.11–03.12), тому всі лінії залежностей на хронології відображаються сірим кольором без конфліктів. Циклів немає: кожне ребро веде від меншого ключа до більшого, тобто граф топологічно впорядкований.
 
 ---
 
