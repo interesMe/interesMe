@@ -46,6 +46,18 @@ public sealed class PostsController(
             result.Response);
     }
 
+    /// <summary>Personalised feed: own posts, followed people and people with shared interests.</summary>
+    [HttpGet("feed")]
+    public Task<IActionResult> GetFeed(
+        [FromQuery] string? cursor,
+        [FromQuery] int pageSize = PostFeedRules.DefaultPageSize,
+        CancellationToken cancellationToken = default) =>
+        ToActionResult(postFeedService.GetFeedAsync(
+            currentUser.UserId,
+            cursor,
+            pageSize,
+            cancellationToken));
+
     [HttpGet("{postId}")]
     public Task<IActionResult> GetById(
         Guid postId,

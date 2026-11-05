@@ -29,6 +29,8 @@ export const HISTORY_API_ENDPOINTS = {
 
 export const POSTS_API_ENDPOINTS = {
   create: `${API_BASE_URL}/posts`,
+  feed: `${API_BASE_URL}/posts/feed`,
+  like: (postId: string) => `${API_BASE_URL}/posts/${postId}/like`,
   byId: (postId: string) => `${API_BASE_URL}/posts/${postId}`,
   myPosts: `${API_BASE_URL}/users/me/posts`,
   userPosts: (userId: string) => `${API_BASE_URL}/users/${userId}/posts`,

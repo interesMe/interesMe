@@ -65,4 +65,25 @@ export class PostsApiService {
 
     return params;
   }
+
+  /** IME-16: personalised feed (own posts, followed people, people with shared interests). */
+  getFeed(cursor: string | null = null, pageSize = 10): Observable<PostPage> {
+    return this.http.get<PostPage>(POSTS_API_ENDPOINTS.feed, {
+      params: cursor ? { cursor, pageSize } : { pageSize },
+    });
+  }
+
+  likePost(postId: string): Observable<PostLikeState> {
+    return this.http.post<PostLikeState>(POSTS_API_ENDPOINTS.like(postId), {});
+  }
+
+  unlikePost(postId: string): Observable<PostLikeState> {
+    return this.http.delete<PostLikeState>(POSTS_API_ENDPOINTS.like(postId));
+  }
+}
+
+export interface PostLikeState {
+  postId: string;
+  likesCount: number;
+  isLikedByCurrentUser: boolean;
 }

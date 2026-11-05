@@ -3,36 +3,41 @@
     <div>
       <p class="eyebrow">{{ text().welcomeBack }}</p>
       <h1><span>{{ text().create }}</span> / {{ text().explore }}</h1>
-      <p class="hero-text">
-        {{ text().description }}
-      </p>
+      <p class="hero-text">{{ text().description }}</p>
     </div>
 
-    <div class="search-card">
-      <input type="text" [placeholder]="text().searchPlaceholder" />
-      <button type="button">⌘K</button>
-    </div>
+    <form class="search-card" role="search" (submit)="search($event)">
+      <input
+        type="search"
+        maxlength="100"
+        [value]="searchText()"
+        [placeholder]="text().searchPlaceholder"
+        [attr.aria-label]="text().searchPlaceholder"
+        (input)="updateSearch($event)"
+      />
+      <button type="submit">{{ text().searchButton }}</button>
+    </form>
   </div>
 
   <div class="action-grid">
     <article class="action-card create-card">
       <div class="action-copy">
-        <div class="icon-bubble">🚀</div>
+        <div class="icon-bubble" aria-hidden="true">🚀</div>
         <h2>{{ text().createInitiativeTitle }}</h2>
         <p>{{ text().createInitiativeDescription }}</p>
-        <button type="button">{{ text().createInitiativeButton }}</button>
+        <a class="action-link" [routerLink]="createInitiativePath">{{ text().createInitiativeButton }}</a>
       </div>
-      <div class="action-visual rocket-visual">✦</div>
+      <div class="action-visual rocket-visual" aria-hidden="true">✦</div>
     </article>
 
     <article class="action-card explore-card">
       <div class="action-copy">
-        <div class="icon-bubble">🔭</div>
+        <div class="icon-bubble" aria-hidden="true">🔭</div>
         <h2>{{ text().exploreInitiativesTitle }}</h2>
         <p>{{ text().exploreInitiativesDescription }}</p>
-        <button type="button">{{ text().exploreInitiativesButton }}</button>
+        <a class="action-link" [routerLink]="initiativesPath">{{ text().exploreInitiativesButton }}</a>
       </div>
-      <div class="action-visual explore-visual">●</div>
+      <div class="action-visual explore-visual" aria-hidden="true">●</div>
     </article>
   </div>
 
@@ -40,52 +45,88 @@
     <main class="feed">
       <div class="section-head">
         <div>
-          <p class="eyebrow">{{ text().liveOpportunities }}</p>
-          <h2>{{ text().featuredInitiatives }}</h2>
+          <p class="eyebrow">{{ text().feedEyebrow }}</p>
+          <h2>{{ text().feedTitle }}</h2>
         </div>
-        <button type="button">{{ text().viewAll }}</button>
+        <a class="head-link" [routerLink]="createPostPath">{{ text().writePost }}</a>
       </div>
 
-      <div class="initiative-list">
-        @for (initiative of initiatives(); track initiative.title) {
-          <article class="initiative-card">
-            <div class="initiative-art" [class]="initiative.tone">
-              <span>{{ initiative.title[0] }}</span>
-            </div>
+      @if (isFeedLoading()) {
+        <p class="state-card" role="status">{{ text().feedLoading }}</p>
+      } @else if (feedError() && posts().length === 0) {
+        <div class="state-card is-error" role="alert">
+          <p>{{ feedError() }}</p>
+          <button type="button" class="ghost-button" (click)="loadFeed()">{{ text().retry }}</button>
+        </div>
+      } @else if (posts().length === 0) {
+        <div class="state-card" role="status">
+          <h3>{{ text().feedEmptyTitle }}</h3>
+          <p>{{ text().feedEmptyDescription }}</p>
+          <div class="state-actions">
+            <a class="ghost-button" [routerLink]="peoplePath">{{ text().findPeople }}</a>
+            <a class="ghost-button" [routerLink]="createPostPath">{{ text().writePost }}</a>
+          </div>
+        </div>
+      } @else {
+        <div class="post-list">
+          @for (post of posts(); track post.id) {
+            <article class="post-card">
+              <header class="post-head">
+                <a class="avatar" [routerLink]="profilePath(post.authorId)" aria-hidden="true" tabindex="-1">
+                  @if (avatarUrl(post.authorAvatarUrl); as url) {
+                    <img [src]="url" alt="" />
+                  } @else {
+                    {{ initial(post.authorDisplayName) }}
+                  }
+                </a>
+                <div class="post-meta">
+                  <a class="author" [routerLink]="profilePath(post.authorId)">{{ post.authorDisplayName }}</a>
+                  <span>
+                    <time [attr.datetime]="post.createdAt">{{ formatDate(post.createdAt) }}</time>
+                    @if (post.initiativeId && post.initiativeTitle) {
+                      · {{ text().inInitiative }}
+                      <a [routerLink]="initiativePath(post.initiativeId)">{{ post.initiativeTitle }}</a>
+                    }
+                  </span>
+                </div>
+              </header>
 
-            <div class="initiative-body">
-              <h3>{{ initiative.title }}</h3>
-              <p>{{ initiative.description }}</p>
+              <p class="post-body">{{ post.body }}</p>
 
-              <div class="tags">
-                @for (tag of initiative.tags; track tag) {
-                  <span>{{ tag }}</span>
-                }
-              </div>
-            </div>
+              @if (post.attachments.length > 0) {
+                <app-post-attachment-gallery [attachments]="post.attachments" />
+              }
 
-            <div class="meta">
-              <strong>{{ initiative.members }}</strong>
-              <span>{{ text().members }}</span>
-            </div>
+              <footer class="post-actions">
+                <button
+                  type="button"
+                  class="like-button"
+                  [class.is-liked]="post.isLikedByCurrentUser"
+                  [attr.aria-pressed]="post.isLikedByCurrentUser"
+                  [attr.aria-label]="post.isLikedByCurrentUser ? text().unlike : text().like"
+                  [disabled]="isLikePending(post.id)"
+                  (click)="toggleLike(post)"
+                >
+                  {{ post.isLikedByCurrentUser ? '♥' : '♡' }} {{ post.likesCount }}
+                </button>
+                <a [routerLink]="postPath(post.id)">{{ text().viewAll }}</a>
+              </footer>
+            </article>
+          }
+        </div>
 
-            <div class="meta">
-              <strong>{{ initiative.roles }}</strong>
-              <span>{{ text().openRoles }}</span>
-            </div>
-
-            <button class="join-button" type="button">{{ text().join }}</button>
-          </article>
+        @if (nextCursor()) {
+          <button type="button" class="ghost-button load-more" [disabled]="isLoadingMore()" (click)="loadMore()">
+            {{ text().loadMore }}
+          </button>
         }
-      </div>
+      }
 
       <article class="mission-card">
-        <div class="mission-icon">👥</div>
+        <div class="mission-icon" aria-hidden="true">👥</div>
         <div>
           <h2>{{ text().missionTitle }}</h2>
-          <p>
-            {{ text().missionDescription }}
-          </p>
+          <p>{{ text().missionDescription }}</p>
         </div>
       </article>
     </main>
@@ -93,38 +134,47 @@
     <aside class="side-panel">
       <section class="panel-card">
         <div class="panel-head">
-          <h3>{{ text().messages }}</h3>
-          <button type="button">{{ text().viewAll }}</button>
+          <h3>{{ text().featuredInitiatives }}</h3>
+          <a class="head-link" [routerLink]="initiativesPath">{{ text().viewAll }}</a>
         </div>
-
-        <div class="message-list">
-          @for (message of messages(); track message.name) {
-            <article class="message">
-              <div class="avatar">{{ message.initials }}</div>
-              <div>
-                <strong>{{ message.name }}</strong>
-                <p>{{ message.text }}</p>
-              </div>
-              <span>{{ message.time }}</span>
-            </article>
-          }
-        </div>
+        @if (initiativesError()) {
+          <p class="muted">{{ text().sidebarError }}</p>
+        } @else if (initiatives().length === 0) {
+          <p class="muted">{{ text().noInitiatives }}</p>
+        } @else {
+          <ul class="side-list">
+            @for (initiative of initiatives(); track initiative.id) {
+              <li>
+                <a [routerLink]="initiativePath(initiative.id)">{{ initiative.title }}</a>
+                <span>{{ initiative.ownerDisplayName }}</span>
+              </li>
+            }
+          </ul>
+        }
       </section>
 
       <section class="panel-card">
         <div class="panel-head">
-          <h3>{{ text().trending }}</h3>
-          <button type="button">{{ text().viewAll }}</button>
+          <h3>{{ text().messages }}</h3>
+          <a class="head-link" [routerLink]="chatsPath">{{ text().viewAll }}</a>
         </div>
-
-        <div class="trend-list">
-          @for (item of trending(); track item) {
-            <div class="trend-item">
-              <span>🔥 {{ item }}</span>
-              <small>{{ text().active }}</small>
-            </div>
-          }
-        </div>
+        @if (conversationsError()) {
+          <p class="muted">{{ text().sidebarError }}</p>
+        } @else if (conversations().length === 0) {
+          <p class="muted">{{ text().noConversations }}</p>
+        } @else {
+          <div class="message-list">
+            @for (conversation of conversations(); track conversation.id) {
+              <a class="message" [routerLink]="conversationPath(conversation)">
+                <div class="avatar" aria-hidden="true">{{ initial(conversationPartner(conversation)) }}</div>
+                <div>
+                  <strong>{{ conversationPartner(conversation) }}</strong>
+                  <p>{{ conversation.lastMessagePreview || text().noMessagePreview }}</p>
+                </div>
+              </a>
+            }
+          </div>
+        }
       </section>
     </aside>
   </div>

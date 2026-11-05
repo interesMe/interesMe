@@ -212,6 +212,63 @@ public sealed class PostFeedService(
                 "User was not found.");
         }
 
+        return await PageAsync(
+            dbContext.Posts.AsNoTracking().Where(post => post.AuthorId == userId),
+            viewerUserId,
+            cursor,
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Personalised feed (IME-16): posts of the viewer, of people the viewer follows and of people who share
+    /// at least one interest with the viewer. Posts attached to a private initiative are shown only to its owner
+    /// and accepted members. Newest first, cursor-paginated.
+    /// </summary>
+    public Task<ApplicationResult<PostPageResponse>> GetFeedAsync(
+        Guid viewerUserId,
+        string? cursor,
+        int pageSize = PostFeedRules.DefaultPageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var followedIds = dbContext.UserFollows
+            .Where(follow => follow.FollowerId == viewerUserId)
+            .Select(follow => follow.FollowedId);
+        var myInterestIds = dbContext.UserInterests
+            .Where(userInterest => userInterest.UserId == viewerUserId)
+            .Select(userInterest => userInterest.InterestId);
+        var sharedInterestUserIds = dbContext.UserInterests
+            .Where(userInterest => myInterestIds.Contains(userInterest.InterestId))
+            .Select(userInterest => userInterest.UserId);
+
+        var feed = dbContext.Posts
+            .AsNoTracking()
+            .Where(post =>
+                post.AuthorId == viewerUserId ||
+                followedIds.Contains(post.AuthorId) ||
+                sharedInterestUserIds.Contains(post.AuthorId));
+
+        return PageAsync(feed, viewerUserId, cursor, pageSize, cancellationToken);
+    }
+
+    /// <summary>Posts attached to a private initiative are visible only to its owner and accepted members.</summary>
+    private IQueryable<Post> VisibleTo(IQueryable<Post> source, Guid viewerUserId) =>
+        source.Where(post =>
+            post.InitiativeId == null ||
+            post.Initiative!.Visibility == InitiativeVisibility.Public ||
+            post.Initiative.OwnerUserId == viewerUserId ||
+            dbContext.InitiativeJoinRequests.Any(joinRequest =>
+                joinRequest.InitiativeId == post.InitiativeId &&
+                joinRequest.UserId == viewerUserId &&
+                joinRequest.Status == InitiativeJoinRequestStatus.Accepted));
+
+    private async Task<ApplicationResult<PostPageResponse>> PageAsync(
+        IQueryable<Post> source,
+        Guid viewerUserId,
+        string? cursor,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
         PostCursor? decodedCursor = null;
         if (!string.IsNullOrWhiteSpace(cursor))
         {
@@ -228,50 +285,20 @@ public sealed class PostFeedService(
 
         pageSize = Math.Clamp(pageSize, 1, PostFeedRules.MaxPageSize);
 
-        var query = dbContext.Posts
-            .AsNoTracking()
-            .Where(post => post.AuthorId == userId);
+        source = VisibleTo(source, viewerUserId);
 
         if (decodedCursor is PostCursor pageCursor)
         {
-            query = query.Where(post =>
+            source = source.Where(post =>
                 post.CreatedAt < pageCursor.CreatedAt ||
                 (post.CreatedAt == pageCursor.CreatedAt && post.Id.CompareTo(pageCursor.Id) < 0));
         }
 
-        var posts = await query
-            .OrderByDescending(post => post.CreatedAt)
-            .ThenByDescending(post => post.Id)
-            .Select(post => new PostResponse
-            {
-                Id = post.Id,
-                AuthorId = post.AuthorId,
-                AuthorDisplayName = post.Author.Profile != null
-                    ? post.Author.Profile.DisplayName
-                    : post.Author.DisplayName,
-                AuthorAvatarUrl = post.Author.Profile != null
-                    ? post.Author.Profile.AvatarUrl
-                    : null,
-                Body = post.Body,
-                InitiativeId = post.InitiativeId,
-                InitiativeTitle = post.Initiative != null ? post.Initiative.Title : null,
-                LikesCount = dbContext.PostLikes.Count(like => like.PostId == post.Id),
-                IsLikedByCurrentUser = dbContext.PostLikes.Any(like =>
-                    like.PostId == post.Id && like.UserId == viewerUserId),
-                Attachments = post.Attachments
-                    .OrderBy(attachment => attachment.SortOrder)
-                    .Select(attachment => new PostAttachmentResponse
-                    {
-                        Id = attachment.Id,
-                        Kind = attachment.Kind,
-                        Url = attachment.StoragePath,
-                        ContentType = attachment.ContentType,
-                        SizeBytes = attachment.SizeBytes,
-                        Order = attachment.SortOrder
-                    })
-                    .ToList(),
-                CreatedAt = post.CreatedAt
-            })
+        var posts = await PostResponses(
+                source
+                    .OrderByDescending(post => post.CreatedAt)
+                    .ThenByDescending(post => post.Id),
+                viewerUserId)
             .Take(pageSize + 1)
             .ToListAsync(cancellationToken);
 
@@ -289,8 +316,10 @@ public sealed class PostFeedService(
     }
 
     private IQueryable<PostResponse> PostResponses(Guid viewerUserId) =>
-        dbContext.Posts
-            .AsNoTracking()
+        PostResponses(VisibleTo(dbContext.Posts.AsNoTracking(), viewerUserId), viewerUserId);
+
+    private IQueryable<PostResponse> PostResponses(IQueryable<Post> source, Guid viewerUserId) =>
+        source
             .Select(post => new PostResponse
             {
                 Id = post.Id,

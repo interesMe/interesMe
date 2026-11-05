@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -19,6 +19,7 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
 export class InitiativesListPage implements OnInit {
   private readonly initiativesApi = inject(InitiativesApiService);
   private readonly i18n = inject(I18nService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
 
   readonly initiatives = signal<Initiative[]>([]);
   readonly isLoading = signal(true);
@@ -45,6 +46,12 @@ export class InitiativesListPage implements OnInit {
   ];
 
   ngOnInit(): void {
+    // Search coming from the Home page: /initiatives?search=...
+    const initialSearch = this.route?.snapshot.queryParamMap.get('search')?.trim();
+    if (initialSearch) {
+      this.searchText.set(initialSearch.slice(0, 100));
+    }
+
     this.loadInitiatives();
   }
 

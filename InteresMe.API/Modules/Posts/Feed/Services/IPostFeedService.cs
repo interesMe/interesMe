@@ -23,4 +23,10 @@ public interface IPostFeedService
         string? cursor,
         int pageSize = PostFeedRules.DefaultPageSize,
         CancellationToken cancellationToken = default);
+
+    Task<ApplicationResult<PostPageResponse>> GetFeedAsync(
+        Guid viewerUserId,
+        string? cursor,
+        int pageSize = PostFeedRules.DefaultPageSize,
+        CancellationToken cancellationToken = default);
 }

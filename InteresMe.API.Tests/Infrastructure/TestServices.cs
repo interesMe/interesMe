@@ -7,6 +7,7 @@ using InteresMe.API.Modules.Initiatives.Services.InitiativeQueries;
 using InteresMe.API.Modules.Initiatives.Services.JoinRequests;
 using InteresMe.API.Modules.Initiatives.Services.Slugs;
 using InteresMe.API.Modules.Initiatives.Validators;
+using InteresMe.API.Modules.Posts.Feed.Services;
 using InteresMe.API.Modules.Profile.Services;
 using InteresMe.API.Security;
 using Microsoft.AspNetCore.Hosting;
@@ -34,6 +35,14 @@ internal static class TestServices
 
     public static InitiativeJoinRequestService CreateJoinRequests(AppDbContext context) => new(context);
 
+    public static PostFeedService CreatePostFeed(AppDbContext context) =>
+        new(
+            context,
+            new UserHistoryService(context),
+            new PostAttachmentValidator(),
+            new LocalPostAttachmentStorage(new TestWebHostEnvironment(), NullLogger<LocalPostAttachmentStorage>.Instance),
+            NullLogger<PostFeedService>.Instance);
+
     public static ProfileService CreateProfileService(AppDbContext context) =>
         new(context, new UserHistoryService(context), new TestWebHostEnvironment());
 
@@ -51,7 +60,7 @@ internal static class TestServices
             CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
-    private sealed class TestWebHostEnvironment : IWebHostEnvironment
+    internal sealed class TestWebHostEnvironment : IWebHostEnvironment
     {
         public string WebRootPath { get; set; } = Path.GetTempPath();
         public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
