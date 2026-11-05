@@ -8,6 +8,10 @@ public static class SwaggerConfiguration
     {
         services.AddSwaggerGen(options =>
         {
+            // Some endpoints (e.g. chat messages) expose JSON and multipart variants on the same route.
+            // OpenAPI 3.0 needs one operation per method/path, so document the first variant.
+            options.ResolveConflictingActions(descriptions => descriptions.First());
+
             options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "InteresMe API",
