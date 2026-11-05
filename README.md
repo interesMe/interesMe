@@ -19,14 +19,15 @@ InteresMe — вебплатформа соціального пошуку (soci
 - [Лабораторна робота №1 — Проєктний документ](./project-brief.md)
 - [Лабораторна робота №2 — Класифікація проєкту та аналіз оточення](./project-classification.md)
 - [Лабораторна робота №3 — Побудова життєвого циклу проєкту](./project-lifecycle.md)
-- [Налаштування Jira Scrum (беклог, Epics, Sprint 1)](./jira-setup.md)
-- [Лабораторна робота №5 — Планування часу та вартості проєкту](./docs/time-cost-plan.md)
+- [Лабораторна робота №4 — Налаштування проєкту в Jira (беклог, Epics, Sprint 1)](./jira-setup.md)
+- [Лабораторна робота №5 — Планування часу та вартості проєкту](./docs/time-cost-plan.md) (розрахунки перевіряє [`docs/calc/time_cost_calc.py`](./docs/calc/time_cost_calc.py))
 
 ### Jira
 
 - [Jira-проєкт `IME` (Scrum-дошка)](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2)
 - [Roadmap / Хронологія](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/timeline)
 - [Релізи (v1.0-MVP, v1.1)](https://nubip-team-u9qon6a8.atlassian.net/projects/IME?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page)
+- [Velocity Chart](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/reports/velocity) — Sprint 1: 0 SP, Sprint 2: 21 SP; активний Sprint 3 (19 SP)
 
 ---
 
@@ -73,6 +74,8 @@ interesme/
 ├── .env.example                  # Копіювати в .env (не комітиться)
 ├── project-brief.md              # Проєктний документ (лабораторна №1)
 ├── project-classification.md     # Класифікація та аналіз оточення (лабораторна №2)
+├── InteresMe.API.Tests/          # xUnit-тести бекенду (реальний PostgreSQL + міграції)
+├── jira-setup.md                 # Налаштування Jira (лабораторна №4)
 ├── docs/time-cost-plan.md        # План часу та вартості (лабораторна №5), скріншоти в docs/img/
 └── InteresMe.sln
 ```
@@ -192,10 +195,16 @@ dotnet ef migrations add MigrationName \
   --project InteresMe.API/InteresMe.API.csproj \
   --output-dir Data/Migrations
 
+# Тести бекенду (потрібен PostgreSQL; кожен тестовий клас створює окрему БД)
+docker run -d --rm --name interesme-test-pg -e POSTGRES_PASSWORD=<пароль> -p 55432:5432 postgres:16-alpine
+INTERESME_TEST_CONNECTION="Host=localhost;Port=55432;Username=postgres;Password=<пароль>;Database=postgres" \
+  dotnet test InteresMe.API.Tests
+
 # Фронтенд
 cd interesme-web
 npm install
 npm start
+npx ng test --watch=false
 ```
 
 ---
@@ -204,6 +213,8 @@ npm start
 
 - Автентифікація через PostgreSQL, BCrypt, JWT, OAuth (Google, GitHub)
 - Реалізовані модулі: Auth, Profile, Posts (стрічка, коментарі, лайки, поширення, зображення), Chat (особисті повідомлення, групи, канали, вкладення), Discovery, Interests (каталог), Initiatives, History, Verification
+- Пошук однодумців за спільними інтересами (`GET /api/discovery/people`, сторінка «Однодумці»), навички в профілі
+- Автотести бекенду (`InteresMe.API.Tests`, 43 тести) запускаються в CI
 - Docker Compose з PostgreSQL
 - CI: збірка бекенду та фронтенду на `main`
 
