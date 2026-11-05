@@ -10,6 +10,8 @@ public sealed class InitiativeJoinRequestResponse
 
     public Guid UserId { get; set; }
 
+    public string? UserDisplayName { get; set; }
+
     public Guid? RoleId { get; set; }
 
     public string? Message { get; set; }

@@ -617,6 +617,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(joinRequest => joinRequest.RoleId);
 
+            // At most one active (Pending = 1 or Accepted = 2) request per user and initiative.
+            entity.HasIndex(joinRequest => new { joinRequest.InitiativeId, joinRequest.UserId })
+                .IsUnique()
+                .HasFilter("\"Status\" IN (1, 2)")
+                .HasDatabaseName("ux_initiative_join_requests_active");
+
             entity.HasOne(joinRequest => joinRequest.Initiative)
                 .WithMany(initiative => initiative.JoinRequests)
                 .HasForeignKey(joinRequest => joinRequest.InitiativeId)

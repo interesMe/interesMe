@@ -1,6 +1,7 @@
 using InteresMe.API.BuildingBlocks.Results;
 using InteresMe.API.BuildingBlocks.Security;
 using InteresMe.API.Modules.Initiatives.Contracts.Requests;
+using InteresMe.API.Modules.Initiatives.Domain.Enums;
 using InteresMe.API.Modules.Initiatives.Services.InitiativeManagement;
 using InteresMe.API.Modules.Initiatives.Services.InitiativeQueries;
 using InteresMe.API.Modules.Initiatives.Services.JoinRequests;
@@ -19,10 +20,27 @@ public sealed class InitiativesController(
     IInitiativeJoinRequestService initiativeJoinRequestService,
     ICurrentUser currentUser) : ControllerBase
 {
+    /// <summary>Open initiatives visible to the viewer, with optional text search and goal filter.</summary>
     [HttpGet]
-    public async Task<IActionResult> GetAll(
+    public Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] InitiativeGoalType? goalType,
+        [FromQuery] int? limit,
         CancellationToken cancellationToken) =>
-        Ok(await initiativeQueryService.GetAllAsync(cancellationToken));
+        WithCurrentUserId(
+            userId => initiativeQueryService.GetAllAsync(userId, search, goalType, limit, cancellationToken));
+
+    /// <summary>Initiatives owned by the current user (any status and visibility).</summary>
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId, out var unauthorizedResult))
+        {
+            return unauthorizedResult;
+        }
+
+        return Ok(await initiativeQueryService.GetMineAsync(userId, cancellationToken));
+    }
 
     [HttpPost]
     public Task<IActionResult> Create(
@@ -35,7 +53,8 @@ public sealed class InitiativesController(
     public Task<IActionResult> GetById(
         Guid id,
         CancellationToken cancellationToken) =>
-        ToActionResult(initiativeQueryService.GetByIdAsync(id, cancellationToken));
+        WithCurrentUserId(
+            userId => initiativeQueryService.GetByIdAsync(userId, id, cancellationToken));
 
     [HttpPut("{id:guid}")]
     public Task<IActionResult> Update(

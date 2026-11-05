@@ -43,6 +43,9 @@ public static class InitiativeMapper
     {
         Id = initiative.Id,
         OwnerUserId = initiative.OwnerUserId,
+        OwnerDisplayName = initiative.OwnerUser is null
+            ? string.Empty
+            : initiative.OwnerUser.Profile?.DisplayName ?? initiative.OwnerUser.DisplayName,
         Slug = initiative.Slug,
         Title = initiative.Title,
         ShortDescription = initiative.ShortDescription,
@@ -78,6 +81,9 @@ public static class InitiativeMapper
         Id = joinRequest.Id,
         InitiativeId = joinRequest.InitiativeId,
         UserId = joinRequest.UserId,
+        UserDisplayName = joinRequest.User is null
+            ? null
+            : joinRequest.User.Profile?.DisplayName ?? joinRequest.User.DisplayName,
         RoleId = joinRequest.RoleId,
         Message = joinRequest.Message,
         Motivation = joinRequest.Motivation,

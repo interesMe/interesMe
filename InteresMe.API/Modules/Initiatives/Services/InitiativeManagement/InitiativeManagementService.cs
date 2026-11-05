@@ -202,6 +202,8 @@ public sealed class InitiativeManagementService(
         dbContext.Initiatives
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(initiative => initiative.OwnerUser)
+                .ThenInclude(owner => owner.Profile)
             .Include(initiative => initiative.InitiativeInterests)
                 .ThenInclude(initiativeInterest => initiativeInterest.Interest)
             .Include(initiative => initiative.Roles);

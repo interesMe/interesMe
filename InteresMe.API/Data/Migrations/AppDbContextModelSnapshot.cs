@@ -551,6 +551,11 @@ namespace InteresMe.API.Data.Migrations
 
                     b.HasIndex("UserId");
 
+                    b.HasIndex("InitiativeId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_initiative_join_requests_active")
+                        .HasFilter("\"Status\" IN (1, 2)");
+
                     b.ToTable("initiative_join_requests", "initiatives");
                 });
 

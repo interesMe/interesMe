@@ -2,6 +2,11 @@ using InteresMe.API.BuildingBlocks.Email;
 using InteresMe.API.Data;
 using InteresMe.API.Modules.Auth.Services;
 using InteresMe.API.Modules.History.Services;
+using InteresMe.API.Modules.Initiatives.Services.InitiativeManagement;
+using InteresMe.API.Modules.Initiatives.Services.InitiativeQueries;
+using InteresMe.API.Modules.Initiatives.Services.JoinRequests;
+using InteresMe.API.Modules.Initiatives.Services.Slugs;
+using InteresMe.API.Modules.Initiatives.Validators;
 using InteresMe.API.Modules.Profile.Services;
 using InteresMe.API.Security;
 using Microsoft.AspNetCore.Hosting;
@@ -21,6 +26,13 @@ internal static class TestServices
             new MemoryCache(new MemoryCacheOptions()),
             new NoOpEmailService(),
             NullLogger<AuthService>.Instance);
+
+    public static InitiativeManagementService CreateInitiativeManagement(AppDbContext context) =>
+        new(context, new InitiativeRequestValidator(context), new InitiativeSlugService(context));
+
+    public static InitiativeQueryService CreateInitiativeQueries(AppDbContext context) => new(context);
+
+    public static InitiativeJoinRequestService CreateJoinRequests(AppDbContext context) => new(context);
 
     public static ProfileService CreateProfileService(AppDbContext context) =>
         new(context, new UserHistoryService(context), new TestWebHostEnvironment());

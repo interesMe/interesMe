@@ -9,6 +9,9 @@ public sealed class InitiativeRequestValidator(AppDbContext dbContext) : IInitia
     private const int ShortDescriptionMaxLength = 500;
     private const int UniversityMaxLength = 160;
     private const int RoleNameMaxLength = 80;
+    internal const int TeamSizeMax = 100;
+    internal const int RolesMax = 10;
+    internal const int InterestsMax = 10;
 
     public async Task<string?> ValidateAsync(
         NormalizedInitiativeRequest request,
@@ -61,6 +64,21 @@ public sealed class InitiativeRequestValidator(AppDbContext dbContext) : IInitia
             request.TeamSize <= 0)
         {
             return "Team size must be greater than zero.";
+        }
+
+        if (request.TeamSize > TeamSizeMax)
+        {
+            return $"Team size must be at most {TeamSizeMax}.";
+        }
+
+        if (request.InterestIds.Count > InterestsMax)
+        {
+            return $"At most {InterestsMax} interests can be selected.";
+        }
+
+        if (request.Roles.Count > RolesMax)
+        {
+            return $"At most {RolesMax} roles can be added.";
         }
 
         if (request.InterestIds.Count == 0)

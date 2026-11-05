@@ -16,4 +16,9 @@ public static class InitiativeErrorCodes
     public const string ApplicationNotFound = "initiative.application.not_found";
     public const string ApplicationConflict = "initiative.application.conflict";
     public const string OwnerRequired = "initiative.owner_required";
+    public const string QueryInvalid = "initiative.query.invalid";
+    public const string ApplyAlreadyMember = "initiative.apply.already_member";
+    public const string ApplyClosed = "initiative.apply.closed";
+    public const string ApplyFieldTooLong = "initiative.apply.field_too_long";
+    public const string TeamFull = "initiative.application.team_full";
 }
