@@ -147,6 +147,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(profile => profile.City)
                 .HasMaxLength(120);
 
+            entity.Property(profile => profile.Skills)
+                .HasColumnType("text[]")
+                .HasDefaultValueSql("'{}'::text[]")
+                .IsRequired();
+
             entity.Property(profile => profile.AvatarUrl)
                 .HasMaxLength(2048);
 

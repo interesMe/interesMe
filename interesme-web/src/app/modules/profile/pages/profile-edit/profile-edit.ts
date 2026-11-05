@@ -21,6 +21,8 @@ import { ProfileApiService } from '../../services/profile-api.service';
 export class ProfileEditComponent implements OnInit, OnDestroy {
   private static readonly allowedAvatarTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
   private static readonly maxAvatarSizeBytes = 5 * 1024 * 1024;
+  static readonly maxSkills = 15;
+  static readonly maxSkillLength = 40;
 
   private readonly authService = inject(AuthService);
   private readonly profileApi = inject(ProfileApiService);
@@ -44,6 +46,9 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
   readonly avatarPreviewUrl = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+  readonly skills = signal<string[]>([]);
+  readonly skillDraft = signal('');
+  readonly skillError = signal<string | null>(null);
   readonly text = computed(() => {
     this.i18n.currentLocale();
 
@@ -69,6 +74,16 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
       cityHint: this.i18n.t('profile.form.cityHint'),
       birthDate: this.i18n.t('profile.form.birthDate'),
       birthDateHint: this.i18n.t('profile.form.birthDateHint'),
+      headline: this.i18n.t('profile.form.headline'),
+      headlinePlaceholder: this.i18n.t('profile.form.headlinePlaceholder'),
+      headlineHint: this.i18n.t('profile.form.headlineHint'),
+      bio: this.i18n.t('profile.form.bio'),
+      bioPlaceholder: this.i18n.t('profile.form.bioPlaceholder'),
+      bioHint: this.i18n.t('profile.form.bioHint'),
+      skills: this.i18n.t('profile.form.skills'),
+      skillsPlaceholder: this.i18n.t('profile.form.skillsPlaceholder'),
+      skillsHint: this.i18n.t('profile.form.skillsHint'),
+      addSkill: this.i18n.t('profile.form.addSkill'),
       changeAvatar: this.i18n.t('profile.form.changeAvatar'),
       removeSelectedAvatar: this.i18n.t('profile.form.removeSelectedAvatar'),
       cancel: this.i18n.t('profile.form.cancel'),
@@ -86,6 +101,8 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
 
   readonly form = this.formBuilder.group({
     displayName: ['', [Validators.required, Validators.maxLength(80)]],
+    headline: ['', [Validators.maxLength(120)]],
+    bio: ['', [Validators.maxLength(500)]],
     city: ['', [Validators.maxLength(120)]],
     birthDate: ['', [futureDateValidator]],
   });
@@ -177,6 +194,62 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
     });
   }
 
+  updateSkillDraft(event: Event): void {
+    this.skillDraft.set((event.target as HTMLInputElement).value);
+    this.skillError.set(null);
+  }
+
+  addSkill(input: HTMLInputElement, event?: Event): void {
+    event?.preventDefault();
+    const skill = input.value.trim();
+
+    if (!skill) {
+      return;
+    }
+
+    if (skill.length > ProfileEditComponent.maxSkillLength) {
+      this.skillError.set(this.i18n.t('profile.validation.skillTooLong'));
+      return;
+    }
+
+    const current = this.skills();
+
+    if (current.some((existing) => existing.toLowerCase() === skill.toLowerCase())) {
+      this.skillError.set(this.i18n.t('profile.validation.skillDuplicate'));
+      return;
+    }
+
+    if (current.length >= ProfileEditComponent.maxSkills) {
+      this.skillError.set(this.i18n.t('profile.validation.skillsLimit'));
+      return;
+    }
+
+    this.skills.set([...current, skill]);
+    // Clear the DOM input directly: in a zoneless app the [value] binding may not have rendered intermediate text.
+    input.value = '';
+    this.skillDraft.set('');
+    this.skillError.set(null);
+  }
+
+  removeSkill(skill: string): void {
+    this.skills.update((current) => current.filter((existing) => existing !== skill));
+    this.skillError.set(null);
+  }
+
+  removeSkillLabel(skill: string): string {
+    return this.i18n.t('profile.form.removeSkill', { skill });
+  }
+
+  headlineValidationMessage(): string | null {
+    const control = this.form.controls.headline;
+    return control.touched && control.hasError('maxlength') ? this.i18n.t('profile.validation.headlineTooLong') : null;
+  }
+
+  bioValidationMessage(): string | null {
+    const control = this.form.controls.bio;
+    return control.touched && control.hasError('maxlength') ? this.i18n.t('profile.validation.bioTooLong') : null;
+  }
+
   selectAvatar(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.fileInput = input;
@@ -260,9 +333,12 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
           this.profileExists.set(false);
           this.form.reset({
             displayName: this.user()?.displayName ?? '',
+            headline: '',
+            bio: '',
             city: '',
             birthDate: '',
           });
+          this.skills.set([]);
           this.avatarUrl.set(null);
           this.resolvedAvatarUrl.set(null);
           this.clearSelectedAvatar({ keepProfilePreview: true });
@@ -282,9 +358,12 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
   private applyProfile(profile: ProfileResponse): void {
     this.form.patchValue({
       displayName: profile.displayName,
+      headline: profile.headline ?? '',
+      bio: profile.bio ?? '',
       city: profile.city ?? '',
       birthDate: profile.birthDate ?? '',
     });
+    this.skills.set([...(profile.skills ?? [])]);
     this.avatarUrl.set(profile.avatarUrl);
     this.resolvedAvatarUrl.set(this.resolveAvatarUrl(profile.avatarUrl));
     this.setAvatarPreviewFromProfile();
@@ -297,9 +376,12 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
 
     return {
       displayName: value.displayName.trim(),
+      headline: this.normalizeOptional(value.headline),
+      bio: this.normalizeOptional(value.bio),
       city: this.normalizeOptional(value.city),
       avatarUrl: this.avatarUrl(),
       birthDate: this.normalizeOptional(value.birthDate),
+      skills: this.skills(),
     };
   }
 

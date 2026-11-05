@@ -83,6 +83,18 @@ export class ProfileApiService {
 
     formData.append('displayName', request.displayName);
 
+    if (request.headline) {
+      formData.append('headline', request.headline);
+    }
+
+    if (request.bio) {
+      formData.append('bio', request.bio);
+    }
+
+    for (const skill of request.skills) {
+      formData.append('skills', skill);
+    }
+
     if (request.city) {
       formData.append('city', request.city);
     }

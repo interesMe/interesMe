@@ -21,6 +21,8 @@ public sealed class ProfileService(
     private const int BioMaxLength = 500;
     private const int CityMaxLength = 120;
     private const int AvatarUrlMaxLength = 2048;
+    internal const int SkillsMaxCount = 15;
+    internal const int SkillMaxLength = 40;
     private const long AvatarMaxSizeBytes = 5 * 1024 * 1024;
     private const string AvatarUploadPathPrefix = "/uploads/avatars/";
     private static readonly Dictionary<string, string> AllowedAvatarExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -82,6 +84,15 @@ public sealed class ProfileService(
                 validation);
         }
 
+        var (skills, skillsError) = NormalizeSkills(request.Skills);
+
+        if (skillsError is not null)
+        {
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                skillsError);
+        }
+
         var profileExists = await dbContext.UserProfiles
             .AnyAsync(
                 userProfile => userProfile.UserId == userId,
@@ -129,6 +140,7 @@ public sealed class ProfileService(
             City = NormalizeOptional(request.City),
             AvatarUrl = NormalizeOptional(request.AvatarUrl),
             BirthDate = request.BirthDate,
+            Skills = skills ?? [],
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -178,6 +190,15 @@ public sealed class ProfileService(
                 validation);
         }
 
+        var (skills, skillsError) = NormalizeSkills(request.Skills);
+
+        if (skillsError is not null)
+        {
+            return ApplicationResult<ProfileResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                skillsError);
+        }
+
         var profile = await dbContext.UserProfiles
             .FirstOrDefaultAsync(
                 userProfile => userProfile.UserId == userId,
@@ -212,6 +233,12 @@ public sealed class ProfileService(
             ? NormalizeOptional(request.AvatarUrl)
             : await SaveAvatarFileAsync(userId, avatarFile, cancellationToken);
         profile.BirthDate = request.BirthDate;
+
+        if (skills is not null)
+        {
+            profile.Skills = skills;
+        }
+
         profile.UpdatedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -345,6 +372,44 @@ public sealed class ProfileService(
 
         return ApplicationResult<List<InterestResponse>>.Success(
             interests.Select(ToInterestResponse).ToList());
+    }
+
+    internal static (List<string>? Skills, string? Error) NormalizeSkills(IEnumerable<string?>? skills)
+    {
+        if (skills is null)
+        {
+            return (null, null);
+        }
+
+        var normalized = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rawSkill in skills)
+        {
+            var skill = rawSkill?.Trim();
+
+            if (string.IsNullOrWhiteSpace(skill))
+            {
+                return (null, "Skills cannot contain empty values.");
+            }
+
+            if (skill.Length > SkillMaxLength)
+            {
+                return (null, $"Each skill must be at most {SkillMaxLength} characters.");
+            }
+
+            if (seen.Add(skill))
+            {
+                normalized.Add(skill);
+            }
+        }
+
+        if (normalized.Count > SkillsMaxCount)
+        {
+            return (null, $"A profile can have at most {SkillsMaxCount} skills.");
+        }
+
+        return (normalized, null);
     }
 
     private static string? ValidateProfile(
@@ -499,6 +564,7 @@ public sealed class ProfileService(
         City = profile.City,
         AvatarUrl = profile.AvatarUrl,
         BirthDate = profile.BirthDate,
+        Skills = profile.Skills,
         CreatedAt = profile.CreatedAt,
         UpdatedAt = profile.UpdatedAt
     };

@@ -1,18 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
-import { TranslationKey } from '../../../../core/i18n/translations';
+import { getApiErrorMessage } from '../../../../core/utils/api-error.util';
+import { InterestResponse } from '../../../profile/models';
+import { ProfileApiService } from '../../../profile/services/profile-api.service';
 
-const ONBOARDING_INTERESTS_KEY = 'interesme_onboarding_interests';
-
-type InterestOption = {
-  value: string;
-  labelKey: TranslationKey;
-};
-
+/**
+ * Onboarding step: the user picks interests from the real catalog (GET /api/interests)
+ * and the selection is persisted to the profile (PUT /api/profile/me/interests).
+ */
 @Component({
   selector: 'app-onboarding-interests-page',
   standalone: true,
@@ -20,24 +19,18 @@ type InterestOption = {
   templateUrl: './interests.html',
   styleUrl: './interests.scss',
 })
-export class OnboardingInterestsPage {
+export class OnboardingInterestsPage implements OnInit {
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
+  private readonly profileApi = inject(ProfileApiService);
 
-  private readonly interestOptions: InterestOption[] = [
-    { value: 'Startup', labelKey: 'onboarding.interests.option.startup' },
-    { value: 'Music', labelKey: 'onboarding.interests.option.music' },
-    { value: 'GameDev', labelKey: 'onboarding.interests.option.gameDev' },
-    { value: 'Design', labelKey: 'onboarding.interests.option.design' },
-    { value: 'Sport', labelKey: 'onboarding.interests.option.sport' },
-    { value: 'Volunteering', labelKey: 'onboarding.interests.option.volunteering' },
-    { value: 'Science', labelKey: 'onboarding.interests.option.science' },
-    { value: 'Photography', labelKey: 'onboarding.interests.option.photography' },
-    { value: 'Travel', labelKey: 'onboarding.interests.option.travel' },
-    { value: 'Education', labelKey: 'onboarding.interests.option.education' },
-  ];
+  readonly interests = signal<InterestResponse[]>([]);
+  readonly selectedInterestIds = signal<string[]>([]);
+  readonly isLoading = signal(true);
+  readonly isSaving = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly loadFailed = signal(false);
 
-  readonly selectedInterests = signal<string[]>([]);
   readonly text = computed(() => {
     this.i18n.currentLocale();
 
@@ -48,43 +41,63 @@ export class OnboardingInterestsPage {
       helper: this.i18n.t('onboarding.interests.helper'),
       aria: this.i18n.t('onboarding.interests.aria'),
       continue: this.i18n.t('onboarding.interests.continue'),
+      loading: this.i18n.t('onboarding.interests.loading'),
+      saving: this.i18n.t('onboarding.interests.saving'),
+      retry: this.i18n.t('onboarding.interests.retry'),
     };
   });
 
-  readonly interests = computed(() => {
-    this.i18n.currentLocale();
+  ngOnInit(): void {
+    this.loadInterests();
+  }
 
-    return this.interestOptions.map((interest) => ({
-      value: interest.value,
-      label: this.i18n.t(interest.labelKey),
-    }));
-  });
+  loadInterests(): void {
+    this.isLoading.set(true);
+    this.loadFailed.set(false);
+    this.errorMessage.set(null);
 
-  toggleInterest(interest: string): void {
-    const selectedInterests = this.selectedInterests();
+    this.profileApi.getInterests().subscribe({
+      next: (interests) => {
+        this.interests.set(interests);
+        this.isLoading.set(false);
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(getApiErrorMessage(error, this.i18n.t('onboarding.interests.loadError')));
+        this.loadFailed.set(true);
+        this.isLoading.set(false);
+      },
+    });
+  }
 
-    this.selectedInterests.set(
-      selectedInterests.includes(interest)
-        ? selectedInterests.filter((selectedInterest) => selectedInterest !== interest)
-        : [...selectedInterests, interest],
+  toggleInterest(interestId: string): void {
+    this.selectedInterestIds.update((selected) =>
+      selected.includes(interestId) ? selected.filter((id) => id !== interestId) : [...selected, interestId],
     );
   }
 
-  isSelected(interest: string): boolean {
-    return this.selectedInterests().includes(interest);
+  isSelected(interestId: string): boolean {
+    return this.selectedInterestIds().includes(interestId);
   }
 
   continue(): void {
-    const selectedInterests = this.selectedInterests();
+    const interestIds = this.selectedInterestIds();
 
-    if (selectedInterests.length === 0) {
+    if (interestIds.length === 0 || this.isSaving()) {
       return;
     }
 
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(ONBOARDING_INTERESTS_KEY, JSON.stringify(selectedInterests));
-    }
+    this.isSaving.set(true);
+    this.errorMessage.set(null);
 
-    void this.router.navigateByUrl(`/${APP_ROUTES.onboardingLoading}`);
+    this.profileApi.saveMyInterests({ interestIds }).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        void this.router.navigateByUrl(`/${APP_ROUTES.onboardingLoading}`);
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(getApiErrorMessage(error, this.i18n.t('onboarding.interests.saveError')));
+        this.isSaving.set(false);
+      },
+    });
   }
 }

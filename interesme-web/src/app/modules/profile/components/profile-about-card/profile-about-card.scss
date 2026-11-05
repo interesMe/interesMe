@@ -118,3 +118,27 @@ dd {
 .social-links a > span:last-child {
   color: var(--im-muted);
 }
+
+.skills-section {
+  display: grid;
+  gap: 8px;
+}
+
+.skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill-chips li {
+  border: 1px solid var(--im-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(20, 184, 166, 0.12);
+  color: var(--im-primary-hover);
+  font-size: 13px;
+  font-weight: 600;
+}

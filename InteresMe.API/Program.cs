@@ -96,6 +96,7 @@ builder.Services.AddScoped<IProfileRequestReader, ProfileRequestReader>();
 builder.Services.AddScoped<IInterestService, InterestService>();
 builder.Services.AddScoped<IInterestCatalogService, InterestCatalogService>();
 builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+builder.Services.AddScoped<IPeopleSearchService, PeopleSearchService>();
 builder.Services.AddScoped<IUserHistoryService, UserHistoryService>();
 builder.Services.AddScoped<IPostFeedService, PostFeedService>();
 builder.Services.AddScoped<IPostCreateRequestReader, PostCreateRequestReader>();

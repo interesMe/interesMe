@@ -95,6 +95,72 @@
         </label>
 
         <label>
+          {{ text().headline }}
+          <input
+            type="text"
+            formControlName="headline"
+            maxlength="120"
+            [placeholder]="text().headlinePlaceholder"
+            [attr.aria-invalid]="headlineValidationMessage() ? true : null"
+          />
+          @if (headlineValidationMessage(); as validationMessage) {
+            <span class="hint">{{ validationMessage }}</span>
+          } @else {
+            <span class="hint neutral">{{ text().headlineHint }}</span>
+          }
+        </label>
+
+        <label>
+          {{ text().bio }}
+          <textarea
+            formControlName="bio"
+            rows="4"
+            maxlength="500"
+            [placeholder]="text().bioPlaceholder"
+            [attr.aria-invalid]="bioValidationMessage() ? true : null"
+          ></textarea>
+          @if (bioValidationMessage(); as validationMessage) {
+            <span class="hint">{{ validationMessage }}</span>
+          } @else {
+            <span class="hint neutral">{{ text().bioHint }} ({{ form.controls.bio.value.length }}/500)</span>
+          }
+        </label>
+
+        <div class="skills-field">
+          <label for="profile-skill-input">{{ text().skills }}</label>
+          @if (skills().length > 0) {
+            <ul class="skill-chips">
+              @for (skill of skills(); track skill) {
+                <li class="skill-chip">
+                  <span>{{ skill }}</span>
+                  <button type="button" [attr.aria-label]="removeSkillLabel(skill)" (click)="removeSkill(skill)">×</button>
+                </li>
+              }
+            </ul>
+          }
+          <div class="skills-input-row">
+            <input
+              #skillInput
+              id="profile-skill-input"
+              type="text"
+              maxlength="40"
+              [placeholder]="text().skillsPlaceholder"
+              [attr.aria-invalid]="skillError() ? true : null"
+              (input)="updateSkillDraft($event)"
+              (keydown.enter)="addSkill(skillInput, $event)"
+            />
+            <button type="button" class="button-secondary" [disabled]="!skillDraft().trim()" (click)="addSkill(skillInput)">
+              {{ text().addSkill }}
+            </button>
+          </div>
+          @if (skillError(); as error) {
+            <span class="hint" role="alert">{{ error }}</span>
+          } @else {
+            <span class="hint neutral">{{ text().skillsHint }}</span>
+          }
+        </div>
+
+        <label>
           {{ text().city }}
           <input
             type="text"

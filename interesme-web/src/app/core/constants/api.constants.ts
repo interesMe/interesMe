@@ -19,6 +19,10 @@ export const PROFILE_API_ENDPOINTS = {
   follow: (userId: string) => `${API_BASE_URL}/users/${userId}/follow`,
 } as const;
 
+export const DISCOVERY_API_ENDPOINTS = {
+  people: `${API_BASE_URL}/discovery/people`,
+} as const;
+
 export const HISTORY_API_ENDPOINTS = {
   myHistory: `${API_BASE_URL}/users/me/history`,
 } as const;

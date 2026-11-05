@@ -12,6 +12,8 @@ public sealed class BasicProfileResponse
 
     public string? Bio { get; set; }
 
+    public IReadOnlyList<string> Skills { get; set; } = [];
+
     public string ActivityStatus { get; set; } = "unknown";
 
     public string ProfileStatus { get; set; } = "active_member";

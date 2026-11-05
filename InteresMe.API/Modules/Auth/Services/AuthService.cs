@@ -23,6 +23,8 @@ public class AuthService(
     : IAuthService
 {
     private const int MinPasswordLength = 8;
+    private const int MaxDisplayNameLength = 80;
+    private const int MaxEmailLength = 254;
     private const int RefreshTokenLifetimeDays = 7;
     private const int GithubSessionLifetimeMinutes = 5;
     private const string GithubSessionCachePrefix = "github-session:";
@@ -43,6 +45,20 @@ public class AuthService(
             return ApplicationResult<AuthResponse>.Failure(
                 ApplicationErrorKind.Validation,
                 "Email, display name, and password are required.");
+        }
+
+        if (!IsValidEmail(email))
+        {
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                "Email format is invalid.");
+        }
+
+        if (displayName.Length > MaxDisplayNameLength)
+        {
+            return ApplicationResult<AuthResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                $"Display name must be at most {MaxDisplayNameLength} characters.");
         }
 
         if (password.Length < MinPasswordLength)
@@ -546,6 +562,28 @@ public class AuthService(
     private static string GetGithubSessionCacheKey(string sessionCode) =>
         $"{GithubSessionCachePrefix}{sessionCode}";
 
+
+    internal static bool IsValidEmail(string email)
+    {
+        if (email.Length > MaxEmailLength || email.Any(char.IsWhiteSpace))
+        {
+            return false;
+        }
+
+        if (!System.Net.Mail.MailAddress.TryCreate(email, out var address) ||
+            !string.Equals(address.Address, email, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var atIndex = email.LastIndexOf('@');
+        var domain = email[(atIndex + 1)..];
+
+        return atIndex > 0 &&
+               domain.Contains('.') &&
+               !domain.StartsWith('.') &&
+               !domain.EndsWith('.');
+    }
 
     private static bool IsUniqueConstraintViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException

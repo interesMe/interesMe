@@ -97,3 +97,7 @@
   background: #cbd5e1;
   cursor: not-allowed;
 }
+
+.helper-text.is-error {
+  color: var(--im-error-text, #b91c1c);
+}

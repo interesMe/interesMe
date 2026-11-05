@@ -42,7 +42,7 @@ export class RegisterComponent {
   readonly hasReturnUrl = computed(() => isValidReturnUrl(this.returnUrlParam()));
 
   readonly form = this.formBuilder.group({
-    displayName: ['', [Validators.required, Validators.maxLength(80)]],
+    displayName: ['', [Validators.required, Validators.maxLength(80), Validators.pattern(/\S/)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', [Validators.required]],

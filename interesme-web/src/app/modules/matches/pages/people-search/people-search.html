@@ -1,0 +1,89 @@
+<section class="people-shell">
+  <header class="people-header">
+    <p class="eyebrow">{{ text().eyebrow }}</p>
+    <h1>{{ text().title }}</h1>
+    <p class="subtitle">{{ text().subtitle }}</p>
+  </header>
+
+  <div class="filters">
+    <label class="filter">
+      <span>{{ text().filterLabel }}</span>
+      <select [value]="selectedInterestId()" [disabled]="isLoading()" (change)="selectInterest($event)">
+        <option value="">{{ text().filterMine }}</option>
+        @for (interest of interests(); track interest.id) {
+          <option [value]="interest.id">{{ interest.name }}</option>
+        }
+      </select>
+    </label>
+    @if (!isLoading() && people().length > 0) {
+      <p class="results-count" role="status">{{ text().resultsCount }}</p>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <p class="state-card" role="status">{{ text().loading }}</p>
+  } @else if (errorMessage()) {
+    <div class="state-card is-error" role="alert">
+      <p>{{ errorMessage() }}</p>
+      <button type="button" (click)="search()">{{ text().retry }}</button>
+    </div>
+  } @else if (hasNoOwnInterests()) {
+    <div class="state-card">
+      <h2>{{ text().noInterestsTitle }}</h2>
+      <p>{{ text().noInterestsDescription }}</p>
+      <a class="button" [routerLink]="profileEditRoute">{{ text().noInterestsCta }}</a>
+    </div>
+  } @else if (isEmpty()) {
+    <div class="state-card" role="status">
+      <h2>{{ text().emptyTitle }}</h2>
+      <p>{{ text().emptyDescription }}</p>
+    </div>
+  } @else {
+    <ul class="people-grid">
+      @for (person of people(); track person.userId) {
+        <li class="person-card">
+          <div class="person-top">
+            <div class="avatar" aria-hidden="true">
+              @if (avatarUrl(person); as url) {
+                <img [src]="url" alt="" />
+              } @else {
+                <span>{{ initial(person) }}</span>
+              }
+            </div>
+            <div class="identity">
+              <h2><a [routerLink]="profileLink(person)">{{ person.displayName }}</a></h2>
+              @if (person.headline) {
+                <p class="headline">{{ person.headline }}</p>
+              }
+              @if (person.city) {
+                <p class="city">{{ person.city }}</p>
+              }
+            </div>
+          </div>
+
+          <div class="shared">
+            <p class="shared-label">{{ sharedCountLabel(person) }}</p>
+            <ul class="chips">
+              @for (interest of person.sharedInterests; track interest.id) {
+                <li class="chip" [style.--chip-color]="interest.color">{{ interest.name }}</li>
+              }
+            </ul>
+          </div>
+
+          @if (person.skills.length > 0) {
+            <div class="skills">
+              <p class="shared-label">{{ text().skills }}</p>
+              <ul class="chips">
+                @for (skill of person.skills; track skill) {
+                  <li class="chip is-skill">{{ skill }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          <a class="open-profile" [routerLink]="profileLink(person)">{{ text().openProfile }} →</a>
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -347,3 +347,58 @@ input[aria-invalid='true'] {
     width: 100%;
   }
 }
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+  font: inherit;
+}
+
+.skills-field {
+  display: grid;
+  gap: 8px;
+}
+
+.skills-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.skills-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--im-border-active, var(--im-primary-hover));
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+  background: rgba(20, 184, 166, 0.14);
+  color: var(--im-primary-hover);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.skill-chip button {
+  min-height: 0;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  line-height: 1;
+}

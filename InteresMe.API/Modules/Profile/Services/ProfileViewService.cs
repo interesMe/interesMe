@@ -29,6 +29,7 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
                 AvatarUrl = user.Profile != null ? user.Profile.AvatarUrl : null,
                 City = user.Profile != null ? user.Profile.City : null,
                 Bio = user.Profile != null ? user.Profile.Bio : null,
+                Skills = user.Profile != null ? user.Profile.Skills : new List<string>(),
                 SocialLinksJson = user.Profile != null ? user.Profile.SocialLinksJson : null,
                 ProfileStatus = user.Profile != null ? user.Profile.ProfileStatus : null,
                 IsDemoUser = user.Email.EndsWith("@demo.interesme.local"),
@@ -51,6 +52,7 @@ public sealed class ProfileViewService(AppDbContext dbContext) : IProfileViewSer
             AvatarUrl = profileData.AvatarUrl,
             City = profileData.City,
             Bio = profileData.Bio,
+            Skills = profileData.Skills,
             ActivityStatus = GetActivityStatus(
                 viewerUserId,
                 profileUserId,

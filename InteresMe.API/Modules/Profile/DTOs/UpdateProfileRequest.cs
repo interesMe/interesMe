@@ -13,4 +13,6 @@ public class UpdateProfileRequest
     public string? AvatarUrl { get; set; }
 
     public DateOnly? BirthDate { get; set; }
+
+    public List<string>? Skills { get; set; }
 }

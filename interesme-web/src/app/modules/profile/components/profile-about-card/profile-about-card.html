@@ -10,6 +10,17 @@
 
   <p class="bio">{{ profile().bio || text().bioEmpty }}</p>
 
+  @if (profile().skills.length) {
+    <div class="skills-section">
+      <h3>{{ text().skills }}</h3>
+      <ul class="skill-chips">
+        @for (skill of profile().skills; track skill) {
+          <li>{{ skill }}</li>
+        }
+      </ul>
+    </div>
+  }
+
   <dl>
     @if (profile().city) {
       <div><dt>{{ text().city }}</dt><dd>{{ profile().city }}</dd></div>

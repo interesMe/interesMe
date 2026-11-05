@@ -24,6 +24,8 @@ public sealed class UserProfile
 
     public DateOnly? BirthDate { get; set; }
 
+    public List<string> Skills { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

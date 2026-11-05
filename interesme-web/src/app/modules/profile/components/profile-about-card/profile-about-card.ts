@@ -23,6 +23,7 @@ export class ProfileAboutCardComponent {
       memberSince: this.i18n.t('profileView.about.memberSince'),
       socialLinks: this.i18n.t('profileView.about.socialLinks'),
       socialEmpty: this.i18n.t('profileView.about.socialEmpty'),
+      skills: this.i18n.t('profileView.about.skills'),
     };
   });
 

@@ -64,6 +64,10 @@ export const routes: Routes = [
         loadChildren: () => import('./modules/interests/interests.routes').then((routesFile) => routesFile.INTERESTS_ROUTES),
       },
       {
+        path: APP_ROUTES.matches,
+        loadChildren: () => import('./modules/matches/matches.routes').then((routesFile) => routesFile.MATCHES_ROUTES),
+      },
+      {
         path: APP_ROUTES.history,
         loadChildren: () => import('./modules/history/history.routes').then((routesFile) => routesFile.HISTORY_ROUTES),
       },

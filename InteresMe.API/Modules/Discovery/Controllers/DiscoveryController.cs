@@ -13,8 +13,24 @@ namespace InteresMe.API.Modules.Discovery.Controllers;
 [Route("api/discovery")]
 public sealed class DiscoveryController(
     IDiscoveryService discoveryService,
+    IPeopleSearchService peopleSearchService,
     ICurrentUser currentUser) : ControllerBase
 {
+    /// <summary>
+    /// Finds people with shared interests. Without interestIds the viewer's own interests are used.
+    /// </summary>
+    [HttpGet("people")]
+    public Task<IActionResult> SearchPeople(
+        [FromQuery] List<Guid>? interestIds,
+        [FromQuery] int? limit,
+        CancellationToken cancellationToken) =>
+        WithCurrentUserId(
+            userId => peopleSearchService.SearchByInterestsAsync(
+                userId,
+                interestIds,
+                limit,
+                cancellationToken));
+
     [HttpGet("goals")]
     [AllowAnonymous]
     public IActionResult GetGoals() => Ok(discoveryService.GetGoals());

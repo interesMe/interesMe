@@ -52,6 +52,12 @@ export class AppSidebar {
       exact: true,
     },
     {
+      labelKey: 'appSidebar.nav.people',
+      icon: '/assets/icons/profile.svg',
+      path: ['/', APP_ROUTES.matches],
+      exact: true,
+    },
+    {
       labelKey: 'appSidebar.nav.messages',
       icon: '/assets/icons/message.svg',
       path: ['/', APP_ROUTES.chat],

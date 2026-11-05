@@ -8,22 +8,39 @@
 
     <p class="helper-text">{{ text().helper }}</p>
 
-    <div class="interest-list" [attr.aria-label]="text().aria">
-      @for (interest of interests(); track interest.value) {
-        <button
-          class="interest-chip"
-          type="button"
-          [ngClass]="{ 'is-selected': isSelected(interest.value) }"
-          [attr.aria-pressed]="isSelected(interest.value)"
-          (click)="toggleInterest(interest.value)"
-        >
-          {{ interest.label }}
-        </button>
-      }
-    </div>
+    @if (isLoading()) {
+      <p class="helper-text" role="status">{{ text().loading }}</p>
+    } @else if (loadFailed()) {
+      <p class="helper-text is-error" role="alert">{{ errorMessage() }}</p>
+      <button class="continue-button" type="button" (click)="loadInterests()">{{ text().retry }}</button>
+    } @else {
+      <div class="interest-list" [attr.aria-label]="text().aria">
+        @for (interest of interests(); track interest.id) {
+          <button
+            class="interest-chip"
+            type="button"
+            [ngClass]="{ 'is-selected': isSelected(interest.id) }"
+            [attr.aria-pressed]="isSelected(interest.id)"
+            [disabled]="isSaving()"
+            (click)="toggleInterest(interest.id)"
+          >
+            {{ interest.name }}
+          </button>
+        }
+      </div>
 
-    <button class="continue-button" type="button" [disabled]="selectedInterests().length === 0" (click)="continue()">
-      {{ text().continue }}
-    </button>
+      @if (errorMessage()) {
+        <p class="helper-text is-error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button
+        class="continue-button"
+        type="button"
+        [disabled]="selectedInterestIds().length === 0 || isSaving()"
+        (click)="continue()"
+      >
+        {{ isSaving() ? text().saving : text().continue }}
+      </button>
+    }
   </section>
 </main>

@@ -46,6 +46,7 @@ public sealed class ProfileRequestReader : IProfileRequestReader
                 createRequest.Bio = NormalizeOptional(form["bio"].ToString());
                 createRequest.City = NormalizeOptional(form["city"].ToString());
                 createRequest.BirthDate = birthDate;
+                createRequest.Skills = ReadSkills(form);
                 break;
 
             case UpdateProfileRequest updateRequest:
@@ -54,6 +55,7 @@ public sealed class ProfileRequestReader : IProfileRequestReader
                 updateRequest.Bio = NormalizeOptional(form["bio"].ToString());
                 updateRequest.City = NormalizeOptional(form["city"].ToString());
                 updateRequest.BirthDate = birthDate;
+                updateRequest.Skills = ReadSkills(form);
                 break;
         }
 
@@ -62,6 +64,11 @@ public sealed class ProfileRequestReader : IProfileRequestReader
             form.Files.GetFile("avatarFile"),
             null);
     }
+
+    private static List<string>? ReadSkills(IFormCollection form) =>
+        form.ContainsKey("skills")
+            ? form["skills"].Select(skill => skill ?? string.Empty).ToList()
+            : null;
 
     private static string? NormalizeOptional(string? value)
     {

@@ -18,6 +18,7 @@ export interface BasicProfile {
   avatarUrl: string | null;
   city: string | null;
   bio: string | null;
+  skills: string[];
   activityStatus: ProfileActivityStatus;
   profileStatus: ProfileStatus;
   socialLinks: ProfileSocialLink[];

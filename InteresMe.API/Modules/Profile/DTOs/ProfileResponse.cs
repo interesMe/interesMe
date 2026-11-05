@@ -18,6 +18,8 @@ public class ProfileResponse
 
     public DateOnly? BirthDate { get; set; }
 
+    public IReadOnlyList<string> Skills { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
