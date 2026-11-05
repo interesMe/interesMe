@@ -1,12 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../../core/i18n/translations';
 import { getApiErrorMessage, normalizeApiError } from '../../../../core/utils/api-error.util';
-import { Initiative } from '../../models';
+import { Initiative, InitiativeJoinRequestStatus } from '../../models';
 import { InitiativesApiService } from '../../services/initiatives-api.service';
 
 @Component({
@@ -28,7 +28,15 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
       } @else if (isNotFound()) {
         <p>{{ t('initiative.common.notFound') }}</p>
       } @else if (successMessage()) {
-        <p>{{ successMessage() }}</p>
+        <p class="status-box is-success" role="status">{{ successMessage() }}</p>
+        @if (initiative(); as item) {
+          <a class="button button-secondary" [routerLink]="detailsPath(item)">{{ t('initiative.common.details') }}</a>
+        }
+      } @else if (activeRequestMessage()) {
+        <p class="status-box" role="status">{{ activeRequestMessage() }}</p>
+        @if (initiative(); as item) {
+          <a class="button button-secondary" [routerLink]="detailsPath(item)">{{ t('initiative.common.details') }}</a>
+        }
       } @else if (initiative(); as item) {
         <h2>{{ item.title }}</h2>
         <p>{{ item.shortDescription }}</p>
@@ -47,11 +55,11 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
               }
             </select>
           </label>
-          <label>{{ t('initiative.apply.message') }}<textarea formControlName="message" rows="3"></textarea></label>
-          <label>{{ t('initiative.apply.motivation') }}<textarea formControlName="motivation" rows="3"></textarea></label>
-          <label>{{ t('initiative.apply.experience') }}<textarea formControlName="experience" rows="3"></textarea></label>
-          <label>{{ t('initiative.apply.contribution') }}<textarea formControlName="contribution" rows="3"></textarea></label>
-          <label>{{ t('initiative.apply.availability') }}<textarea formControlName="availability" rows="3"></textarea></label>
+          <label>{{ t('initiative.apply.message') }}<textarea formControlName="message" rows="3" maxlength="500"></textarea></label>
+          <label>{{ t('initiative.apply.motivation') }}<textarea formControlName="motivation" rows="3" maxlength="1000"></textarea></label>
+          <label>{{ t('initiative.apply.experience') }}<textarea formControlName="experience" rows="3" maxlength="1000"></textarea></label>
+          <label>{{ t('initiative.apply.contribution') }}<textarea formControlName="contribution" rows="3" maxlength="1000"></textarea></label>
+          <label>{{ t('initiative.apply.availability') }}<textarea formControlName="availability" rows="3" maxlength="1000"></textarea></label>
 
           <button class="button button-primary" type="submit" [disabled]="isSubmitting()">
             {{ isSubmitting() ? t('initiative.common.submitting') : t('initiative.common.submit') }}
@@ -65,7 +73,9 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
       .initiative-form, label { display: grid; gap: 10px; }
       .initiative-form { margin-top: 20px; }
       textarea, select { border: 1px solid var(--im-border); border-radius: var(--im-radius-sm); padding: 10px; }
-      .form-error { color: var(--im-connect); }
+      .form-error { color: var(--im-error-text, #b91c1c); }
+      .status-box { border-radius: 12px; padding: 12px; background: rgba(245, 158, 11, 0.14); color: #b45309; font-weight: 600; }
+      .status-box.is-success { background: rgba(20, 184, 166, 0.14); color: var(--im-primary-hover); }
     `,
   ],
 })
@@ -82,14 +92,16 @@ export class ApplyToInitiativePage implements OnInit {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+  /** Shown instead of the form when the user already has a pending/accepted request or applying is closed. */
+  readonly activeRequestMessage = signal<string | null>(null);
 
   readonly form = this.formBuilder.group({
     roleId: this.formBuilder.control<string | null>(null),
-    message: [''],
-    motivation: [''],
-    experience: [''],
-    contribution: [''],
-    availability: [''],
+    message: ['', [Validators.maxLength(500)]],
+    motivation: ['', [Validators.maxLength(1000)]],
+    experience: ['', [Validators.maxLength(1000)]],
+    contribution: ['', [Validators.maxLength(1000)]],
+    availability: ['', [Validators.maxLength(1000)]],
   });
 
   ngOnInit(): void {
@@ -101,6 +113,12 @@ export class ApplyToInitiativePage implements OnInit {
       return;
     }
 
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.errorMessage.set(this.t('initiative.apply.tooLong'));
+      return;
+    }
+
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -109,11 +127,11 @@ export class ApplyToInitiativePage implements OnInit {
     this.initiativesApi
       .createJoinRequest(initiative.id, {
         roleId: formValue.roleId,
-        message: formValue.message || null,
-        motivation: formValue.motivation || null,
-        experience: formValue.experience || null,
-        contribution: formValue.contribution || null,
-        availability: formValue.availability || null,
+        message: formValue.message.trim() || null,
+        motivation: formValue.motivation.trim() || null,
+        experience: formValue.experience.trim() || null,
+        contribution: formValue.contribution.trim() || null,
+        availability: formValue.availability.trim() || null,
       })
       .subscribe({
         next: () => {
@@ -121,11 +139,22 @@ export class ApplyToInitiativePage implements OnInit {
           this.isSubmitting.set(false);
         },
         error: (error: unknown) => {
-          const message = getApiErrorMessage(error, this.t('initiative.apply.errorFallback'));
-          this.errorMessage.set(message.toLowerCase().includes('pending') || message.toLowerCase().includes('duplicate')
-            ? this.t('initiative.apply.duplicate')
-            : message);
+          const apiError = normalizeApiError(error, this.t('initiative.apply.errorFallback'));
           this.isSubmitting.set(false);
+
+          switch (apiError.code) {
+            case 'initiative.apply.already_exists':
+              this.activeRequestMessage.set(this.t('initiative.myRequest.pending'));
+              return;
+            case 'initiative.apply.already_member':
+              this.activeRequestMessage.set(this.t('initiative.myRequest.accepted'));
+              return;
+            case 'initiative.apply.closed':
+              this.activeRequestMessage.set(this.t('initiative.details.closed'));
+              return;
+            default:
+              this.errorMessage.set(apiError.message);
+          }
         },
       });
   }
@@ -149,6 +178,12 @@ export class ApplyToInitiativePage implements OnInit {
     this.initiativesApi.getById(id).subscribe({
       next: (initiative) => {
         this.initiative.set(initiative);
+        const status = initiative.myJoinRequest?.status;
+        if (status === InitiativeJoinRequestStatus.Pending) {
+          this.activeRequestMessage.set(this.t('initiative.myRequest.pending'));
+        } else if (status === InitiativeJoinRequestStatus.Accepted) {
+          this.activeRequestMessage.set(this.t('initiative.myRequest.accepted'));
+        }
         this.isLoading.set(false);
       },
       error: (error: unknown) => {

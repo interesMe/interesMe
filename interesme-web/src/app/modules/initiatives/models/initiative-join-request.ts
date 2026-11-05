@@ -4,6 +4,7 @@ export interface InitiativeJoinRequest {
   id: string;
   initiativeId: string;
   userId: string;
+  userDisplayName: string | null;
   roleId: string | null;
   message: string | null;
   motivation: string | null;

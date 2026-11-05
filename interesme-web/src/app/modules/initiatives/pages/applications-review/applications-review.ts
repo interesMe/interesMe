@@ -6,7 +6,7 @@ import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslationKey } from '../../../../core/i18n/translations';
 import { getApiErrorMessage, normalizeApiError } from '../../../../core/utils/api-error.util';
-import { Initiative, InitiativeJoinRequest } from '../../models';
+import { Initiative, InitiativeJoinRequest, InitiativeJoinRequestStatus } from '../../models';
 import { InitiativesApiService } from '../../services/initiatives-api.service';
 
 @Component({
@@ -33,10 +33,16 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
       } @else if (joinRequests().length === 0) {
         <p>{{ t('initiative.applications.empty') }}</p>
       } @else {
+        @if (actionError()) {
+          <p class="form-error" role="alert">{{ actionError() }}</p>
+        }
         <section class="applications">
           @for (request of joinRequests(); track request.id) {
             <article class="application-card">
-              <p><strong>{{ t('initiative.applications.status') }}:</strong> {{ request.status }}</p>
+              <h2 class="applicant">
+                <a [routerLink]="['/', 'u', request.userId]">{{ request.userDisplayName || t('initiative.applications.unknownApplicant') }}</a>
+              </h2>
+              <p><strong>{{ t('initiative.applications.status') }}:</strong> {{ statusLabel(request.status) }}</p>
               @if (request.roleId) {
                 <p><strong>{{ t('initiative.apply.role') }}:</strong> {{ roleName(request.roleId) }}</p>
               }
@@ -55,6 +61,7 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
               @if (request.availability) {
                 <p><strong>{{ t('initiative.apply.availability') }}:</strong> {{ request.availability }}</p>
               }
+              @if (isPending(request)) {
               <div class="actions">
                 <button class="button button-secondary" type="button" (click)="accept(request)">
                   {{ t('initiative.applications.accept') }}
@@ -63,6 +70,7 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
                   {{ t('initiative.applications.reject') }}
                 </button>
               </div>
+              }
             </article>
           }
         </section>
@@ -89,6 +97,8 @@ export class ApplicationsReviewPage implements OnInit {
   readonly isLoading = signal(true);
   readonly isNotFound = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  /** Errors of accept/reject actions are shown above the list instead of replacing it. */
+  readonly actionError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadPage();
@@ -123,6 +133,19 @@ export class ApplicationsReviewPage implements OnInit {
     });
   }
 
+  isPending(request: InitiativeJoinRequest): boolean {
+    return request.status === InitiativeJoinRequestStatus.Pending;
+  }
+
+  statusLabel(status: InitiativeJoinRequestStatus): string {
+    const keys: Record<InitiativeJoinRequestStatus, TranslationKey> = {
+      [InitiativeJoinRequestStatus.Pending]: 'initiative.applications.statusPending',
+      [InitiativeJoinRequestStatus.Accepted]: 'initiative.applications.statusAccepted',
+      [InitiativeJoinRequestStatus.Rejected]: 'initiative.applications.statusRejected',
+    };
+    return this.t(keys[status]);
+  }
+
   accept(request: InitiativeJoinRequest): void {
     this.updateRequest(request, 'accept');
   }
@@ -154,6 +177,7 @@ export class ApplicationsReviewPage implements OnInit {
         ? this.initiativesApi.acceptJoinRequest(initiative.id, request.id)
         : this.initiativesApi.rejectJoinRequest(initiative.id, request.id);
 
+    this.actionError.set(null);
     operation.subscribe({
       next: (updatedRequest) => {
         this.joinRequests.update((requests) =>
@@ -161,7 +185,7 @@ export class ApplicationsReviewPage implements OnInit {
         );
       },
       error: (error: unknown) => {
-        this.errorMessage.set(getApiErrorMessage(error, this.t('initiative.applications.actionErrorFallback')));
+        this.actionError.set(getApiErrorMessage(error, this.t('initiative.applications.actionErrorFallback')));
       },
     });
   }

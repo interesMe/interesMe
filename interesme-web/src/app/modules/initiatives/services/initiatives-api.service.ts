@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -8,6 +8,7 @@ import {
   CreateInitiativeRequest,
   Initiative,
   InitiativeJoinRequest,
+  InitiativeListQuery,
   UpdateInitiativeRequest,
 } from '../models';
 
@@ -17,8 +18,27 @@ import {
 export class InitiativesApiService {
   private readonly http = inject(HttpClient);
 
-  getAll(): Observable<Initiative[]> {
-    return this.http.get<Initiative[]>(INITIATIVES_API_ENDPOINTS.list);
+  getAll(query: InitiativeListQuery = {}): Observable<Initiative[]> {
+    let params = new HttpParams();
+
+    if (query.search?.trim()) {
+      params = params.set('search', query.search.trim());
+    }
+
+    if (query.goalType) {
+      params = params.set('goalType', query.goalType);
+    }
+
+    if (query.limit) {
+      params = params.set('limit', query.limit);
+    }
+
+    return this.http.get<Initiative[]>(INITIATIVES_API_ENDPOINTS.list, { params });
+  }
+
+  /** Initiatives owned by the current user, any status or visibility. */
+  getMine(): Observable<Initiative[]> {
+    return this.http.get<Initiative[]>(INITIATIVES_API_ENDPOINTS.mine);
   }
 
   getById(id: string): Observable<Initiative> {

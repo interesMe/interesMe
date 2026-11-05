@@ -1,0 +1,240 @@
+:host {
+  display: block;
+}
+
+.details-page {
+  display: grid;
+  gap: 16px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.back-link {
+  justify-self: start;
+  color: var(--im-primary-hover);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+.details-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .details-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.details-main,
+.details-side {
+  display: grid;
+  gap: 16px;
+}
+
+.card,
+.hero-card,
+.state-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius-lg, 20px);
+  padding: 20px;
+  background: var(--im-surface);
+  box-shadow: var(--im-shadow-card);
+}
+
+.state-card.is-error {
+  border-color: var(--im-error-border, #fca5a5);
+  background: var(--im-error-bg, #fef2f2);
+}
+
+.hero-card h1 {
+  font-size: clamp(24px, 4vw, 32px);
+  overflow-wrap: anywhere;
+}
+
+.description {
+  color: var(--im-text);
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.owner-line,
+.muted {
+  color: var(--im-muted);
+  font-size: 14px;
+}
+
+.owner-line a,
+.team-list a {
+  color: var(--im-primary-hover);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.badges,
+.chips,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge,
+.chip {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--im-border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: var(--im-surface-soft, transparent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge.is-private {
+  color: var(--im-muted);
+}
+
+.chip.is-role {
+  border-color: var(--im-border-active, var(--im-primary-hover));
+  background: rgba(20, 184, 166, 0.12);
+  color: var(--im-primary-hover);
+}
+
+.goal-connect { color: var(--im-connect); }
+.goal-learn { color: #15803d; }
+.goal-build { color: var(--im-primary-hover); }
+.goal-play { color: #b45309; }
+.goal-explore { color: #0284c7; }
+
+h2 {
+  font-size: 18px;
+}
+
+h3 {
+  margin-top: 4px;
+  color: var(--im-muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.facts dt {
+  color: var(--im-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.facts dd {
+  font-weight: 600;
+}
+
+.team-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--im-avatar-soft-bg, rgba(20, 184, 166, 0.16));
+  color: var(--im-primary-hover);
+  font-weight: 700;
+}
+
+.team-role {
+  color: var(--im-muted);
+  font-size: 13px;
+}
+
+.request-status {
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+.request-status.is-pending {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.request-status.is-accepted {
+  background: rgba(20, 184, 166, 0.14);
+  color: var(--im-primary-hover);
+}
+
+.request-status.is-rejected {
+  background: var(--im-error-bg, #fef2f2);
+  color: var(--im-error-text, #b91c1c);
+}
+
+.confirm-box {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--im-error-border, #fca5a5);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--im-error-bg, #fef2f2);
+}
+
+.button-danger,
+.button-danger-outline {
+  min-height: 40px;
+  border-radius: 12px;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button-danger {
+  border: 0;
+  background: var(--im-error-text, #b91c1c);
+  color: #fff;
+}
+
+.button-danger-outline {
+  justify-self: start;
+  border: 1px solid var(--im-error-border, #fca5a5);
+  background: transparent;
+  color: var(--im-error-text, #b91c1c);
+}
+
+.form-error {
+  color: var(--im-error-text, #b91c1c);
+}

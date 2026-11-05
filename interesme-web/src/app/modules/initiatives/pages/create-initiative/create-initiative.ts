@@ -69,10 +69,11 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
             <input
               type="text"
               formControlName="title"
+              maxlength="120"
               [placeholder]="t('initiative.create.describe.titlePlaceholder')"
             />
-            @if (showRequiredError('title')) {
-              <span class="field-error">{{ t('initiative.create.validation.titleRequired') }}</span>
+            @if (fieldError('title'); as error) {
+              <span class="field-error" role="alert">{{ error }}</span>
             }
           </label>
 
@@ -81,11 +82,12 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
             <textarea
               formControlName="shortDescription"
               rows="5"
+              maxlength="500"
               [placeholder]="t('initiative.create.describe.descriptionPlaceholder')"
             ></textarea>
             <small>{{ t('initiative.create.describe.descriptionHelper') }}</small>
-            @if (showRequiredError('shortDescription')) {
-              <span class="field-error">{{ t('initiative.create.validation.descriptionRequired') }}</span>
+            @if (fieldError('shortDescription'); as error) {
+              <span class="field-error" role="alert">{{ error }}</span>
             }
           </label>
         </section>
@@ -102,14 +104,18 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
               <input
                 #roleInput
                 type="text"
+                maxlength="80"
                 [placeholder]="t('initiative.create.people.rolesPlaceholder')"
-                (keydown.enter)="$event.preventDefault(); addRole(roleInput.value); roleInput.value = ''"
+                (keydown.enter)="$event.preventDefault(); addRole(roleInput)"
               />
-              <button class="button button-secondary" type="button" (click)="addRole(roleInput.value); roleInput.value = ''">
+              <button class="button button-secondary" type="button" (click)="addRole(roleInput)">
                 {{ t('initiative.common.addRole') }}
               </button>
             </div>
             <p class="examples">{{ t('initiative.create.people.rolesExamples') }}</p>
+            @if (rolesError(); as error) {
+              <span class="field-error" role="alert">{{ error }}</span>
+            }
             @if (roles().length > 0) {
               <div class="chips" [attr.aria-label]="t('initiative.create.people.rolesLabel')">
                 @for (role of roles(); track role) {
@@ -136,6 +142,9 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
               </label>
             }
           </div>
+          @if (interestsError(); as error) {
+            <span class="field-error" role="alert">{{ error }}</span>
+          }
           </fieldset>
         </section>
 
@@ -148,12 +157,15 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
           <div class="context-grid">
             <label class="field">
               <span>{{ t('initiative.create.context.universityLabel') }}</span>
-              <input type="text" formControlName="university" [placeholder]="t('initiative.create.context.universityPlaceholder')" />
+              <input type="text" formControlName="university" maxlength="160" [placeholder]="t('initiative.create.context.universityPlaceholder')" />
             </label>
 
             <label class="field">
               <span>{{ t('initiative.create.context.teamSizeLabel') }}</span>
-              <input type="number" min="1" formControlName="teamSize" [placeholder]="t('initiative.create.context.teamSizePlaceholder')" />
+              <input type="number" min="1" max="100" formControlName="teamSize" [placeholder]="t('initiative.create.context.teamSizePlaceholder')" />
+              @if (fieldError('teamSize'); as error) {
+                <span class="field-error" role="alert">{{ error }}</span>
+              }
             </label>
           </div>
         </section>
@@ -502,14 +514,21 @@ export class CreateInitiativePage implements OnInit {
   readonly isLoadingInterests = signal(false);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly rolesError = signal<string | null>(null);
+  readonly interestsError = signal<string | null>(null);
+
+  static readonly maxRoles = 10;
+  static readonly maxRoleLength = 80;
+  static readonly maxInterests = 10;
 
   readonly form = this.formBuilder.group({
-    title: ['', [Validators.required, Validators.maxLength(140)]],
-    shortDescription: ['', [Validators.required, Validators.maxLength(500)]],
+    // Limits mirror the backend validator (InitiativeRequestValidator).
+    title: ['', [Validators.required, Validators.maxLength(120), Validators.pattern(/\S/)]],
+    shortDescription: ['', [Validators.required, Validators.maxLength(500), Validators.pattern(/\S/)]],
     goalType: [InitiativeGoalType.Explore, [Validators.required]],
     visibility: [InitiativeVisibility.Public, [Validators.required]],
-    university: [''],
-    teamSize: this.formBuilder.control<number | null>(null),
+    university: ['', [Validators.maxLength(160)]],
+    teamSize: this.formBuilder.control<number | null>(null, [Validators.min(1), Validators.max(100)]),
   });
 
   get goals(): Array<{ value: InitiativeGoalType; label: string; copy: string }> {
@@ -562,7 +581,16 @@ export class CreateInitiativePage implements OnInit {
   }
 
   submit(): void {
-    if (this.form.invalid || this.isSubmitting()) {
+    if (this.isSubmitting()) {
+      return;
+    }
+
+    const rolesMissing = this.roles().length === 0;
+    const interestsMissing = this.selectedInterestIds().size === 0;
+    this.rolesError.set(rolesMissing ? this.t('initiative.create.validation.rolesRequired') : null);
+    this.interestsError.set(interestsMissing ? this.t('initiative.create.validation.interestsRequired') : null);
+
+    if (this.form.invalid || rolesMissing || interestsMissing) {
       this.form.markAllAsTouched();
       this.errorMessage.set(this.t('initiative.common.required'));
       return;
@@ -574,8 +602,8 @@ export class CreateInitiativePage implements OnInit {
 
     this.initiativesApi
       .create({
-        title: formValue.title,
-        shortDescription: formValue.shortDescription,
+        title: formValue.title.trim(),
+        shortDescription: formValue.shortDescription.trim(),
         goalType: formValue.goalType,
         visibility: formValue.visibility,
         university: formValue.university || null,
@@ -602,12 +630,31 @@ export class CreateInitiativePage implements OnInit {
     this.form.controls.visibility.markAsDirty();
   }
 
-  addRole(role: string): void {
-    const normalizedRole = role.trim();
-    if (!normalizedRole || this.roles().includes(normalizedRole)) {
+  addRole(input: HTMLInputElement): void {
+    const normalizedRole = input.value.trim();
+
+    if (!normalizedRole) {
       return;
     }
+
+    if (normalizedRole.length > CreateInitiativePage.maxRoleLength) {
+      this.rolesError.set(this.t('initiative.create.validation.roleTooLong'));
+      return;
+    }
+
+    if (this.roles().some((role) => role.toLowerCase() === normalizedRole.toLowerCase())) {
+      this.rolesError.set(this.t('initiative.create.validation.roleDuplicate'));
+      return;
+    }
+
+    if (this.roles().length >= CreateInitiativePage.maxRoles) {
+      this.rolesError.set(this.t('initiative.create.validation.rolesLimit'));
+      return;
+    }
+
     this.roles.update((roles) => [...roles, normalizedRole]);
+    this.rolesError.set(null);
+    input.value = '';
   }
 
   removeRole(role: string): void {
@@ -615,6 +662,14 @@ export class CreateInitiativePage implements OnInit {
   }
 
   toggleInterest(interestId: string): void {
+    const selected = this.selectedInterestIds();
+
+    if (!selected.has(interestId) && selected.size >= CreateInitiativePage.maxInterests) {
+      this.interestsError.set(this.t('initiative.create.validation.interestsLimit'));
+      return;
+    }
+
+    this.interestsError.set(null);
     this.selectedInterestIds.update((currentIds) => {
       const nextIds = new Set(currentIds);
       nextIds.has(interestId) ? nextIds.delete(interestId) : nextIds.add(interestId);
@@ -626,9 +681,30 @@ export class CreateInitiativePage implements OnInit {
     return this.selectedInterestIds().has(interestId);
   }
 
-  showRequiredError(controlName: 'title' | 'shortDescription'): boolean {
+  fieldError(controlName: 'title' | 'shortDescription' | 'teamSize'): string | null {
     const control = this.form.controls[controlName];
-    return control.hasError('required') && (control.touched || control.dirty);
+
+    if (!control.touched && !control.dirty) {
+      return null;
+    }
+
+    if (control.hasError('required') || control.hasError('pattern')) {
+      return controlName === 'title'
+        ? this.t('initiative.create.validation.titleRequired')
+        : this.t('initiative.create.validation.descriptionRequired');
+    }
+
+    if (control.hasError('maxlength')) {
+      return controlName === 'title'
+        ? this.t('initiative.create.validation.titleTooLong')
+        : this.t('initiative.create.validation.descriptionTooLong');
+    }
+
+    if (control.hasError('min') || control.hasError('max')) {
+      return this.t('initiative.create.validation.teamSizeRange');
+    }
+
+    return null;
   }
 
   t(key: TranslationKey, params?: Record<string, string | number | boolean | null | undefined>): string {

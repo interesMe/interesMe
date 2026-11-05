@@ -8,6 +8,7 @@ export function normalizeApiError(error: unknown, fallbackMessage = FALLBACK_MES
   if (!(error instanceof HttpErrorResponse)) {
     return {
       status: 0,
+      code: null,
       message: fallbackMessage,
       validationErrors: null,
       raw: error,
@@ -18,6 +19,7 @@ export function normalizeApiError(error: unknown, fallbackMessage = FALLBACK_MES
 
   return {
     status: error.status,
+    code: typeof errorBody?.['code'] === 'string' ? (errorBody['code'] as string) : null,
     message: readMessage(errorBody, error.message, fallbackMessage),
     validationErrors: readValidationErrors(errorBody),
     raw: error.error,

@@ -200,3 +200,40 @@ dd {
     min-height: auto;
   }
 }
+
+.list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.filter-field {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 200px);
+  color: var(--im-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.search-field {
+  flex: 1 1 260px;
+}
+
+.filter-field input,
+.filter-field select {
+  min-height: 42px;
+  border: 1px solid var(--im-border);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--im-surface);
+  color: var(--im-text);
+  font: inherit;
+}
+
+.card-owner {
+  color: var(--im-muted);
+  font-size: 13px;
+}

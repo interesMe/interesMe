@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
@@ -25,18 +25,59 @@ export class InitiativesListPage implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly createPath = `/${APP_ROUTES.initiatives}/new`;
+  readonly searchText = signal('');
+  readonly goalFilter = signal<InitiativeGoalType | null>(null);
+  /** Filters used for the currently displayed results. */
+  private readonly appliedFilters = signal<{ search: string; goalType: InitiativeGoalType | null }>({
+    search: '',
+    goalType: null,
+  });
+  readonly hasAppliedFilters = computed(() => {
+    const filters = this.appliedFilters();
+    return filters.search.length > 0 || filters.goalType !== null;
+  });
+  readonly goalOptions = [
+    InitiativeGoalType.Connect,
+    InitiativeGoalType.Learn,
+    InitiativeGoalType.Build,
+    InitiativeGoalType.Play,
+    InitiativeGoalType.Explore,
+  ];
 
   ngOnInit(): void {
+    this.loadInitiatives();
+  }
+
+  updateSearch(event: Event): void {
+    this.searchText.set((event.target as HTMLInputElement).value);
+  }
+
+  selectGoal(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    this.goalFilter.set(value ? (value as InitiativeGoalType) : null);
+    this.applyFilters();
+  }
+
+  applyFilters(event?: Event): void {
+    event?.preventDefault();
+    this.loadInitiatives();
+  }
+
+  clearFilters(): void {
+    this.searchText.set('');
+    this.goalFilter.set(null);
     this.loadInitiatives();
   }
 
   loadInitiatives(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    const filters = { search: this.searchText().trim(), goalType: this.goalFilter() };
 
-    this.initiativesApi.getAll().subscribe({
+    this.initiativesApi.getAll({ search: filters.search, goalType: filters.goalType }).subscribe({
       next: (initiatives) => {
         this.initiatives.set(initiatives);
+        this.appliedFilters.set(filters);
         this.isLoading.set(false);
       },
       error: (error: unknown) => {

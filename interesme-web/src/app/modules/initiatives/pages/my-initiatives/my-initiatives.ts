@@ -89,7 +89,7 @@ export class MyInitiativesPage implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.initiativesApi.getAll().subscribe({
+    this.initiativesApi.getMine().subscribe({
       next: (initiatives) => {
         this.initiatives.set(initiatives);
         this.isLoading.set(false);

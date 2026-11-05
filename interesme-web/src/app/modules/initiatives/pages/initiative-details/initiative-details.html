@@ -1,0 +1,151 @@
+<main class="details-page">
+  <a class="back-link" [routerLink]="listPath">← {{ t('initiative.common.backToList') }}</a>
+
+  @if (isLoading()) {
+    <p class="state-card" role="status">{{ t('initiative.common.loading') }}</p>
+  } @else if (isNotFound()) {
+    <section class="state-card">
+      <h1>{{ t('initiative.common.notFound') }}</h1>
+      <a class="button button-secondary" [routerLink]="listPath">{{ t('initiative.common.backToList') }}</a>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="state-card is-error" role="alert">
+      <h1>{{ t('initiative.common.error') }}</h1>
+      <p>{{ errorMessage() }}</p>
+      <button class="button button-primary" type="button" (click)="loadInitiative()">{{ t('initiative.common.retry') }}</button>
+    </section>
+  } @else if (initiative(); as item) {
+    <div class="details-layout">
+      <article class="details-main">
+        <header class="hero-card">
+          <div class="badges">
+            <span class="badge goal-badge" [ngClass]="goalClass(item.goalType)">{{ goalLabel(item.goalType) }}</span>
+            <span class="badge">{{ statusLabel(item.status) }}</span>
+            @if (isPrivate(item)) {
+              <span class="badge is-private">{{ t('initiative.common.private') }}</span>
+            }
+          </div>
+          <h1>{{ item.title }}</h1>
+          <p class="description">{{ item.shortDescription }}</p>
+          <p class="owner-line">
+            {{ t('initiative.details.startedBy') }}
+            <a [routerLink]="profilePath(item.ownerUserId)">{{ item.ownerDisplayName }}</a>
+          </p>
+        </header>
+
+        <section class="card">
+          <h2>{{ t('initiative.details.requirements') }}</h2>
+          <dl class="facts">
+            @if (item.university) {
+              <div><dt>{{ t('initiative.common.university') }}</dt><dd>{{ item.university }}</dd></div>
+            }
+            <div>
+              <dt>{{ t('initiative.details.team') }}</dt>
+              <dd>
+                @if (item.teamSize) {
+                  {{ t('initiative.details.teamFill', { current: teamCount(), total: item.teamSize }) }}
+                } @else {
+                  {{ t('initiative.details.teamOpen', { current: teamCount() }) }}
+                }
+              </dd>
+            </div>
+          </dl>
+
+          <h3>{{ t('initiative.details.lookingFor') }}</h3>
+          <div class="chips">
+            @for (role of item.roles; track role.id) {
+              <span class="chip is-role">{{ role.name }}</span>
+            }
+          </div>
+
+          <h3>{{ t('initiative.common.interests') }}</h3>
+          <div class="chips">
+            @for (interest of item.interests; track interest.id) {
+              <span class="chip">{{ interest.name }}</span>
+            }
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>{{ t('initiative.details.currentTeam') }}</h2>
+          <ul class="team-list">
+            <li>
+              <span class="avatar" aria-hidden="true">{{ initial(item.ownerDisplayName) }}</span>
+              <a [routerLink]="profilePath(item.ownerUserId)">{{ item.ownerDisplayName }}</a>
+              <span class="team-role">{{ t('initiative.details.ownerRole') }}</span>
+            </li>
+            @for (member of item.members; track member.userId) {
+              <li>
+                <span class="avatar" aria-hidden="true">{{ initial(member.displayName) }}</span>
+                <a [routerLink]="profilePath(member.userId)">{{ member.displayName }}</a>
+                <span class="team-role">{{ member.roleName || t('initiative.details.memberRole') }}</span>
+              </li>
+            }
+          </ul>
+          @if (item.members.length === 0) {
+            <p class="muted">{{ t('initiative.details.noMembers') }}</p>
+          }
+        </section>
+      </article>
+
+      <aside class="details-side">
+        @if (isOwner()) {
+          <section class="card">
+            <h2>{{ t('initiative.details.ownerActions') }}</h2>
+            <div class="actions">
+              <a class="button button-secondary" [routerLink]="editPath(item)">{{ t('initiative.common.edit') }}</a>
+              <a class="button button-secondary" [routerLink]="applicationsPath(item)">{{ t('initiative.common.applications') }}</a>
+              @if (item.slug && !isPrivate(item)) {
+                <button class="button button-secondary" type="button" (click)="copyPublicLink(item)">
+                  {{ copyMessage() || t('initiative.common.copyLink') }}
+                </button>
+              }
+            </div>
+
+            @if (!confirmingDelete()) {
+              <button class="button button-danger-outline" type="button" (click)="askDelete()">
+                {{ t('initiative.details.delete') }}
+              </button>
+            } @else {
+              <div class="confirm-box" role="alertdialog" [attr.aria-label]="t('initiative.details.deleteConfirm')">
+                <p>{{ t('initiative.details.deleteConfirm') }}</p>
+                <div class="actions">
+                  <button class="button button-danger" type="button" [disabled]="isDeleting()" (click)="confirmDelete(item)">
+                    {{ isDeleting() ? t('initiative.details.deleting') : t('initiative.details.deleteYes') }}
+                  </button>
+                  <button class="button button-secondary" type="button" [disabled]="isDeleting()" (click)="cancelDelete()">
+                    {{ t('initiative.details.deleteNo') }}
+                  </button>
+                </div>
+              </div>
+            }
+            @if (deleteError()) {
+              <p class="form-error" role="alert">{{ deleteError() }}</p>
+            }
+          </section>
+        } @else {
+          <section class="card join-card">
+            <h2>{{ t('initiative.details.join') }}</h2>
+            @if (item.myJoinRequest; as request) {
+              <p class="request-status" [ngClass]="requestStatusClass(request.status)" role="status">
+                {{ requestStatusLabel(request.status) }}
+              </p>
+            }
+            @if (canApply()) {
+              <a class="button button-primary" [routerLink]="applyPath(item)">{{ t('initiative.common.apply') }}</a>
+            } @else if (!activeRequest()) {
+              <p class="muted">
+                {{ isClosed() ? t('initiative.details.closed') : t('initiative.details.teamFull') }}
+              </p>
+            }
+            @if (item.slug && !isPrivate(item)) {
+              <button class="button button-secondary" type="button" (click)="copyPublicLink(item)">
+                {{ copyMessage() || t('initiative.common.copyLink') }}
+              </button>
+            }
+          </section>
+        }
+      </aside>
+    </div>
+  }
+</main>

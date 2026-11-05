@@ -9,6 +9,29 @@
     <a class="button button-primary" [routerLink]="createPath">{{ t('initiativesList.header.create') }}</a>
   </section>
 
+  <form class="list-filters" role="search" (submit)="applyFilters($event)">
+    <label class="filter-field search-field">
+      <span>{{ t('initiativesList.filters.searchLabel') }}</span>
+      <input
+        type="search"
+        maxlength="100"
+        [value]="searchText()"
+        [placeholder]="t('initiativesList.filters.searchPlaceholder')"
+        (input)="updateSearch($event)"
+      />
+    </label>
+    <label class="filter-field">
+      <span>{{ t('initiativesList.filters.goalLabel') }}</span>
+      <select [value]="goalFilter() ?? ''" (change)="selectGoal($event)">
+        <option value="">{{ t('initiativesList.filters.allGoals') }}</option>
+        @for (goal of goalOptions; track goal) {
+          <option [value]="goal">{{ goalLabel(goal) }}</option>
+        }
+      </select>
+    </label>
+    <button class="button button-primary" type="submit" [disabled]="isLoading()">{{ t('initiativesList.filters.apply') }}</button>
+  </form>
+
   @if (isLoading()) {
     <section class="state-card" aria-live="polite">
       <span class="loader" aria-hidden="true"></span>
@@ -23,6 +46,13 @@
       <button class="button button-primary" type="button" (click)="loadInitiatives()">
         {{ t('initiativesList.error.retry') }}
       </button>
+    </section>
+  } @else if (initiatives().length === 0 && hasAppliedFilters()) {
+    <section class="state-card" role="status">
+      <span class="state-icon" aria-hidden="true">?</span>
+      <h1>{{ t('initiativesList.noResults.title') }}</h1>
+      <p>{{ t('initiativesList.noResults.description') }}</p>
+      <button class="button button-secondary" type="button" (click)="clearFilters()">{{ t('initiativesList.noResults.clear') }}</button>
     </section>
   } @else if (initiatives().length === 0) {
     <section class="state-card">
@@ -44,6 +74,9 @@
           <div class="card-copy">
             <h2>{{ initiative.title }}</h2>
             <p>{{ initiative.shortDescription }}</p>
+            @if (initiative.ownerDisplayName) {
+              <p class="card-owner">{{ t('initiativesList.card.owner', { name: initiative.ownerDisplayName }) }}</p>
+            }
           </div>
 
           @if (initiative.university || initiative.teamSize) {
@@ -58,7 +91,7 @@
               @if (initiative.teamSize) {
                 <div>
                   <dt>{{ t('initiativesList.card.teamSize') }}</dt>
-                  <dd>{{ t('initiativesList.card.teamSizeValue', { count: initiative.teamSize }) }}</dd>
+                  <dd>{{ t('initiativesList.card.teamFill', { current: initiative.memberCount + 1, total: initiative.teamSize }) }}</dd>
                 </div>
               }
             </dl>

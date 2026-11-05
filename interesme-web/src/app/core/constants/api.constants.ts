@@ -46,6 +46,7 @@ export const INTERESTS_API_ENDPOINTS = {
 export const INITIATIVES_API_ENDPOINTS = {
   list: `${API_BASE_URL}/initiatives`,
   create: `${API_BASE_URL}/initiatives`,
+  mine: `${API_BASE_URL}/initiatives/mine`,
   byId: (id: string) => `${API_BASE_URL}/initiatives/${id}`,
   joinRequests: (initiativeId: string) => `${API_BASE_URL}/initiatives/${initiativeId}/join-requests`,
   acceptJoinRequest: (initiativeId: string, requestId: string) =>
