@@ -6,6 +6,12 @@ public sealed class PeopleSearchResponse
 
     public bool UsedMyInterests { get; set; }
 
+    /// <summary>Applied skill filters (lower-cased).</summary>
+    public IReadOnlyList<string> SkillFilters { get; set; } = [];
+
+    /// <summary>Skills of people matching the interests, offered as filter options.</summary>
+    public IReadOnlyList<string> AvailableSkills { get; set; } = [];
+
     public IReadOnlyList<PersonMatchResponse> Items { get; set; } = [];
 }
 

@@ -10,4 +10,11 @@ public interface IPeopleSearchService
         IReadOnlyCollection<Guid>? interestIds,
         int? limit,
         CancellationToken cancellationToken = default);
+
+    Task<ApplicationResult<PeopleSearchResponse>> SearchAsync(
+        Guid viewerUserId,
+        IReadOnlyCollection<Guid>? interestIds,
+        IReadOnlyCollection<string>? skills,
+        int? limit,
+        CancellationToken cancellationToken = default);
 }

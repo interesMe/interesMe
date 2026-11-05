@@ -26,6 +26,9 @@ export class PeopleSearchPage implements OnInit {
   readonly profileEditRoute = ['/', APP_ROUTES.profile, 'edit'];
   readonly interests = signal<InterestResponse[]>([]);
   readonly selectedInterestId = signal<string>('');
+  readonly selectedSkills = signal<string[]>([]);
+  readonly availableSkills = signal<string[]>([]);
+  readonly hasActiveFilters = computed(() => this.selectedSkills().length > 0 || this.selectedInterestId() !== '');
   readonly result = signal<PeopleSearchResponse | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -49,6 +52,9 @@ export class PeopleSearchPage implements OnInit {
       loading: this.i18n.t('people.loading'),
       retry: this.i18n.t('people.retry'),
       skills: this.i18n.t('people.skills'),
+      skillFilterLabel: this.i18n.t('people.skillFilterLabel'),
+      skillFilterHint: this.i18n.t('people.skillFilterHint'),
+      resetFilters: this.i18n.t('people.resetFilters'),
       openProfile: this.i18n.t('people.openProfile'),
       emptyTitle: this.i18n.t('people.emptyTitle'),
       emptyDescription: this.i18n.t('people.emptyDescription'),
@@ -70,6 +76,26 @@ export class PeopleSearchPage implements OnInit {
 
   selectInterest(event: Event): void {
     this.selectedInterestId.set((event.target as HTMLSelectElement).value);
+    // Skill options depend on the interest selection, so start a new skill selection.
+    this.selectedSkills.set([]);
+    this.search();
+  }
+
+  toggleSkill(skill: string): void {
+    const key = skill.toLowerCase();
+    this.selectedSkills.update((selected) =>
+      selected.includes(key) ? selected.filter((current) => current !== key) : [...selected, key],
+    );
+    this.search();
+  }
+
+  isSkillSelected(skill: string): boolean {
+    return this.selectedSkills().includes(skill.toLowerCase());
+  }
+
+  resetFilters(): void {
+    this.selectedInterestId.set('');
+    this.selectedSkills.set([]);
     this.search();
   }
 
@@ -79,9 +105,10 @@ export class PeopleSearchPage implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.peopleApi.searchPeople(interestId ? [interestId] : []).subscribe({
+    this.peopleApi.searchPeople(interestId ? [interestId] : [], this.selectedSkills()).subscribe({
       next: (result) => {
         this.result.set(result);
+        this.availableSkills.set(this.mergeSelectedSkills(result.availableSkills));
         this.isLoading.set(false);
       },
       error: (error: unknown) => {
@@ -90,6 +117,19 @@ export class PeopleSearchPage implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  /** Keeps selected skills visible as chips even if they are no longer among the suggestions. */
+  private mergeSelectedSkills(available: readonly string[]): string[] {
+    const merged = [...available];
+
+    for (const selected of this.selectedSkills()) {
+      if (!merged.some((skill) => skill.toLowerCase() === selected)) {
+        merged.push(selected);
+      }
+    }
+
+    return merged;
   }
 
   profileLink(person: PersonMatch): string[] {

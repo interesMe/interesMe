@@ -12,6 +12,7 @@ describe('PeopleSearchPage', () => {
   let fixture: ComponentFixture<PeopleSearchPage>;
   let response: PeopleSearchResponse;
   const searchCalls: string[][] = [];
+  const skillCalls: string[][] = [];
 
   async function render(): Promise<HTMLElement> {
     await TestBed.configureTestingModule({
@@ -21,8 +22,9 @@ describe('PeopleSearchPage', () => {
         {
           provide: PeopleSearchApiService,
           useValue: {
-            searchPeople: (interestIds: string[] = []) => {
+            searchPeople: (interestIds: string[] = [], skills: string[] = []) => {
               searchCalls.push([...interestIds]);
+              skillCalls.push([...skills]);
               return of(response);
             },
           },
@@ -44,12 +46,15 @@ describe('PeopleSearchPage', () => {
 
   beforeEach(() => {
     searchCalls.length = 0;
+    skillCalls.length = 0;
   });
 
   it('renders matches with shared interests, skills and a profile link', async () => {
     response = {
       interestIds: ['i-1'],
       usedMyInterests: true,
+      skillFilters: [],
+      availableSkills: ['Figma', 'Angular'],
       items: [
         {
           userId: 'u-1',
@@ -74,7 +79,7 @@ describe('PeopleSearchPage', () => {
   });
 
   it('shows an empty-state message when nobody matches', async () => {
-    response = { interestIds: ['i-1'], usedMyInterests: false, items: [] };
+    response = { interestIds: ['i-1'], usedMyInterests: false, skillFilters: [], availableSkills: [], items: [] };
 
     const element = await render();
 
@@ -84,11 +89,39 @@ describe('PeopleSearchPage', () => {
   });
 
   it('asks the user to add interests when they have none', async () => {
-    response = { interestIds: [], usedMyInterests: true, items: [] };
+    response = { interestIds: [], usedMyInterests: true, skillFilters: [], availableSkills: [], items: [] };
 
     await render();
 
     expect(fixture.componentInstance.hasNoOwnInterests()).toBe(true);
     expect(fixture.componentInstance.isEmpty()).toBe(false);
+  });
+
+  // IME-12: skill filter chips.
+  it('filters by selected skills and restores the initial search on reset', async () => {
+    response = {
+      interestIds: ['i-1'],
+      usedMyInterests: true,
+      skillFilters: [],
+      availableSkills: ['Figma', 'Angular'],
+      items: [],
+    };
+
+    const element = await render();
+    const chips = Array.from(element.querySelectorAll<HTMLButtonElement>('.skill-option'));
+    expect(chips.map((chip) => chip.textContent?.trim())).toEqual(['Figma', 'Angular']);
+
+    fixture.componentInstance.toggleSkill('Figma');
+    fixture.componentInstance.toggleSkill('Angular');
+    expect(skillCalls.at(-1)).toEqual(['figma', 'angular']);
+    expect(fixture.componentInstance.isSkillSelected('FIGMA')).toBe(true);
+
+    fixture.componentInstance.toggleSkill('Figma');
+    expect(skillCalls.at(-1)).toEqual(['angular']);
+
+    fixture.componentInstance.resetFilters();
+    expect(skillCalls.at(-1)).toEqual([]);
+    expect(searchCalls.at(-1)).toEqual([]);
+    expect(fixture.componentInstance.hasActiveFilters()).toBe(false);
   });
 });

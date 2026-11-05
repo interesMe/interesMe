@@ -210,3 +210,67 @@ h1 {
   font-weight: 700;
   text-decoration: none;
 }
+
+.reset-button {
+  min-height: 42px;
+  border: 1px solid var(--im-border);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--im-surface);
+  color: var(--im-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skill-filter {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.skill-filter legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--im-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.skill-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-option {
+  min-height: 34px;
+  border: 1px solid var(--im-border);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: var(--im-surface);
+  color: var(--im-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skill-option.is-selected {
+  border-color: var(--im-border-active, var(--im-primary-hover));
+  background: rgba(20, 184, 166, 0.14);
+  color: var(--im-primary-hover);
+}
+
+.skill-option:disabled,
+.reset-button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.hint {
+  color: var(--im-muted);
+  font-size: 12px;
+}

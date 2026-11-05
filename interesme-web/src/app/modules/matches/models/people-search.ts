@@ -18,5 +18,7 @@ export interface PersonMatch {
 export interface PeopleSearchResponse {
   interestIds: string[];
   usedMyInterests: boolean;
+  skillFilters: string[];
+  availableSkills: string[];
   items: PersonMatch[];
 }

@@ -17,17 +17,20 @@ public sealed class DiscoveryController(
     ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>
-    /// Finds people with shared interests. Without interestIds the viewer's own interests are used.
+    /// Finds people with shared interests, optionally narrowed by skills (all selected skills must match).
+    /// Without interestIds the viewer's own interests are used.
     /// </summary>
     [HttpGet("people")]
     public Task<IActionResult> SearchPeople(
         [FromQuery] List<Guid>? interestIds,
+        [FromQuery] List<string>? skills,
         [FromQuery] int? limit,
         CancellationToken cancellationToken) =>
         WithCurrentUserId(
-            userId => peopleSearchService.SearchByInterestsAsync(
+            userId => peopleSearchService.SearchAsync(
                 userId,
                 interestIds,
+                skills,
                 limit,
                 cancellationToken));
 

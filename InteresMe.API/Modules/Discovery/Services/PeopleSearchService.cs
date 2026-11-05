@@ -14,10 +14,22 @@ public sealed class PeopleSearchService(AppDbContext dbContext) : IPeopleSearchS
     internal const int DefaultLimit = 20;
     internal const int MaxLimit = 50;
     internal const int MaxInterestIds = 20;
+    internal const int MaxSkillFilters = 10;
+    internal const int MaxSkillLength = 40;
+    internal const int MaxAvailableSkills = 30;
+    private const int AvailableSkillsCandidateSample = 200;
 
     public async Task<ApplicationResult<PeopleSearchResponse>> SearchByInterestsAsync(
         Guid viewerUserId,
         IReadOnlyCollection<Guid>? interestIds,
+        int? limit,
+        CancellationToken cancellationToken = default) =>
+        await SearchAsync(viewerUserId, interestIds, skills: null, limit, cancellationToken);
+
+    public async Task<ApplicationResult<PeopleSearchResponse>> SearchAsync(
+        Guid viewerUserId,
+        IReadOnlyCollection<Guid>? interestIds,
+        IReadOnlyCollection<string>? skills,
         int? limit,
         CancellationToken cancellationToken = default)
     {
@@ -40,6 +52,15 @@ public sealed class PeopleSearchService(AppDbContext dbContext) : IPeopleSearchS
             return ApplicationResult<PeopleSearchResponse>.Failure(
                 ApplicationErrorKind.Validation,
                 $"At most {MaxInterestIds} interests can be used in one search.");
+        }
+
+        var (skillFilters, skillsError) = NormalizeSkillFilters(skills);
+
+        if (skillsError is not null)
+        {
+            return ApplicationResult<PeopleSearchResponse>.Failure(
+                ApplicationErrorKind.Validation,
+                skillsError);
         }
 
         var usedMyInterests = requestedIds.Count == 0;
@@ -68,19 +89,52 @@ public sealed class PeopleSearchService(AppDbContext dbContext) : IPeopleSearchS
             {
                 InterestIds = [],
                 UsedMyInterests = usedMyInterests,
+                SkillFilters = skillFilters,
                 Items = []
             });
         }
 
-        var ranked = await dbContext.UserInterests
+        var candidates = dbContext.UserInterests
             .AsNoTracking()
             .Where(userInterest =>
                 searchIds.Contains(userInterest.InterestId) &&
                 userInterest.UserId != viewerUserId)
             .GroupBy(userInterest => userInterest.UserId)
-            .Select(group => new { UserId = group.Key, SharedCount = group.Count() })
+            .Select(group => new { UserId = group.Key, SharedCount = group.Count() });
+
+        // Skills offered as filter chips: taken from people who match the interests (before skill filtering).
+        var candidateSkillLists = await candidates
+            .OrderByDescending(candidate => candidate.SharedCount)
+            .Take(AvailableSkillsCandidateSample)
             .Join(
-                dbContext.Users.AsNoTracking(),
+                dbContext.UserProfiles.AsNoTracking(),
+                candidate => candidate.UserId,
+                profile => profile.UserId,
+                (candidate, profile) => profile.Skills)
+            .ToListAsync(cancellationToken);
+
+        var availableSkills = candidateSkillLists
+            .SelectMany(list => list)
+            .GroupBy(skill => skill.Trim(), StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(MaxAvailableSkills)
+            .Select(group => group.Key)
+            .ToList();
+
+        var users = dbContext.Users.AsNoTracking();
+
+        foreach (var skill in skillFilters)
+        {
+            // AND semantics: every selected skill must be present (case-insensitive, evaluated in PostgreSQL).
+            users = users.Where(user =>
+                user.Profile != null &&
+                user.Profile.Skills.Any(userSkill => userSkill.ToLower() == skill));
+        }
+
+        var ranked = await candidates
+            .Join(
+                users,
                 match => match.UserId,
                 user => user.Id,
                 (match, user) => new
@@ -135,6 +189,8 @@ public sealed class PeopleSearchService(AppDbContext dbContext) : IPeopleSearchS
         {
             InterestIds = searchIds,
             UsedMyInterests = usedMyInterests,
+            SkillFilters = skillFilters,
+            AvailableSkills = availableSkills,
             Items = ranked
                 .Select(row => new PersonMatchResponse
                 {
@@ -149,5 +205,41 @@ public sealed class PeopleSearchService(AppDbContext dbContext) : IPeopleSearchS
                 })
                 .ToList()
         });
+    }
+
+    internal static (List<string> Skills, string? Error) NormalizeSkillFilters(IReadOnlyCollection<string>? skills)
+    {
+        if (skills is null || skills.Count == 0)
+        {
+            return ([], null);
+        }
+
+        var normalized = new List<string>();
+
+        foreach (var raw in skills)
+        {
+            var skill = raw?.Trim();
+
+            if (string.IsNullOrWhiteSpace(skill))
+            {
+                return ([], "Skill filters cannot be empty.");
+            }
+
+            if (skill.Length > MaxSkillLength)
+            {
+                return ([], $"Each skill filter must be at most {MaxSkillLength} characters.");
+            }
+
+            var lowered = skill.ToLowerInvariant();
+
+            if (!normalized.Contains(lowered))
+            {
+                normalized.Add(lowered);
+            }
+        }
+
+        return normalized.Count > MaxSkillFilters
+            ? ([], $"At most {MaxSkillFilters} skills can be used as filters.")
+            : (normalized, null);
     }
 }

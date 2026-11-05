@@ -15,10 +15,36 @@
         }
       </select>
     </label>
+    @if (hasActiveFilters()) {
+      <button type="button" class="reset-button" [disabled]="isLoading()" (click)="resetFilters()">
+        {{ text().resetFilters }}
+      </button>
+    }
     @if (!isLoading() && people().length > 0) {
       <p class="results-count" role="status">{{ text().resultsCount }}</p>
     }
   </div>
+
+  @if (availableSkills().length > 0) {
+    <fieldset class="skill-filter">
+      <legend>{{ text().skillFilterLabel }}</legend>
+      <div class="skill-options">
+        @for (skill of availableSkills(); track skill.toLowerCase()) {
+          <button
+            type="button"
+            class="skill-option"
+            [class.is-selected]="isSkillSelected(skill)"
+            [attr.aria-pressed]="isSkillSelected(skill)"
+            [disabled]="isLoading()"
+            (click)="toggleSkill(skill)"
+          >
+            {{ skill }}
+          </button>
+        }
+      </div>
+      <p class="hint">{{ text().skillFilterHint }}</p>
+    </fieldset>
+  }
 
   @if (isLoading()) {
     <p class="state-card" role="status">{{ text().loading }}</p>
