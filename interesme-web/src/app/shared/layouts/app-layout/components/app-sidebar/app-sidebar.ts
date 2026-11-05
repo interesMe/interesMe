@@ -32,6 +32,10 @@ export class AppSidebar {
   private readonly authService = inject(AuthService);
   private readonly i18n = inject(I18nService);
 
+  readonly user = this.authService.user;
+  readonly userInitial = computed(() => this.user()?.displayName?.trim().charAt(0).toUpperCase() || 'I');
+  readonly createInitiativePath = `/${APP_ROUTES.initiatives}/new`;
+
   readonly navItems: SidebarItem[] = [
     {
       labelKey: 'appSidebar.nav.home',

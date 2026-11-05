@@ -364,6 +364,10 @@ export class ProfileEditComponent implements OnInit, OnDestroy {
       birthDate: profile.birthDate ?? '',
     });
     this.skills.set([...(profile.skills ?? [])]);
+    // Pre-select saved interests; otherwise saving the interests block would wipe them.
+    if (profile.interestIds) {
+      this.selectedInterestIds.set(new Set(profile.interestIds));
+    }
     this.avatarUrl.set(profile.avatarUrl);
     this.resolvedAvatarUrl.set(this.resolveAvatarUrl(profile.avatarUrl));
     this.setAvatarPreviewFromProfile();

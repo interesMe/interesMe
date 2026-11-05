@@ -109,7 +109,7 @@
                 >
                   {{ post.isLikedByCurrentUser ? '♥' : '♡' }} {{ post.likesCount }}
                 </button>
-                <a [routerLink]="postPath(post.id)">{{ text().viewAll }}</a>
+                <a [routerLink]="postPath(post.id)">{{ text().openPost }}</a>
               </footer>
             </article>
           }

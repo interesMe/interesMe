@@ -50,7 +50,14 @@ public sealed class ProfileService(
                 "Profile was not found.");
         }
 
-        return ApplicationResult<ProfileResponse>.Success(ToProfileResponse(profile));
+        var response = ToProfileResponse(profile);
+        response.InterestIds = await dbContext.UserInterests
+            .AsNoTracking()
+            .Where(userInterest => userInterest.UserId == userId)
+            .Select(userInterest => userInterest.InterestId)
+            .ToListAsync(cancellationToken);
+
+        return ApplicationResult<ProfileResponse>.Success(response);
     }
 
     public async Task<ApplicationResult<ProfileResponse>> CreateMyProfileAsync(

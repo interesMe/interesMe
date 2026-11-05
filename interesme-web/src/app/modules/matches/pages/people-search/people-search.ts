@@ -58,6 +58,7 @@ export class PeopleSearchPage implements OnInit {
       openProfile: this.i18n.t('people.openProfile'),
       emptyTitle: this.i18n.t('people.emptyTitle'),
       emptyDescription: this.i18n.t('people.emptyDescription'),
+      emptySkillsDescription: this.i18n.t('people.emptySkillsDescription'),
       noInterestsTitle: this.i18n.t('people.noInterestsTitle'),
       noInterestsDescription: this.i18n.t('people.noInterestsDescription'),
       noInterestsCta: this.i18n.t('people.noInterestsCta'),

@@ -202,106 +202,6 @@
   letter-spacing: -0.035em;
 }
 
-.section-head button,
-.panel-head button {
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 12px;
-  background: var(--im-surface-soft);
-  color: var(--im-text);
-}
-
-.initiative-list {
-  display: grid;
-  gap: 14px;
-}
-
-.initiative-card {
-  display: grid;
-  grid-template-columns: 124px minmax(0, 1fr) 86px 86px auto;
-  gap: 18px;
-  align-items: center;
-  padding: 14px;
-  border: 1px solid var(--im-border);
-  border-radius: 24px;
-  background: var(--im-surface);
-  box-shadow: var(--im-shadow-card);
-}
-
-.initiative-art {
-  height: 96px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  color: white;
-  font-size: 32px;
-  font-weight: 900;
-}
-
-.initiative-art.startup {
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
-}
-
-.initiative-art.band {
-  background: linear-gradient(135deg, #111827, #fb6f61);
-}
-
-.initiative-art.garden {
-  background: linear-gradient(135deg, #166534, #86efac);
-}
-
-.initiative-body h3 {
-  margin: 0 0 8px;
-  color: var(--im-text);
-  font-size: 20px;
-  letter-spacing: -0.02em;
-}
-
-.initiative-body p {
-  margin: 0 0 12px;
-  color: var(--im-muted);
-  line-height: 1.45;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tags span {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(20, 184, 166, 0.1);
-  color: var(--im-primary-hover);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.meta {
-  text-align: center;
-}
-
-.meta strong {
-  display: block;
-  color: var(--im-text);
-  font-size: 19px;
-}
-
-.meta span {
-  color: var(--im-muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.join-button {
-  height: 42px;
-  padding: 0 20px;
-  border-radius: 13px;
-  background: var(--im-primary-hover);
-  color: #ffffff;
-}
-
 .mission-card,
 .panel-card {
   border: 1px solid var(--im-border);
@@ -315,8 +215,7 @@
   gap: 20px;
   align-items: center;
   padding: 26px;
-  background:
-    var(--im-mission-card-bg);
+  background: var(--im-mission-card-bg);
 }
 
 .mission-icon {
@@ -345,8 +244,7 @@
   padding: 22px;
 }
 
-.message-list,
-.trend-list {
+.message-list {
   display: grid;
   gap: 16px;
   margin-top: 18px;
@@ -382,27 +280,6 @@
   font-size: 13px;
 }
 
-.message > span {
-  color: var(--im-muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.trend-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--im-text);
-  font-size: 14px;
-  font-weight: 850;
-}
-
-.trend-item small {
-  color: var(--im-teal-readable);
-  font-size: 12px;
-  font-weight: 900;
-}
-
 :host-context([data-theme='dark']) .create-card {
   border-color: rgba(251, 111, 97, 0.18);
 }
@@ -411,54 +288,25 @@
   border-color: rgba(20, 184, 166, 0.2);
 }
 
-:host-context([data-theme='dark']) :is(.initiative-card, .mission-card, .panel-card) {
+:host-context([data-theme='dark']) :is(.mission-card, .panel-card) {
   background-color: var(--im-surface-elevated);
-}
-
-:host-context([data-theme='dark']) .tags span {
-  background: rgba(20, 184, 166, 0.1);
-  color: #2dd4bf;
 }
 
 @media (max-width: 1180px) {
   .hero,
   .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero {
     display: grid;
+    grid-template-columns: 1fr;
   }
 
   .search-card {
     min-width: 0;
-  }
-
-  .dashboard-grid {
-    display: grid;
-  }
-
-  .initiative-card {
-    grid-template-columns: 100px minmax(0, 1fr);
-  }
-
-  .meta,
-  .join-button {
-    justify-self: start;
   }
 }
 
 @media (max-width: 760px) {
   .action-grid {
     grid-template-columns: 1fr;
-  }
-
-  .initiative-card {
-    grid-template-columns: 1fr;
-  }
-
-  .initiative-art {
-    height: 120px;
   }
 }
 

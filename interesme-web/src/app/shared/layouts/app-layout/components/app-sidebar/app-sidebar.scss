@@ -189,7 +189,8 @@
   line-height: 1.5;
 }
 
-.sidebar-promo button {
+.sidebar-promo button,
+.sidebar-promo .promo-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,6 +206,7 @@
   font-size: 13px;
   font-weight: 900;
   box-shadow: 0 12px 24px rgba(15, 153, 143, 0.22);
+  text-decoration: none;
 }
 
 .user-card {
@@ -240,6 +242,13 @@
 .user-info strong {
   color: var(--im-text);
   font-size: 15px;
+}
+
+.user-info strong,
+.user-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-info span {

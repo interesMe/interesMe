@@ -41,6 +41,13 @@ public sealed class UserInterestsTests(PostgresDatabase database) : IClassFixtur
             .ToListAsync();
 
         Assert.Equal(["Chess", "Robotics"], stored);
+
+        // The edit form pre-selects the saved interests from GET /api/profile/me.
+        await using var profileContext = database.CreateContext();
+        var profile = await TestServices.CreateProfileService(profileContext).GetMyProfileAsync(userId);
+        Assert.Equal(
+            new[] { interests[1].Id, interests[2].Id }.OrderBy(id => id),
+            profile.Response!.InterestIds.OrderBy(id => id));
     }
 
     [Fact]

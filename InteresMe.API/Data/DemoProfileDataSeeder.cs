@@ -15,6 +15,14 @@ internal static class DemoProfileDataSeeder
 {
     private const string DemoEmailDomain = "demo.interesme.local";
 
+    /// <summary>
+    /// Real (non-demo) accounts are left untouched unless DEMO_SEED_LOCAL_USERS=true is set explicitly.
+    /// Previously every startup replaced real users' interests, bios, follows and posts with demo values,
+    /// silently discarding what the user had chosen.
+    /// </summary>
+    internal static bool ShouldSeedLocalUsers() =>
+        string.Equals(Environment.GetEnvironmentVariable("DEMO_SEED_LOCAL_USERS"), "true", StringComparison.OrdinalIgnoreCase);
+
     public static async Task SeedAsync(AppDbContext dbContext, ILogger logger)
     {
         var users = await dbContext.Users
@@ -42,14 +50,14 @@ internal static class DemoProfileDataSeeder
             .ToDictionaryAsync(interest => interest.Slug);
 
         var now = DateTime.UtcNow;
-        var localUsers = users
-            .Where(user => !user.Email.EndsWith($"@{DemoEmailDomain}"))
-            .ToList();
+        var localUsers = ShouldSeedLocalUsers()
+            ? users.Where(user => !user.Email.EndsWith($"@{DemoEmailDomain}")).ToList()
+            : [];
         var demoUsers = users
             .Where(user => user.Email.EndsWith($"@{DemoEmailDomain}"))
             .ToList();
 
-        SeedProfiles(dbContext, users, now);
+        SeedProfiles(dbContext, [.. demoUsers, .. localUsers], now);
         await SeedInterestsAsync(dbContext, localUsers, demoUsers, interests, now);
         await SeedSubinterestsAsync(dbContext, localUsers, demoUsers, now);
         await SeedPostsAsync(dbContext, localUsers, demoUsers, now);

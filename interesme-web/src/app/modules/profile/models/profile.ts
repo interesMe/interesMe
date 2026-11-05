@@ -8,6 +8,7 @@ export interface ProfileResponse {
   avatarUrl: string | null;
   birthDate: string | null;
   skills: string[];
+  interestIds?: string[];
   createdAt: string;
   updatedAt: string;
 }

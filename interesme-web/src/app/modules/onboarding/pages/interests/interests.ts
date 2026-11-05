@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { APP_ROUTES } from '../../../../core/constants/routes.constants';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -56,9 +57,15 @@ export class OnboardingInterestsPage implements OnInit {
     this.loadFailed.set(false);
     this.errorMessage.set(null);
 
-    this.profileApi.getInterests().subscribe({
-      next: (interests) => {
+    forkJoin({
+      interests: this.profileApi.getInterests(),
+      // A returning user may already have interests: pre-select them so "Continue" does not wipe them.
+      profile: this.profileApi.getMyProfile().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ interests, profile }) => {
         this.interests.set(interests);
+        const known = new Set(interests.map((interest) => interest.id));
+        this.selectedInterestIds.set((profile?.interestIds ?? []).filter((id) => known.has(id)));
         this.isLoading.set(false);
       },
       error: (error: unknown) => {

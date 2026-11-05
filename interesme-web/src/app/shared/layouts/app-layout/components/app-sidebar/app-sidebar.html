@@ -42,18 +42,18 @@
     <h3>{{ text().promoTitle }}</h3>
     <p>{{ text().promoDescription }}</p>
 
-    <button type="button">
+    <a class="promo-action" [routerLink]="createInitiativePath">
       <span aria-hidden="true">+</span>
       {{ text().createInitiative }}
-    </button>
+    </a>
   </section>
 
   <section class="user-card" [attr.aria-label]="text().currentUserAria">
-    <div class="user-avatar" aria-hidden="true">M</div>
+    <div class="user-avatar" aria-hidden="true">{{ userInitial() }}</div>
 
     <div class="user-info">
-      <strong>Max</strong>
-      <span>@max</span>
+      <strong>{{ user()?.displayName }}</strong>
+      <span>{{ user()?.email }}</span>
     </div>
 
     <span class="user-more" aria-hidden="true">⌄</span>

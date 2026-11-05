@@ -110,6 +110,7 @@ openssl rand -base64 48   # AUTH_TOKEN_SECRET
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth App Client Secret |
 | `FRONTEND_OAUTH_CALLBACK_URL` | Маршрут фронтенду після OAuth-колбеку бекенду |
 | `FRONTEND_PORT` | Порт фронтенд dev-сервера в Docker Compose |
+| `DEMO_SEED_LOCAL_USERS` | `true` — у Development демо-сидер також заповнює **реальні** акаунти демо-даними (інтереси, пости, підписки). За замовчуванням `false`: змінюються лише демо-користувачі `@demo.interesme.local` |
 
 Ніколи не комітьте `.env` — він внесений у `.gitignore`.
 

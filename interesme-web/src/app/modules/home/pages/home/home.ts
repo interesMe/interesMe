@@ -80,6 +80,7 @@ export class HomePage implements OnInit {
       findPeople: this.i18n.t('home.feed.findPeople'),
       writePost: this.i18n.t('home.feed.writePost'),
       loadMore: this.i18n.t('home.feed.loadMore'),
+      openPost: this.i18n.t('home.feed.openPost'),
       inInitiative: this.i18n.t('home.feed.inInitiative'),
       like: this.i18n.t('home.feed.like'),
       unlike: this.i18n.t('home.feed.unlike'),

@@ -62,7 +62,7 @@
   } @else if (isEmpty()) {
     <div class="state-card" role="status">
       <h2>{{ text().emptyTitle }}</h2>
-      <p>{{ text().emptyDescription }}</p>
+      <p>{{ selectedSkills().length > 0 ? text().emptySkillsDescription : text().emptyDescription }}</p>
     </div>
   } @else {
     <ul class="people-grid">

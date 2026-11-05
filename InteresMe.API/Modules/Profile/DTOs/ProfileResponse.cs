@@ -20,6 +20,9 @@ public class ProfileResponse
 
     public IReadOnlyList<string> Skills { get; set; } = [];
 
+    /// <summary>Selected interests (filled by GET /api/profile/me) so the edit form can pre-select them.</summary>
+    public IReadOnlyList<Guid> InterestIds { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

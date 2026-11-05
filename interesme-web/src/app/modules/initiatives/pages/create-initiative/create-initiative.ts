@@ -419,11 +419,20 @@ import { InitiativesApiService } from '../../services/initiatives-api.service';
       }
 
       .selectable-chip {
+        position: relative;
         cursor: pointer;
       }
 
+      /* Visually hidden checkbox: it must not inherit the generic full-width input size
+         (previously caused ~1400px of horizontal page overflow). */
       .selectable-chip input {
         position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        padding: 0;
         opacity: 0;
         pointer-events: none;
       }
