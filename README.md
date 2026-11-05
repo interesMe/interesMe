@@ -19,6 +19,14 @@ InteresMe — вебплатформа соціального пошуку (soci
 - [Лабораторна робота №1 — Проєктний документ](./project-brief.md)
 - [Лабораторна робота №2 — Класифікація проєкту та аналіз оточення](./project-classification.md)
 - [Лабораторна робота №3 — Побудова життєвого циклу проєкту](./project-lifecycle.md)
+- [Налаштування Jira Scrum (беклог, Epics, Sprint 1)](./jira-setup.md)
+- [Лабораторна робота №5 — Планування часу та вартості проєкту](./docs/time-cost-plan.md)
+
+### Jira
+
+- [Jira-проєкт `IME` (Scrum-дошка)](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2)
+- [Roadmap / Хронологія](https://nubip-team-u9qon6a8.atlassian.net/jira/software/c/projects/IME/boards/2/timeline)
+- [Релізи (v1.0-MVP, v1.1)](https://nubip-team-u9qon6a8.atlassian.net/projects/IME?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page)
 
 ---
 
@@ -65,6 +73,7 @@ interesme/
 ├── .env.example                  # Копіювати в .env (не комітиться)
 ├── project-brief.md              # Проєктний документ (лабораторна №1)
 ├── project-classification.md     # Класифікація та аналіз оточення (лабораторна №2)
+├── docs/time-cost-plan.md        # План часу та вартості (лабораторна №5), скріншоти в docs/img/
 └── InteresMe.sln
 ```
 
