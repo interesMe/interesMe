@@ -21,6 +21,7 @@ InteresMe — вебплатформа соціального пошуку (soci
 - [Лабораторна робота №3 — Побудова життєвого циклу проєкту](./project-lifecycle.md)
 - [Лабораторна робота №4 — Налаштування проєкту в Jira (беклог, Epics, Sprint 1)](./jira-setup.md)
 - [Лабораторна робота №5 — Планування часу та вартості проєкту](./docs/time-cost-plan.md) (розрахунки перевіряє [`docs/calc/time_cost_calc.py`](./docs/calc/time_cost_calc.py), підготовка до захисту — [`docs/LAB5_DEFENSE_UA.md`](./docs/LAB5_DEFENSE_UA.md))
+- [Лабораторна робота №6 — Управління ресурсами в Jira](./docs/resources.md)
 
 ### Jira
 
